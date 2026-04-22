@@ -1,0 +1,5 @@
+/*Archivo para la distribucion de la pagina*/
+
+.container-main{
+    display:grid
+}

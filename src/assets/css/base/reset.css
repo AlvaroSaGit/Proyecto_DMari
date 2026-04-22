@@ -1,0 +1,14 @@
+/*Archivo para reiniciar todos los valores*/
+
+*{
+    /*Incluye el contenido para el ancho y alto y el padding y margin*/
+    box-sizing: border-box;
+    /*Margen y padding reiniciados a 0*/
+    margin: 0;
+    padding: 0;
+}
+
+html{
+    /*Para que el scroll sea suave*/
+    scroll-behavior: smooth;
+}

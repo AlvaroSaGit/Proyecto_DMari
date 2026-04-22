@@ -1,0 +1,20 @@
+/*Archivo para aplicar a todo el archivo la tipografia*/
+
+body{
+    /*Fuente de letra*/
+    font-family: var(--font_cuerpo);
+    /*Tamaño de letra*/
+    font-size:1rem; /* 16 px por tamaño fuente de la raiz */
+    /* Espaciado entre las lineas */
+    line-height: 1.6;
+}
+
+h1,h2,h3,h4{
+    /*Fuente de letra*/
+    font-family: var(--font_titulo);
+    /*Grosor o peso de la tipografia*/
+    font-weight: 700;
+    /*Margen abajo*/
+    margin-bottom:1rem;
+}
+
