@@ -1,0 +1,10 @@
+
+.btn-agregar-catalogo{
+    background-color: #ffb7c5;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    width: 100%;
+}

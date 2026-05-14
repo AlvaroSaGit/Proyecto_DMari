@@ -1,3 +1,5 @@
+@import url(../boton/botonAgregar.css);
+
 /* contenedor principal */
 .container-inicio {
     padding: 20px;
@@ -61,15 +63,4 @@
     font-weight: bold;
     color: #333;
     margin-bottom: 15px;
-}
-
-/* boton de ver mas */
-.btn-ver {
-    background-color: #ffb7c5;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 25px;
-    cursor: pointer;
-    width: 100%;
 }

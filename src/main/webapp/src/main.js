@@ -67,7 +67,6 @@ function configurarBotonesHeader() {
     if (btnCategoria) {
         btnCategoria.addEventListener('click', function() {
             // abrimos la barra lateral de categorias
-            console.log("abre");
             abrirCategoria();
         });
     }
