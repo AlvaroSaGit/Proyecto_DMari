@@ -50,7 +50,7 @@ import java.util.ArrayList;
 /*
     @WebServlet - Mapea este servlet a la direccion URL "/listar".
 */
-@WebServlet(name = "ProductoController", urlPatterns = {"/listar"})
+@WebServlet(name = "ProductoController", urlPatterns = {"/listar","/insertar"})
 public class ProductoController extends HttpServlet {
     /*
     doGet: Responde a peticiones de tipo lectura

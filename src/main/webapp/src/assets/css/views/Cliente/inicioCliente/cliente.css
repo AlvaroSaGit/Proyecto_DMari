@@ -24,6 +24,8 @@
 /* ESTILO DEL CATALOGO */
 @import url("../catalogo/catalogo.css");
 
+@import url(../../Auth/registro/registro.css);
+
 .container-inicio{
     display: flex;
     flex-direction: column;
