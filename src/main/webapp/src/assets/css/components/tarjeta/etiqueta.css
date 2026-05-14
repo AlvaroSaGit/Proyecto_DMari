@@ -17,5 +17,5 @@
     /*Colores*/
     color: white;
     background-color: var(--color_apartados);
-    corner-shape: scoop;
+    corner-shape: none;
 }

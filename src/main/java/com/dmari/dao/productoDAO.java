@@ -49,7 +49,15 @@ public class productoDAO {
         /*
             La sentencia sql que se ejecutara en el motor de mysql
         */
-        String sql = "select id_producto_pk, nombre_producto, precio, stock from producto";
+        String sql = "SELECT " +
+             "p.id_producto_pk, " +
+             "p.nombre_producto, " +
+             "p.precio, " +
+             "p.stock, " +
+             "i.url_ruta " +
+             "FROM producto p " +
+             "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk " +
+             "AND i.imagen_principal = 1";
         
         /*
             Usar el try como try-with-resources,
