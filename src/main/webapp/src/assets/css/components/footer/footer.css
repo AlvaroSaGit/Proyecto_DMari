@@ -1,0 +1,72 @@
+@import url(../../base/variables.css);
+/* fondo oscuro para toda la franja */
+.pie-pagina {
+    background-color: var(--color_apartados); 
+    color: white;
+    padding: 40px 20px;
+    width: 100%;
+}
+
+/* contenedor para separar las dos columnas */
+.footer-contenido {
+    /* pone el texto a un lado y redes al otro */
+    display: flex;
+    /* deja espacio maximo entre los dos bloques */
+    justify-content: space-between;
+    /* permite que se baje en pantallas pequeñas */
+    flex-wrap: wrap;
+    max-width: 1100px;
+    margin: 0 auto;
+    gap: 40px;
+}
+
+/* bloque de texto a la izquierda */
+.footer-info {
+    /* define que ocupe mas espacio que las redes */
+    flex: 1 1 500px;
+}
+
+/* titulo de las secciones */
+.footer-info h4, .footer-redes h4 {
+    font-size: 1rem;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+/* parrafo de descripcion */
+.footer-info p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #ecf0f1;
+}
+
+/* bloque de redes a la derecha */
+.footer-redes {
+    /* alinea el contenido a la izquierda del bloque */
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+}
+
+/* fila de los iconos */
+.iconos-redes {
+    /* pone los iconos uno tras otro */
+    display: flex;
+    /* espacio entre cada red social */
+    gap: 20px;
+}
+
+/* estilo de los iconos grandes */
+.iconos-redes i {
+    /* tamaño grande para que se vean bien */
+    font-size: 40px;
+    color: white;
+    cursor: pointer;
+    /* transicion suave para el color */
+    transition: 0.3s;
+}
+
+/* cambio de color al pasar el mouse */
+.iconos-redes i:hover {
+    color: #40e0d0;
+}

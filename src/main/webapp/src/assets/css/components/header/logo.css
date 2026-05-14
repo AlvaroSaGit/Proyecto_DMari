@@ -1,0 +1,13 @@
+/* Centrar el logo */
+.header-logo > a{
+    display: flex;
+    align-items: center;
+}
+
+
+/*Imagen del logo*/
+
+img[alt="DMari"]{
+    width: 100px;
+}
+

@@ -1,0 +1,37 @@
+@import url(../../base/variables.css);
+
+.header-categoria{
+    /*Centrar en el eje X*/
+    display: flex;
+    justify-content: center;
+}
+
+/* Desde el html de la carpeta de componentes */
+.btn-categoria{
+    font-family: 'Poppins',sans-serif;
+    display: flex;
+    /* Centrar el contenido al medio en el eje Y*/
+    align-items: center;
+    /*Espaciado entre el span del la imagen y del texto*/
+    gap: 5px;
+    /*Espaciado dentro de la caja*/
+    padding: 5px;
+}
+
+.btn-categoria{
+    /*Color blanco a la letra*/
+    color: white;
+    /*Color de fondo del boton*/
+    background-color: var(--color_apartados);
+    /*Quitar estilo de los bordes*/
+    border-style: none;
+    /*El suavizado de los bordes*/
+    border-radius: 10px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* El texto de categoria*/
+.btn-text {
+    font-size: 1rem;
+    font-family: 'Poppins',sans-serif;
+}

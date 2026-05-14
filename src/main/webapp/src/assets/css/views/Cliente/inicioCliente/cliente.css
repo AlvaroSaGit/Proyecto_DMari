@@ -1,0 +1,102 @@
+/*ARCHIVO PARA LA VISTA CLIENTE*/
+
+/* Barril de estilos de la carpeta BASE */ 
+@import url('../../../base/index.css'); 
+
+/*El layout de cliente*/
+@import url("../../../layout/layout-cliente.css");
+
+/* ---- HEADER ---- */
+@import url(../../../components/header/index.css);
+
+/* ESTILO DE LAS CARDS Y ETIQUETAS */
+@import url(../../../components/tarjeta/index.css);
+
+/* ESTILOS DEL FOOTER */
+@import url(../../../components/footer/footer.css);
+
+/*BARRA LATERALES*/
+@import url(../../../components/barraLateral/index.css);
+
+/* SIDEBAR USUARIO */
+@import url(../../../components/usuarioSideBar/usuarioSideBar.css);
+
+/* ESTILO DEL CATALOGO */
+@import url("../catalogo/catalogo.css");
+
+.container-inicio{
+    display: flex;
+    flex-direction: column;
+    /*Espacio entre todos los items dentro de container-inicio*/
+    gap: 10px;
+}
+
+/* NOVEDADES */
+.novedades {
+    /*background-color: var();*/
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+}
+
+/* fila de etiquetas en el banner */
+.novedades-etiqueta {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+
+.novedades-contenido{
+    display: flex;
+    /*Centrar eje X - Y*/
+    align-items: center;
+    justify-content: center;
+    /*Separar el titulo con las etiquetas*/
+    gap: 5px;
+    flex-direction: column;
+}
+
+.novedades-etiqueta{
+    display: flex;
+    /*Espacio entre las etiquetas*/
+    gap: 20px;
+}
+
+/* damos efecto a los contenedores del header de forma sencilla */
+.header-navegacion > div,
+.header-accion > div {
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+/* forzamos la manito en botones y enlaces internos */
+.header-navegacion button,
+.header-accion button,
+.header-navegacion a {
+    cursor: pointer;
+}
+
+/* efecto visual al pasar el mouse por el header */
+.header-navegacion > div:hover,
+.header-accion > div:hover {
+    opacity: 0.7;
+}
+
+/* componente universal para botones de cerrar */
+.btn-cerrar {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #2c3e50;
+    transition: color 0.3s, transform 0.2s;
+}
+
+/* efecto de advertencia al pasar el mouse */
+.btn-cerrar:hover {
+    color: #e74c3c;
+    transform: scale(1.1);
+}

@@ -1,0 +1,75 @@
+/* contenedor principal */
+.container-inicio {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+/* estilo de las etiquetas */
+.etiqueta {
+    background-color: #808080;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    white-space: nowrap; /* evita que el texto se rompa */
+    width: max-content;
+}
+
+/* grid de productos */
+.producto-grid {
+    display: grid;
+    /* tarjetas una al lado de otra que se ajustan solas */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+/* estilo de la tarjeta */
+.tarjeta {
+    background-color: white;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: 0.3s;
+}
+
+/* imagen dentro de la tarjeta */
+.tarjeta-img img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+/* textos dentro de la tarjeta */
+.tarjeta-cuerpo {
+    padding: 15px;
+    text-align: center;
+}
+
+/* Para titulo 3*/
+.tarjeta-cuerpo h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+}
+
+/*TEXTO PRECIO*/
+.precio {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+/* boton de ver mas */
+.btn-ver {
+    background-color: #ffb7c5;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    width: 100%;
+}

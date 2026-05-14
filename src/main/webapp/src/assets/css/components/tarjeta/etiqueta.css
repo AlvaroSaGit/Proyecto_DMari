@@ -1,0 +1,21 @@
+/*Import de las variables*/
+@import url(../../base/variables.css);
+
+.etiqueta{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /*Evita que pase a la siguiente linea*/
+    white-space: nowrap;
+    /*Se ajusta al contenido*/
+    width: max-content;
+    height: 25px;
+    /*Padding general*/
+    padding: 10px;
+    /*Border radio*/
+    border-radius: 10px;
+    /*Colores*/
+    color: white;
+    background-color: var(--color_apartados);
+    corner-shape: scoop;
+}

@@ -1,0 +1,10 @@
+# Ignorar carpeta de compilacion de Maven
+/target/
+
+# Ignorar configuraciones de NetBeans
+/nb-configuration.xml
+/nbproject/private/
+
+# Ignorar archivos temporales del sistema
+.DS_Store
+Thumbs.db

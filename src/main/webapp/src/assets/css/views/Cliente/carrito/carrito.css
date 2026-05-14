@@ -1,0 +1,79 @@
+/* importamos las variables globales */
+@import url("../../../base/variables.css");
+
+/* fondo oscuro que cubre toda la pantalla */
+.overlay-carrito {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    display: none; /* oculto por defecto */
+}
+
+/* mostramos el fondo cuando tiene la clase activo */
+.overlay-carrito.activo {
+    display: block;
+}
+
+/* barra lateral blanca oculta a la derecha */
+.sidebar-carrito {
+    position: fixed;
+    top: 0;
+    right: -400px; /* la escondemos fuera de la pantalla */
+    width: 100%;
+    max-width: 350px;
+    height: 100vh;
+    background-color: var(--color_fondo);
+    box-shadow: -2px 0 15px rgba(0, 0, 0, 0.1);
+    z-index: 999;
+    transition: right 0.3s ease; /* animacion de deslizamiento */
+    display: flex;
+    flex-direction: column;
+}
+
+/* deslizamos la barra hacia la pantalla */
+.sidebar-carrito.activo {
+    right: 0;
+}
+
+/* cabecera del sidebar */
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--color_gris);
+}
+
+/* cuerpo donde iran los productos */
+.sidebar-body {
+    flex-grow: 1; /* ocupa todo el espacio sobrante */
+    padding: 20px;
+    overflow-y: auto; /* permite hacer scroll si hay muchas donas */
+}
+
+.carrito-vacio {
+    text-align: center;
+    color: #666;
+}
+
+/* pie del carrito con el total */
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid var(--color_gris);
+}
+
+.btn-pagar {
+    width: 100%;
+    margin-top: 10px;
+    background-color: var(--color_botones);
+    color: var(--color_apartados);
+    border: none;
+    padding: 12px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+}

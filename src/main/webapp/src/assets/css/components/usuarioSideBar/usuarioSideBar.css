@@ -1,0 +1,76 @@
+/* importamos las variables globales */
+@import url("../../../base/variables.css");
+
+/* fondo oscuro que cubre toda la pantalla */
+.overlay-usuario {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    display: none;
+}
+
+.overlay-usuario.activo {
+    display: block;
+}
+
+/* barra lateral oculta a la derecha */
+.sidebar-usuario {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 100%;
+    max-width: 350px;
+    height: 100vh;
+    background-color: var(--color_fondo);
+    box-shadow: -2px 0 15px rgba(0, 0, 0, 0.1);
+    z-index: 999;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-usuario.activo {
+    right: 0;
+}
+
+.sidebar-body {
+    flex-grow: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-usuario-item {
+    background: none;
+    border: none;
+    padding: 15px;
+    font-family: var(--font_cuerpo);
+    font-size: 16px;
+    color: var(--color_apartados);
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.btn-usuario-item:hover {
+    background-color: var(--color_gris);
+}
+
+.btn-usuario-item i {
+    font-size: 24px;
+}
+
+.sidebar-usuario .separador {
+    height: 1px;
+    background-color: var(--color_gris);
+    margin: 10px 0;
+}

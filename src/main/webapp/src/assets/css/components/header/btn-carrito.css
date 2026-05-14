@@ -1,0 +1,14 @@
+.btn-carrito{
+    display: flex;
+    /*Se centra el contenido*/
+    align-items: center;
+    justify-content: center;
+    /*Le quita el borde del boton*/
+    border: none;
+    /*Le quita el background del boton*/
+    background: none;
+}
+
+.btn-carrito span{
+    color: black;
+}

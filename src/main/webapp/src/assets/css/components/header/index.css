@@ -1,0 +1,37 @@
+/* Variables */ 
+/*Estilos del boton categorias*/
+@import url(./btn-categoria.css);
+/*Estilso del icono del carrito*/
+@import url(./btn-carrito.css);
+/*Estilos del icono del logo*/
+@import url(./logo.css);
+/*Estilos del icono del usuario*/
+@import url(./usuario.css);
+
+#header-container{
+    display: flex;
+    /*Añadir padding a izquierda y derecha*/
+    padding: 0px 15px 0px 15px;
+    /*Borde de abajo*/
+    border-bottom: 1px solid var(--color_gris);
+    justify-content: space-between;
+    width: 100vw;
+}
+
+/*La parte izquierda del header*/
+.header-navegacion{
+    display: flex;
+    /*Centrar verticalmente al centro el contenido*/
+    align-items: center;
+    /* Espaciado entre los items*/
+    gap: 15px;
+    
+}
+
+.header-accion{
+    display: flex;
+    /*Centrar verticalmente al centro el contenido*/
+    align-items: center;
+    /*Espaciado entre los items*/
+    gap: 15px;
+}

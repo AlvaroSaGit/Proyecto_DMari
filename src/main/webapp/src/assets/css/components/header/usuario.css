@@ -1,0 +1,17 @@
+/*El apartado de usuario*/
+.btn-usuario{
+    /*Se aplica display flex centrando el icono*/
+    display: flex;
+    /*Se centra en el eje X el contenido*/
+    justify-content: center;
+    /*Se centra en el eje y el contenido*/
+    align-items: center;
+    /*Le quita el borde del boton*/
+    border: none;
+    /*Le quita el background del boton*/
+    background: none;
+}
+
+.btn-usuario span{
+    color: black;    
+}
