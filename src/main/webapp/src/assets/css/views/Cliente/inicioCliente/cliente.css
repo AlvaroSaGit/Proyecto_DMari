@@ -26,6 +26,9 @@
 
 @import url(../../Auth/registro/registro.css);
 
+/* ESTILO DE CONFIGURACION */
+@import url("../configuracion/configuracion.css");
+
 .container-inicio{
     display: flex;
     flex-direction: column;

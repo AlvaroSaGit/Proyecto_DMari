@@ -1,0 +1,118 @@
+/* ESTILOS PARA LA VISTA DE CONFIGURACION E HISTORIAL */
+
+.configuracion-view {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    max-width: 800px;
+    margin: 20px auto;
+}
+
+.configuracion-header h2 {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.configuracion-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+.btn-tab {
+    background: none;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    color: #666;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+.btn-tab:hover {
+    background-color: #f5f5f5;
+}
+
+.btn-tab.activo {
+    background-color: #000; /* Color principal */
+    color: white;
+    font-weight: bold;
+}
+
+.configuracion-contenido {
+    padding: 15px;
+    background-color: #fafafa;
+    border-radius: 8px;
+}
+
+.lista-historial {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.item-historial {
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.estado-entregado {
+    color: green;
+    font-weight: bold;
+}
+
+.estado-preparacion {
+    color: orange;
+    font-weight: bold;
+}
+
+/* ESTILOS DEL FORMULARIO DE PERFIL */
+.formulario-perfil {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+    max-width: 400px;
+}
+
+.grupo-form-perfil label {
+    display: block;
+    margin-bottom: 5px;
+    color: #444;
+    font-weight: 500;
+}
+
+.grupo-form-perfil input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.btn-guardar-perfil {
+    background-color: #000;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    width: max-content;
+}
+
+/* CLASE MUY IMPORTANTE PARA OCULTAR PESTANAS INACTIVAS */
+.configuracion-contenido .oculto {
+    display: none;
+}

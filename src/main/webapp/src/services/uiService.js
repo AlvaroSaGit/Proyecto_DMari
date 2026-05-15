@@ -17,6 +17,10 @@ export async function cargarComponente(id, ruta) {
 
         // Se extrae la ruta en una constante de respuesta
         const respuesta = await fetch(ruta);
+        // Verificamos que la peticion HTTP haya sido exitosa (ej. que no sea un error 404)
+        if (!respuesta.ok) {
+            throw new Error(`Error HTTP: ${respuesta.status}`);
+        }
         // html esperara hasta que tenga la url de la ruta y lo volvera texto
         const html = await respuesta.text();
         /* 

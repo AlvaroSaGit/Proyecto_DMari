@@ -1,0 +1,42 @@
+<section class="configuracion-view">
+    <div class="configuracion-header">
+        <h2>Mi Cuenta</h2>
+    </div>
+    
+    <div class="configuracion-tabs">
+        <button id="tab-perfil" class="btn-tab activo">Mis Datos</button>
+        <button id="tab-historial" class="btn-tab">Historial de Pedidos</button>
+    </div>
+    
+    <!-- Contenido de las pestanas, ahora directamente en el HTML -->
+    <div class="configuracion-contenido">
+        <!-- PESTANA 1: CONFIGURACION DE MIS DATOS -->
+        <div id="contenido-perfil">
+            <h3>Configuracion de la Cuenta</h3>
+            <form class="formulario-perfil">
+                <div class="grupo-form-perfil">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="perfil-nombre" value="Usuario de Prueba">
+                </div>
+                <div class="grupo-form-perfil">
+                    <label>Correo Electronico</label>
+                    <input type="email" id="perfil-correo" value="prueba@dmari.com" readonly title="El correo no se puede cambiar">
+                </div>
+                <button type="button" class="btn-guardar-perfil">Guardar Cambios</button>
+            </form>
+        </div>
+
+        <!-- PESTANA 2: HISTORIAL DE PEDIDOS -->
+        <div id="contenido-historial" class="oculto">
+            <h3>Mis Pedidos Recientes</h3>
+            <ul class="lista-historial">
+                <li class="item-historial">
+                    <strong>Pedido #1001</strong> - 2x Velas de Vainilla - <span class="estado-entregado">Entregado</span>
+                </li>
+                <li class="item-historial">
+                    <strong>Pedido #1002</strong> - 1x Dona Glaseada - <span class="estado-preparacion">En preparacion</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
