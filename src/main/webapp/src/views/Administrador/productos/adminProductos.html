@@ -23,3 +23,39 @@
         </table>
     </div>
 </section>
+
+<!-- Modal oculto para Crear / Editar Producto del Admin -->
+<div id="modal-producto" class="modal-admin oculto">
+    <div class="modal-contenido">
+        <div class="modal-header">
+            <h3 id="modal-titulo">Nuevo Producto</h3>
+            <button id="btn-cerrar-modal" class="btn-cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-producto" class="admin-form">
+                <div class="admin-form__group">
+                    <label class="admin-form__label" for="prod-nombre">Nombre del producto</label>
+                    <input class="admin-form__input" type="text" id="prod-nombre" name="nombre" required>
+                </div>
+                <div class="admin-form__group">
+                    <label class="admin-form__label" for="prod-precio">Precio</label>
+                    <input class="admin-form__input" type="number" id="prod-precio" name="precio" step="0.01" required>
+                </div>
+                <div class="admin-form__group">
+                    <label class="admin-form__label" for="prod-stock">Stock</label>
+                    <input class="admin-form__input" type="number" id="prod-stock" name="stock" required>
+                </div>
+                <div class="admin-form__group">
+                    <label class="admin-form__label" for="prod-imagen">Ruta de la imagen</label>
+                    <input class="admin-form__input" type="text" id="prod-imagen" name="imagen" placeholder="Ej: assets/img/dona.jpg" required>
+                </div>
+                <div class="admin-form__actions">
+                    <button type="button" id="btn-cancelar-modal" class="admin-form__btn admin-form__btn--secondary">Cancelar</button>
+                    <button type="submit" class="admin-form__btn admin-form__btn--primary">Guardar Producto</button>
+                </div>
+                <!-- Contenedor para mostrar mensajes del Fetch -->
+                <div id="admin-form-mensaje" class="admin-form__message"></div>
+            </form>
+        </div>
+    </div>
+</div>

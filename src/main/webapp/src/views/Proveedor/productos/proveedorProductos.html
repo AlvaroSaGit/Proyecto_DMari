@@ -1,0 +1,55 @@
+<section class="proveedor-vista-productos">
+    <div class="proveedor-header-seccion">
+        <h2>Mis Productos Registrados</h2>
+        <!-- Boton para pedirle al admin que agregue algo nuevo -->
+        <button id="btn-nueva-solicitud" class="btn-primario"><i class='bx bx-plus'></i> Solicitar Nuevo Producto</button>
+    </div>
+    
+    <div class="proveedor-tabla-contenedor">
+        <table class="tabla-proveedor">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Imagen</th>
+                    <th>Nombre</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-proveedor-productos-body">
+                <tr><td colspan="6" style="text-align:center;">Cargando mis productos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Modal para Solicitudes del Proveedor -->
+<div id="modal-solicitud-proveedor" class="modal-admin oculto">
+    <div class="modal-contenido">
+        <div class="modal-header">
+            <h3 id="modal-solicitud-titulo">Solicitar Nuevo Producto</h3>
+            <button id="btn-cerrar-modal-prov" class="btn-cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-solicitud-prov" class="formulario-admin">
+                <div class="grupo-form">
+                    <label>Nombre del Producto</label>
+                    <input type="text" id="solicitud-nombre" required>
+                </div>
+                <div class="grupo-form">
+                    <label>Precio Sugerido ($)</label>
+                    <input type="number" step="0.01" id="solicitud-precio" required>
+                </div>
+                <div class="grupo-form">
+                    <label>Stock Disponible</label>
+                    <input type="number" id="solicitud-stock" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-cancelar-modal-prov" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-primario">Enviar Solicitud</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -9,6 +9,8 @@ import { inicializarCarrito, abrirCarrito } from './components/carritoSideBar/ca
 import { inicializarCategoria, abrirCategoria } from './components/categoriaSideBar/categoriaController.js';
 // importamos el controlador del usuario
 import { inicializarUsuario, abrirUsuario } from './components/usuarioSideBar/usuarioSideBarController.js';
+// importamos el controlador del sidebar de proveedor
+import { inicializarProveedor } from './views/Proveedor/sidebar/proveedorSideBarController.js';
 
 /* 
     El addEventListener mantiene pendiente cuando ocurra el suceso
@@ -33,6 +35,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     inicializarCategoria();
     // cargamos el html de usuario oculto en el index
     inicializarUsuario();
+
+    // temporal: cargamos el panel del proveedor para visualizarlo en pantalla
+    inicializarProveedor();
 
     // BOTONES DEL HEADER
     // activamos los clics de los botones del header
