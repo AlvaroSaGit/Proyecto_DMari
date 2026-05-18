@@ -1,57 +1,80 @@
-// importamos el servicio ui
+// importamos el servicio para cargar html
 import { cargarComponente } from '../../../services/uiService.js';
-// importamos la funcion de agregar al carrito
+// importamos la funcion del carrito para el boton de comprar
 import { agregarAlCarrito } from '../../../components/carritoSideBar/carritoController.js';
-// importamos el servicio de base de datos
-import { obtenerProductos } from '../../../services/productoService.js';
-// importamos el componente de la tarjeta
-import { crearTarjetaHTML } from '../../../components/tarjeta/tarjetaComponent.js';
 
-// funcion principal para cargar la vista de inicio
 export async function cargarVistaInicio() {
-    // inyectamos el html vacio
-    await cargarComponente('component-main', 'src/views/Cliente/inicioCliente/inicio.html');
+    // cargamos la vista del inicio en el contenedor principal
+    await cargarComponente('component-main', './src/views/Cliente/inicioCliente/inicio.html');
     
-    // una vez cargado el html llamamos la logica de las tarjetas
-    renderizarProductos();
+    // llamamos al backend para traer los productos reales
+    cargarProductosDesdeBD();
 }
 
-// funcion para inyectar las tarjetas
-async function renderizarProductos() {
-    const contenedorDestacado = document.getElementById('contenedor-producto');
-    const contenedorDonas = document.getElementById('contenedor-donas');
-    const contenedorVelas = document.getElementById('contenedor-velas');
-    
-    if (!contenedorDestacado || !contenedorDonas || !contenedorVelas) return;
-    
-    // obtenemos los datos desde el servicio
-    const productos = await obtenerProductos();
-    if (!productos) return;
-
-    // limpiamos contenedores
-    contenedorDestacado.innerHTML = '';
-    contenedorDonas.innerHTML = '';
-    contenedorVelas.innerHTML = '';
-
-    // construimos los nodos de forma segura
-    productos.forEach(producto => {
-        contenedorDestacado.appendChild(crearTarjetaHTML(producto));
-
-        if (producto.categoria === 'donas') {
-            contenedorDonas.appendChild(crearTarjetaHTML(producto));
-        } else if (producto.categoria === 'velas') {
-            contenedorVelas.appendChild(crearTarjetaHTML(producto));
+async function cargarProductosDesdeBD() {
+    try {
+        // hacemos la peticion al servlet ProductoController en la ruta /listar
+        const respuesta = await fetch('listar');
+        
+        if (respuesta.ok) {
+            // convertimos el json que nos mando java a un arreglo de javascript
+            const productos = await respuesta.json();
+            renderizarProductos(productos);
+        } else {
+            console.error('error al cargar los productos del backend');
         }
+    } catch (error) {
+        // atrapamos errores de red o servidor caido
+        console.error('falla de conexion al intentar traer productos:', error);
+    }
+}
+
+function renderizarProductos(productos) {
+    // buscamos el contenedor de destacados en el html
+    const contenedor = document.getElementById('contenedor-producto');
+    if (!contenedor) return;
+
+    // limpiamos el contenedor por si tenia html viejo
+    contenedor.innerHTML = '';
+
+    // recorremos la lista de productos
+    productos.forEach(prod => {
+        // creamos la tarjeta html para cada articulo
+        const tarjeta = document.createElement('div');
+        tarjeta.className = 'tarjeta'; 
+        
+        // validamos la ruta de la imagen, si es nula ponemos una por defecto
+        const imagenUrl = (prod.imagen && prod.imagen !== 'null') ? prod.imagen : './src/assets/img/default.jpg';
+        
+        // armamos la estructura visual del producto
+        tarjeta.innerHTML = `
+            <img src="${imagenUrl}" alt="${prod.nombre}" style="width: 100%; border-radius: 8px;">
+            <h3>${prod.nombre}</h3>
+            <p>Precio: $${prod.precio.toFixed(2)}</p>
+            <p>Stock disponible: ${prod.stock}</p>
+            <button class="btn-agregar-carrito" data-id="${prod.id}" data-nombre="${prod.nombre}" data-precio="${prod.precio}">
+                Agregar al carrito
+            </button>
+        `;
+        
+        // inyectamos la tarjeta en el contenedor de la pagina web
+        contenedor.appendChild(tarjeta);
     });
+
+    // damos accion a los botones recien dibujados
+    asignarEventosCarrito();
+}
+
+function asignarEventosCarrito() {
+    const botones = document.querySelectorAll('.btn-agregar-carrito');
     
-    // buscamos todos los botones recien creados (con la nueva clase de la tarjeta)
-    const botonesAgregar = document.querySelectorAll('.btn-agregar-catalogo');
-    
-    botonesAgregar.forEach(boton => {
-        boton.addEventListener('click', function() {
-            const id = parseInt(this.getAttribute('data-id'));
-            const nombre = this.getAttribute('data-nombre');
-            const precio = parseFloat(this.getAttribute('data-precio'));
+    botones.forEach(btn => {
+        btn.addEventListener('click', (evento) => {
+            const id = parseInt(evento.target.getAttribute('data-id'));
+            const nombre = evento.target.getAttribute('data-nombre');
+            const precio = parseFloat(evento.target.getAttribute('data-precio'));
+            
+            // enviamos los datos extraidos a la funcion que maneja el arreglo del carrito
             agregarAlCarrito(id, nombre, precio);
         });
     });

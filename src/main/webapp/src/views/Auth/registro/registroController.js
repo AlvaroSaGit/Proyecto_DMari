@@ -54,21 +54,27 @@ function prepararFormularioRegistro() {
             return;
         }
         
-        // armamos un objeto limpio con los datos para pasarlos a java despues
-        const datosUsuario = {
-            nombre: nombre,
-            correo: correo,
-            password: password
-        };
+        // Usamos URLSearchParams para enviar los datos como formulario (facilita la lectura en Java sin librerías extra)
+        const parametros = new URLSearchParams();
+        parametros.append('nombre', nombre);
+        parametros.append('correo', correo);
+        parametros.append('password', password);
         
         // envolvemos en un trycatch para atajar problemas de internet o de base de datos
         try {
-            // aqui ira la peticion fetch hacia tu proyecto de java
-            console.log('datos listos para enviar a java:', datosUsuario);
-            alert('enviando datos al servidor java...');
+            // peticion fetch hacia tu nuevo AuthController en Java en la ruta /registro
+            const respuesta = await fetch('registro', {
+                method: 'POST',
+                body: parametros
+            });
             
-            // si todo sale bien borramos lo que se escribio en las cajitas
-            formulario.reset();
+            if (respuesta.ok) {
+                alert('¡Registro exitoso! Ahora inicia sesión.');
+                formulario.reset();
+                cargarVistaLogin(); // Enviamos al usuario a la vista de login
+            } else {
+                alert('Hubo un error en el registro. Quizás el correo ya está en uso.');
+            }
         } catch (error) {
             // si falla la promesa de java caera aqui sin crashear la pagina
             console.error('error al conectar con el servidor:', error);

@@ -50,7 +50,7 @@ import java.util.ArrayList;
 /*
     @WebServlet - Mapea este servlet a la direccion URL "/listar".
 */
-@WebServlet(name = "ProductoController", urlPatterns = {"/listar","/insertar"})
+@WebServlet(name = "ProductoController", urlPatterns = {"/listar","/insertar","/actualizar","/eliminar"})
 public class ProductoController extends HttpServlet {
     /*
     doGet: Responde a peticiones de tipo lectura
@@ -104,6 +104,55 @@ public class ProductoController extends HttpServlet {
             
             /* Enviamos el texto final al cliente (navegador/frontend) */
             out.print(json.toString());
+        }
+    }
+
+    /*
+    doPost: Responde a peticiones para modificar datos (crear, actualizar, borrar)
+    */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        String ruta = request.getServletPath();
+        productoDAO dao = new productoDAO();
+
+        if ("/insertar".equals(ruta)) {
+            // capturamos parametros
+            String nombre = request.getParameter("nombre");
+            double precio = Double.parseDouble(request.getParameter("precio"));
+            int stock = Integer.parseInt(request.getParameter("stock"));
+
+            // armamos producto
+            producto nuevoProd = new producto();
+            nuevoProd.setNombreProducto(nombre);
+            nuevoProd.setPrecio(precio);
+            nuevoProd.setStock(stock);
+
+            // guardamos y validamos
+            if (dao.insertarProducto(nuevoProd) > 0) {
+                response.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            }
+
+        } else if ("/actualizar".equals(ruta)) {
+            producto prod = new producto();
+            prod.setIdProductoPk(Integer.parseInt(request.getParameter("id")));
+            prod.setNombreProducto(request.getParameter("nombre"));
+            prod.setPrecio(Double.parseDouble(request.getParameter("precio")));
+            prod.setStock(Integer.parseInt(request.getParameter("stock")));
+
+            if (dao.actualizarProducto(prod)) {
+                response.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            }
+
+        } else if ("/eliminar".equals(ruta)) {
+            int id = Integer.parseInt(request.getParameter("id"));
+            // el DAO devuelve un boolean que usamos para el status HTTP
+            response.setStatus(dao.eliminarProducto(id) ? HttpServletResponse.SC_OK : HttpServletResponse.SC_BAD_REQUEST);
         }
     }
 }

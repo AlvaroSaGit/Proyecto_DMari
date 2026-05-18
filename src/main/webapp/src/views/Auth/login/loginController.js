@@ -45,19 +45,26 @@ function prepararFormularioLogin() {
             return; // cortamos la funcion aqui si faltan datos
         }
         
-        // empaquetamos los datos en un objeto para enviarlos al backend
-        const datosLogin = {
-            correo: correo,
-            password: password
-        };
+        // Empaquetamos los datos con URLSearchParams para que Java los lea facil con request.getParameter
+        const parametros = new URLSearchParams();
+        parametros.append('correo', correo);
+        parametros.append('password', password);
         
         // bloque try-catch para manejar errores de conexion con el servidor
         try {
-            // simulamos el envio de datos (aqui ira el fetch a java)
-            console.log('intentando iniciar sesion:', datosLogin);
-            alert('enviando datos de login al servidor java...');
-            // limpiamos el formulario despues de enviar
-            formulario.reset();
+            const respuesta = await fetch('login', {
+                method: 'POST',
+                body: parametros
+            });
+            
+            if (respuesta.ok) {
+                alert('¡Inicio de sesión exitoso!');
+                formulario.reset();
+                // Recargamos la pagina completa para que el header detecte la sesion
+                window.location.reload();
+            } else {
+                alert('Correo o contraseña incorrectos');
+            }
         } catch (error) {
             // si falla la red o el servidor, lo mostramos en consola
             console.error('error al conectar con el servidor:', error);
