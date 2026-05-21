@@ -52,7 +52,7 @@ function renderizarProductos(productos) {
             <h3>${prod.nombre}</h3>
             <p>Precio: $${prod.precio.toFixed(2)}</p>
             <p>Stock disponible: ${prod.stock}</p>
-            <button class="btn-agregar-carrito" data-id="${prod.id}" data-nombre="${prod.nombre}" data-precio="${prod.precio}">
+            <button class="btn-agregar-carrito" data-id="${prod.id}" data-nombre="${prod.nombre}" data-precio="${prod.precio}" data-stock="${prod.stock}">
                 Agregar al carrito
             </button>
         `;
@@ -73,9 +73,10 @@ function asignarEventosCarrito() {
             const id = parseInt(evento.target.getAttribute('data-id'));
             const nombre = evento.target.getAttribute('data-nombre');
             const precio = parseFloat(evento.target.getAttribute('data-precio'));
+            const stock = evento.target.getAttribute('data-stock') ? parseInt(evento.target.getAttribute('data-stock')) : null;
             
             // enviamos los datos extraidos a la funcion que maneja el arreglo del carrito
-            agregarAlCarrito(id, nombre, precio);
+            agregarAlCarrito(id, nombre, precio, stock);
         });
     });
 }

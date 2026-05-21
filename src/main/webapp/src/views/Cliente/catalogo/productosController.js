@@ -59,7 +59,10 @@ async function renderizarProductosCatalogo() {
             const id = parseInt(boton.dataset.id);
             const nombre = boton.dataset.nombre;
             const precio = parseFloat(boton.dataset.precio);
-            agregarAlCarrito(id, nombre, precio);
+            // Extraemos el stock asegurandonos de que sea un numero. Si por alguna razon no viene, enviamos null.
+            const stock = boton.dataset.stock ? parseInt(boton.dataset.stock) : null;
+            
+            agregarAlCarrito(id, nombre, precio, stock);
         }
     });
 }

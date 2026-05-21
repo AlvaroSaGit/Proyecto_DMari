@@ -10,7 +10,7 @@ import { inicializarCategoria, abrirCategoria } from './components/categoriaSide
 // importamos el controlador del usuario
 import { inicializarUsuario, abrirUsuario } from './components/usuarioSideBar/usuarioSideBarController.js';
 // importamos el controlador del sidebar de proveedor
-import { inicializarProveedor } from './views/Proveedor/sidebar/proveedorSideBarController.js';
+// import { inicializarProveedor } from './views/Proveedor/sidebar/proveedorSideBarController.js';
 
 /* 
     El addEventListener mantiene pendiente cuando ocurra el suceso
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     inicializarUsuario();
 
     // temporal: cargamos el panel del proveedor para visualizarlo en pantalla
-    inicializarProveedor();
+    // inicializarProveedor();
 
     // BOTONES DEL HEADER
     // activamos los clics de los botones del header
@@ -106,14 +106,18 @@ async function verificarSesion() {
                 const nuevoBtn = btnUsuario.cloneNode(true);
                 btnUsuario.parentNode.replaceChild(nuevoBtn, btnUsuario);
                 
-                // Le agregamos el evento para cerrar sesion
-                nuevoBtn.addEventListener('click', async () => {
+                // Le agregamos el evento para cerrar sesion usando funcion tradicional
+                nuevoBtn.addEventListener('click', async function() {
                     await fetch('logout'); // Llama al servlet de logout
                     window.location.reload(); // Recarga la pagina para volver al estado "deslogueado"
                 });
             }
+        } else if (respuesta.status === 401) {
+            // Atrapamos el 401 especificamente para que la app sepa que estamos en modo visitante
+            console.log("Modo visitante: No hay sesion activa en el sistema.");
         }
     } catch (error) {
-        console.error('Error al verificar la sesion:', error);
+        // Esto solo saltara si el backend esta apagado o no hay conexion
+        console.error('Error de comunicacion con el servidor:', error);
     }
 }

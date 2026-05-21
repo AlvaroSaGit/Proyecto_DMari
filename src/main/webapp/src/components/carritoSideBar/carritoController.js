@@ -11,6 +11,20 @@ export async function inicializarCarrito() {
     // esperamos a que el componente html se coloque en su contenedor
     await cargarComponente('contenedor-sidebar-carrito', './src/components/carritoSideBar/carritoSidebar.html');
     
+    // Agregamos una regla CSS dinamica para quitar las flechitas (spinners) del input en Chrome, Edge y Safari
+    if (!document.getElementById('estilo-carrito-input')) {
+        const estilo = document.createElement('style');
+        estilo.id = 'estilo-carrito-input';
+        estilo.textContent = `
+            .input-cantidad::-webkit-inner-spin-button,
+            .input-cantidad::-webkit-outer-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+        `;
+        document.head.appendChild(estilo);
+    }
+
     // preparamos los elementos para poder cerrar el carrito
     const btnCerrar = document.getElementById('btn-cerrar-carrito');
     const overlay = document.getElementById('overlay-carrito');
@@ -35,7 +49,7 @@ export async function inicializarCarrito() {
 async function procesarCompra() {
     // evitamos que proceda si el carrito esta vacio
     if (carrito.length === 0) {
-        alert('Tu carrito está vacío. ¡Agrega algunos productos primero!');
+        alert('Tu carrito esta vacio. ¡Agrega algunos productos primero!');
         return;
     }
 
@@ -44,18 +58,18 @@ async function procesarCompra() {
         const respuesta = await fetch('session');
 
         if (respuesta.ok) {
-            // Respondió 200 OK: Está logueado
+            // Respondio 200 OK: Esta logueado
             alert('¡Excelente! Procesando tu compra...');
-            // A futuro: Aquí enviaremos los datos del carrito a Java para crear el Pedido en BD.
+            // A futuro: Aqui enviaremos los datos del carrito a Java para crear el Pedido en BD.
         } else {
-            // Respondió 401: No está logueado
-            alert('Por favor, inicia sesión o regístrate para poder finalizar tu compra.');
+            // Respondio 401: No esta logueado
+            alert('Por favor, inicia sesion o registrate para poder finalizar tu compra.');
             cerrarCarrito(); // Ocultamos el carrito
             cargarVistaLogin(); // Lo llevamos a la pantalla de login
         }
     } catch (error) {
-        console.error('Error al verificar la sesión:', error);
-        alert('Hubo un error de conexión con el servidor.');
+        console.error('Error al verificar la sesion:', error);
+        alert('Hubo un error de conexion con el servidor.');
     }
 }
 
@@ -78,17 +92,38 @@ export function cerrarCarrito() {
     if (overlay) overlay.classList.remove('activo');
 }
 
-// funcion encargada de recibir un producto nuevo o sumar su cantidad
-export function agregarAlCarrito(id, nombre, precio) {
+/**
+ * Agrega un producto al carrito de compras o incrementa su cantidad si ya existe.
+ * Tambien valida que la cantidad no supere el stock disponible (si se proporciona uno).
+ * 
+ * @param {number} id - Identificador unico del producto en la base de datos.
+ * @param {string} nombre - Nombre descriptivo del producto.
+ * @param {number} precio - Precio unitario del producto.
+ * @param {number|null} stock - Inventario actual del producto. Es opcional, por defecto es null.
+ */
+export function agregarAlCarrito(id, nombre, precio, stock = null) {
     // buscamos si el producto ya existe en nuestro arreglo en memoria
     const productoExistente = carrito.find(item => item.id === id);
     
     if (productoExistente) {
-        // si el producto ya estaba, solo incrementamos cuantas unidades quiere
-        productoExistente.cantidad++;
+        // ACTUALIZACION: Si el producto ya existia, le refrescamos el stock con el dato mas reciente
+        if (stock != null) {
+            productoExistente.stock = stock;
+        }
+
+            // incrementamos la cantidad, pero la topamos al maximo del stock disponible silenciosamente
+            productoExistente.cantidad++;
+            if (productoExistente.stock != null && productoExistente.cantidad > productoExistente.stock) {
+                productoExistente.cantidad = productoExistente.stock;
+            }
     } else {
-        // si es un producto nuevo, insertamos el objeto completo al arreglo
-        carrito.push({ id: id, nombre: nombre, precio: precio, cantidad: 1 });
+        // validamos que si es un producto nuevo, tenga al menos 1 unidad de stock
+        if (stock != null && stock <= 0) {
+            alert('Este producto se encuentra agotado por el momento.');
+            return;
+        }
+        // si es un producto nuevo, insertamos el objeto completo al arreglo guardando su stock
+        carrito.push({ id: id, nombre: nombre, precio: precio, cantidad: 1, stock: stock });
     }
     
     // Guardamos la informacion actualizada en el navegador
@@ -99,7 +134,42 @@ export function agregarAlCarrito(id, nombre, precio) {
     abrirCarrito();
 }
 
-// funcion que recorre el arreglo de productos y arma el html visual
+/**
+ * Actualiza directamente la cantidad de un producto (usado por los inputs de texto y botones +/-).
+ * Fuerza un tope de stock, evitando que el usuario introduzca un numero mayor a lo permitido.
+ * @param {number} id - Identificador del producto a modificar.
+ * @param {number} nuevaCantidad - La cantidad requerida por el usuario.
+ */
+export function actualizarCantidad(id, nuevaCantidad) {
+    const productoExistente = carrito.find(item => item.id === id);
+    if (productoExistente && nuevaCantidad > 0) {
+        // si existe un limite de stock y lo superamos, lo topamos al maximo disponible
+        if (productoExistente.stock != null && nuevaCantidad > productoExistente.stock) {
+            productoExistente.cantidad = productoExistente.stock;
+        } else {
+            productoExistente.cantidad = nuevaCantidad;
+        }
+        
+        localStorage.setItem('carritoDMari', JSON.stringify(carrito));
+        renderizarCarrito(); // redibujamos con el nuevo precio subtotal
+    }
+}
+
+/**
+ * Remueve completamente un articulo del carrito basandose en su ID.
+ * @param {number} id - Identificador del producto a eliminar.
+ */
+export function eliminarDelCarrito(id) {
+    carrito = carrito.filter(item => item.id !== id);
+    localStorage.setItem('carritoDMari', JSON.stringify(carrito));
+    renderizarCarrito();
+}
+
+/**
+ * Construye el HTML de los elementos del carrito leyendo los datos en memoria.
+ * Inyecta este HTML en el contenedor lateral, calcula el total 
+ * y vuelve a enlazar los eventos de los botones recien creados (+, -, X, input).
+ */
 function renderizarCarrito() {
     const contenedor = document.getElementById('items-carrito');
     const txtTotal = document.getElementById('total-carrito');
@@ -118,16 +188,67 @@ function renderizarCarrito() {
         // sumamos al monto total de la compra
         total += subtotal;
         
-        // concatenamos el texto con el bloque html de este articulo
+        // si el producto tiene stock, preparamos el atributo max para el input
+        const maxAttr = item.stock ? `max="${item.stock}"` : '';
+        // preparamos un texto visual para que el usuario sepa cuanto stock le queda disponible
+        const textoStock = item.stock != null ? `<span class="badge-stock">Stock: ${item.stock}</span>` : '';
+
+        // concatenamos el texto con el bloque html de este articulo, ahora mucho mas estilizado
         htmlCarrito += `
-            <p class="item-carrito-producto">
-                <strong>${item.cantidad}x</strong> ${item.nombre} - $${subtotal}
-            </p>`;
+            <div class="item-carrito-producto" style="display: flex; flex-direction: column; padding: 10px; border-bottom: 1px solid #eee; margin-bottom: 5px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-weight: 600; color: #333;">${item.nombre}</span>
+                        ${textoStock}
+                    </div>
+                    <button class="btn-eliminar-item" data-id="${item.id}" style="color: #ff4d4d; background: none; border: none; cursor: pointer; font-weight: bold; font-size: 1.2rem; line-height: 1; padding: 0 5px;" title="Eliminar">✕</button>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #666; font-size: 0.95rem;">$${subtotal.toFixed(2)}</span>
+                    <div style="display: flex; align-items: center; border: 1px solid #ccc; border-radius: 5px; overflow: hidden;">
+                        <button class="btn-restar" data-id="${item.id}" style="background: #f4f4f4; border: none; padding: 5px 12px; cursor: pointer; font-size: 1rem; color: #333;">-</button>
+                        <input type="number" min="1" ${maxAttr} value="${item.cantidad}" class="input-cantidad" data-id="${item.id}" style="width: 40px; text-align: center; border: none; border-left: 1px solid #ccc; border-right: 1px solid #ccc; outline: none; padding: 5px 0; -moz-appearance: textfield;">
+                        <button class="btn-sumar" data-id="${item.id}" style="background: #f4f4f4; border: none; padding: 5px 12px; cursor: pointer; font-size: 1rem; color: #333;">+</button>
+                    </div>
+                </div>
+            </div>`;
     });
     
     // inyectamos de golpe todo el texto armado en el contenedor principal (mejor rendimiento)
     contenedor.innerHTML = htmlCarrito;
     
     // actualizamos el texto del total a pagar
-    txtTotal.innerText = '$' + total;
+    txtTotal.innerText = '$' + total.toFixed(2); // Aseguramos que solo muestre 2 decimales
+
+    // Comportamiento del boton de restar "-"
+    document.querySelectorAll('.btn-restar').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.dataset.id);
+            const item = carrito.find(i => i.id === id);
+            if (item && item.cantidad > 1) actualizarCantidad(id, item.cantidad - 1);
+        });
+    });
+
+    // Comportamiento del boton de sumar "+"
+    document.querySelectorAll('.btn-sumar').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.dataset.id);
+            const item = carrito.find(i => i.id === id);
+            if (item) actualizarCantidad(id, item.cantidad + 1);
+        });
+    });
+
+    // Agregamos el comportamiento a los nuevos inputs de cantidad
+    document.querySelectorAll('.input-cantidad').forEach(input => {
+        input.addEventListener('change', (e) => {
+            actualizarCantidad(parseInt(e.target.dataset.id), parseInt(e.target.value));
+        });
+    });
+
+    // Agregamos el comportamiento a los botones de eliminar "X"
+    document.querySelectorAll('.btn-eliminar-item').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            eliminarDelCarrito(parseInt(e.target.dataset.id));
+        });
+    });
 }
