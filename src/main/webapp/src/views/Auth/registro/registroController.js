@@ -69,11 +69,11 @@ function prepararFormularioRegistro() {
             });
             
             if (respuesta.ok) {
-                alert('¡Registro exitoso! Ahora inicia sesión.');
+                alert('¡Registro exitoso! Ahora inicia sesion.');
                 formulario.reset();
                 cargarVistaLogin(); // Enviamos al usuario a la vista de login
             } else {
-                alert('Hubo un error en el registro. Quizás el correo ya está en uso.');
+                alert('Hubo un error en el registro.');
             }
         } catch (error) {
             // si falla la promesa de java caera aqui sin crashear la pagina

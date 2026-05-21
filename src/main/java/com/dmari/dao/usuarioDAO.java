@@ -11,48 +11,104 @@ import com.dmari.modelo.usuario;
 public class usuarioDAO {
     
     databaseHelper db = new databaseHelper();
+    
+    // CLAVE DE ENCRIPTACION: Debe ser exactamente la misma que usaste en tus INSERTS (.sql)
+    private static final String LLAVE_SECRETA = "llave_dmari";
 
-    // Metodo para REGISTRAR un nuevo usuario en la Base de Datos
+    // metodo para registrar un nuevo usuario de forma segura en la base de datos
     public boolean registrarUsuario(usuario nuevoUsuario) {
-        // Sentencia SQL para insertar. Usamos '?' por seguridad contra inyeccion SQL
-        String sql = "INSERT INTO usuarios (nombre, correo, password) VALUES (?, ?, ?)";
+        // la informacion del usuario se divide e inserta en 3 tablas: usuario, correo y credenciales
+        // por defecto se asigna el rol 2 (cliente) y estado_cuenta = 1 (activo)
+        // se agrega el campo apellido para cumplir con las columnas obligatorias de la base de datos
+        String sqlUsuario = "INSERT INTO usuario (nombre, apellido, id_rol_fk, estado_cuenta) VALUES (?, ?, 2, 1)";
+        String sqlCorreo = "INSERT INTO correo (id_usuario_fk, correo, correo_primario) VALUES (?, ?, 1)";
+        // usamos AES_ENCRYPT para convertir la contrasena en formato binario antes de guardarla en el BLOB
+        String sqlCredenciales = "INSERT INTO credenciales (id_usuario, passwd_encript) VALUES (?, AES_ENCRYPT(?, ?))";
         
-        try (Connection con = db.conectar();
-            PreparedStatement ps = con.prepareStatement(sql)) {
+        Connection con = null;
+        try {
+            con = db.conectar();
+            // apagamos el autocommit para iniciar una transaccion de base de datos
+            // esto asegura que, si falla una tabla, no se guarde nada a medias en las demas
+            con.setAutoCommit(false);
             
-            // Llenamos los '?' con los datos del objeto usuario
-            ps.setString(1, nuevoUsuario.getNombre());
-            ps.setString(2, nuevoUsuario.getCorreo());
-            ps.setString(3, nuevoUsuario.getPassword()); // En un proyecto real, aqui se encriptaria la clave
+            int idGenerado = 0;
             
-            // Ejecutamos la orden. Si afecta a más de 0 filas, se guardó con éxito
-            return ps.executeUpdate() > 0;
+            // paso 1: insertamos el registro principal en la tabla usuario
+            // usamos RETURN_GENERATED_KEYS para exigirle a mysql que nos devuelva el id autoincrementable que le acaba de asignar
+            try (PreparedStatement psUsuario = con.prepareStatement(sqlUsuario, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                psUsuario.setString(1, nuevoUsuario.getNombre());
+                // el apellido es opcional al registrarse, si es nulo, mysql lo guardara como NULL
+                psUsuario.setString(2, nuevoUsuario.getApellido());
+                psUsuario.executeUpdate();
+                try (ResultSet rs = psUsuario.getGeneratedKeys()) {
+                    if (rs.next()) idGenerado = rs.getInt(1);
+                }
+            }
+            
+            // paso 2: si mysql nos devolvio un id valido, lo usamos para amarrar los datos secundarios
+            if (idGenerado > 0) {
+                // insertamos el registro en la tabla correo
+                try (PreparedStatement psCorreo = con.prepareStatement(sqlCorreo)) {
+                    psCorreo.setInt(1, idGenerado);
+                    psCorreo.setString(2, nuevoUsuario.getCorreo());
+                    psCorreo.executeUpdate();
+                }
+                // insertamos la contrasena en la tabla credenciales aplicando la encriptacion AES
+                try (PreparedStatement psCred = con.prepareStatement(sqlCredenciales)) {
+                    psCred.setInt(1, idGenerado);
+                    psCred.setString(2, nuevoUsuario.getPassword()); // contrasena plana del formulario
+                    psCred.setString(3, LLAVE_SECRETA);           // semilla o llave de seguridad
+                    psCred.executeUpdate();
+                }
+                
+                // confirmamos la transaccion para guardar todo definitivamente en la base de datos
+                con.commit(); 
+                return true;
+            }
+            
+            // si algo salio mal y no se genero el id, cancelamos los cambios para no dejar datos huerfanos
+            con.rollback(); 
+            return false;
             
         } catch (SQLException e) {
+            try { if (con != null) con.rollback(); } catch (SQLException ex) {}
             System.out.println("Error al registrar usuario: " + e.getMessage());
             return false;
+        } finally {
+            try { if (con != null) con.close(); } catch (SQLException e) {}
         }
     }
 
-    // Metodo para INICIAR SESIÓN (Validar si existe en la BD)
+    // metodo para verificar las credenciales de inicio de sesion
     public usuario verificarLogin(String correo, String password) {
-        String sql = "SELECT id_usuario, nombre, correo FROM usuarios WHERE correo = ? AND password = ?";
+        // usamos un inner join para extraer los datos cruzando las 3 tablas donde vive la informacion
+        // usamos AES_DECRYPT para descifrar la contrasena en tiempo real usando la llave secreta
+        // incluimos u.id_rol_fk para poder gestionar que sidebar o vistas cargar en el frontend
+        String sql = "SELECT u.id_usuario_pk, u.nombre, u.id_rol_fk, c.correo " +
+                     "FROM usuario u " +
+                     "INNER JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk " +
+                     "INNER JOIN credenciales cr ON u.id_usuario_pk = cr.id_usuario " +
+                     "WHERE c.correo = ? AND AES_DECRYPT(cr.passwd_encript, ?) = ?";
+                     
         usuario usuarioLogueado = null;
         
         try (Connection con = db.conectar();
             PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setString(1, correo);
-            ps.setString(2, password);
+            ps.setString(2, LLAVE_SECRETA); // pasamos la llave para abrir el candado de la encriptacion
+            ps.setString(3, password);     // pasamos la contrasena en texto plano digitada por el usuario
             
             try (ResultSet rs = ps.executeQuery()) {
-                // Si el ResultSet tiene datos (next), las credenciales son correctas
+                // si el resultset avanza, significa que encontro una coincidencia exacta en mysql
                 if (rs.next()) {
                     usuarioLogueado = new usuario();
-                    usuarioLogueado.setIdUsuario(rs.getInt("id_usuario"));
+                    usuarioLogueado.setIdUsuario(rs.getInt("id_usuario_pk"));
                     usuarioLogueado.setNombre(rs.getString("nombre"));
                     usuarioLogueado.setCorreo(rs.getString("correo"));
-                    // Nota: No extraemos ni devolvemos el password por motivos de seguridad
+                    usuarioLogueado.setIdRol(rs.getInt("id_rol_fk")); // guardamos el rol para las validaciones del sistema
+                    // omitimos extraer o devolver la contrasena hacia el frontend por motivos de seguridad
                 }
             }
             
@@ -60,7 +116,7 @@ public class usuarioDAO {
             System.out.println("Error al verificar login: " + e.getMessage());
         }
         
-        // Si devuelve null, significa que el correo o la clave estaban mal
+        // si el objeto sigue nulo, significa que el correo o contrasena son incorrectos
         return usuarioLogueado;
     }
 }

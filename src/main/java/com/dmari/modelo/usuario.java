@@ -1,16 +1,26 @@
 package com.dmari.modelo;
 
 public class usuario {
+    // Atributos que corresponden a la tabla 'usuario' en MySQL
     private int idUsuario;
     private String nombre;
+    private String apellido;
+    private int idRol;
+    
+    // Atributo que corresponde a la tabla 'correo' en MySQL
     private String correo;
+    
+    // Atributo que corresponde a la tabla 'credenciales' en MySQL (BLOB en BD, String en Java)
     private String password;
 
-    // Constructor vacio
+    // Constructor vacio obligatorio para Java Web / Servlets
     public usuario() {
     }
 
-    // Getters y Setters
+    // ==========================================================
+    // GETTERS Y SETTERS (Metodos de acceso)
+    // ==========================================================
+
     public int getIdUsuario() {
         return idUsuario;
     }
@@ -25,6 +35,22 @@ public class usuario {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public String getApellido() {
+        return apellido;
+    }
+
+    public void setApellido(String apellido) {
+        this.apellido = apellido;
+    }
+
+    public int getIdRol() {
+        return idRol;
+    }
+
+    public void setIdRol(int idRol) {
+        this.idRol = idRol;
     }
 
     public String getCorreo() {

@@ -1,5 +1,7 @@
 package com.dmari.controlador;
 
+import java.io.IOException;
+
 import com.dmari.dao.usuarioDAO;
 import com.dmari.modelo.usuario;
 
@@ -8,7 +10,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 /*
     Mapeamos este controlador a dos rutas diferentes.
@@ -54,12 +55,15 @@ public class AuthController extends HttpServlet {
         if ("/registro".equals(ruta)) {
             // Capturamos los datos que envió Javascript (gracias al URLSearchParams)
             String nombre = request.getParameter("nombre");
+            String apellido = request.getParameter("apellido"); // Capturamos el apellido por si se envia
             String correo = request.getParameter("correo");
             String password = request.getParameter("password");
 
             // Armamos el objeto usuario
             usuario nuevoUsuario = new usuario();
             nuevoUsuario.setNombre(nombre);
+            // Si el apellido viene en la peticion y no esta vacio, lo guardamos en el objeto
+            if (apellido != null && !apellido.isEmpty()) nuevoUsuario.setApellido(apellido);
             nuevoUsuario.setCorreo(correo);
             nuevoUsuario.setPassword(password);
 
