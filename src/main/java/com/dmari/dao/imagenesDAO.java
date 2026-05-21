@@ -6,32 +6,11 @@ package com.dmari.dao;
 /*
     Conexion database
 */
-import com.dmari.helper.databaseHelper;
-
 import java.sql.Connection;
-
-/*
-    El java.sql.preparedstatement, lleva la consulta
-    SQL (select) de forma segura a la base de datos
-*/
 import java.sql.PreparedStatement;
-/*
-    Resulset es como una tabla temporal o una caja
-    donde java guarda la respuesta que manda mysql
-*/
-import java.sql.ResultSet;
-
-/*
-    El java.sql.sqlexception, es la alarma que suena
-    si la base de datos esta apagada o algo mal escrito
-*/
 import java.sql.SQLException;
-/*
-    Es una lista dinamica
-    donde se ira guardando cada producto
-    para mandarlos al frontend
-*/
-import java.util.ArrayList;
+
+import com.dmari.helper.databaseHelper;
 
 public class imagenesDAO {
     databaseHelper db = new databaseHelper();
@@ -51,7 +30,7 @@ public class imagenesDAO {
             return filas > 0;
 
         } catch (SQLException e) {
-            System.out.println("error al guardar foto: " + e.getMessage());
+            System.out.println("Error al guardar foto: " + e.getMessage());
             return false;
         }
     }
