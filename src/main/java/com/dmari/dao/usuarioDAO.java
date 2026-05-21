@@ -19,8 +19,7 @@ public class usuarioDAO {
     public boolean registrarUsuario(usuario nuevoUsuario) {
         // la informacion del usuario se divide e inserta en 3 tablas: usuario, correo y credenciales
         // por defecto se asigna el rol 2 (cliente) y estado_cuenta = 1 (activo)
-        // se agrega el campo apellido para cumplir con las columnas obligatorias de la base de datos
-        String sqlUsuario = "INSERT INTO usuario (nombre, apellido, id_rol_fk, estado_cuenta) VALUES (?, ?, 2, 1)";
+        String sqlUsuario = "INSERT INTO usuario (nombre, id_rol_fk, estado_cuenta) VALUES (?, 2, 1)";
         String sqlCorreo = "INSERT INTO correo (id_usuario_fk, correo, correo_primario) VALUES (?, ?, 1)";
         // usamos AES_ENCRYPT para convertir la contrasena en formato binario antes de guardarla en el BLOB
         String sqlCredenciales = "INSERT INTO credenciales (id_usuario, passwd_encript) VALUES (?, AES_ENCRYPT(?, ?))";
@@ -38,8 +37,6 @@ public class usuarioDAO {
             // usamos RETURN_GENERATED_KEYS para exigirle a mysql que nos devuelva el id autoincrementable que le acaba de asignar
             try (PreparedStatement psUsuario = con.prepareStatement(sqlUsuario, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 psUsuario.setString(1, nuevoUsuario.getNombre());
-                // el apellido es opcional al registrarse, si es nulo, mysql lo guardara como NULL
-                psUsuario.setString(2, nuevoUsuario.getApellido());
                 psUsuario.executeUpdate();
                 try (ResultSet rs = psUsuario.getGeneratedKeys()) {
                     if (rs.next()) idGenerado = rs.getInt(1);
@@ -73,7 +70,9 @@ public class usuarioDAO {
             
         } catch (SQLException e) {
             try { if (con != null) con.rollback(); } catch (SQLException ex) {}
-            System.out.println("Error al registrar usuario: " + e.getMessage());
+            System.err.println("\n=== ERROR CRITICO AL REGISTRAR ===");
+            System.err.println("Motivo: " + e.getMessage());
+            System.err.println("==================================\n");
             return false;
         } finally {
             try { if (con != null) con.close(); } catch (SQLException e) {}
