@@ -23,6 +23,8 @@ public class producto {
     private String fechaCreacion;
     /* Nueva variable para la ruta de la tabla imagenes */
     private String urlRuta;
+    /* Nombre de la categoria proveniente del JOIN */
+    private String categoria;
     
     /*Constructor vacio para poder armar objetos en blanco*/
     public producto(){}
@@ -99,7 +101,11 @@ public class producto {
         this.urlRuta = urlRuta;
     }
 
-   
-    
-    
+    public String getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(String categoria) {
+        this.categoria = categoria;
+    }
 }

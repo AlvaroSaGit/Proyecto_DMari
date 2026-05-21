@@ -1,11 +1,12 @@
 package com.dmari.dao;
 
-import com.dmari.helper.databaseHelper;
-import com.dmari.modelo.usuario;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import com.dmari.helper.databaseHelper;
+import com.dmari.modelo.usuario;
 
 public class usuarioDAO {
     
@@ -17,7 +18,7 @@ public class usuarioDAO {
         String sql = "INSERT INTO usuarios (nombre, correo, password) VALUES (?, ?, ?)";
         
         try (Connection con = db.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+            PreparedStatement ps = con.prepareStatement(sql)) {
             
             // Llenamos los '?' con los datos del objeto usuario
             ps.setString(1, nuevoUsuario.getNombre());
@@ -39,7 +40,7 @@ public class usuarioDAO {
         usuario usuarioLogueado = null;
         
         try (Connection con = db.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+            PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setString(1, correo);
             ps.setString(2, password);

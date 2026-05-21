@@ -49,6 +49,7 @@ function renderizarProductos(productos) {
         // armamos la estructura visual del producto
         tarjeta.innerHTML = `
             <img src="${imagenUrl}" alt="${prod.nombre}" style="width: 100%; border-radius: 8px;">
+            <span style="background-color: #f0f0f0; color: #555; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-top: 10px;">${prod.categoria || 'Sin categoría'}</span>
             <h3>${prod.nombre}</h3>
             <p>Precio: $${prod.precio.toFixed(2)}</p>
             <p>Stock disponible: ${prod.stock}</p>
@@ -65,14 +66,21 @@ function renderizarProductos(productos) {
     asignarEventosCarrito();
 }
 
+/**
+ * Busca todos los botones de "Agregar al carrito" generados dinamicamente
+ * y les asigna un evento de clic. Extrae los datos del producto (id, nombre, precio, stock)
+ * guardados en los atributos 'data-' y los envia al controlador del carrito.
+ */
 function asignarEventosCarrito() {
     const botones = document.querySelectorAll('.btn-agregar-carrito');
     
     botones.forEach(btn => {
         btn.addEventListener('click', (evento) => {
+            // Extraemos la informacion del producto desde el boton que recibio el clic
             const id = parseInt(evento.target.getAttribute('data-id'));
             const nombre = evento.target.getAttribute('data-nombre');
             const precio = parseFloat(evento.target.getAttribute('data-precio'));
+            // Validamos que el stock exista y sea un numero, de lo contrario enviamos null
             const stock = evento.target.getAttribute('data-stock') ? parseInt(evento.target.getAttribute('data-stock')) : null;
             
             // enviamos los datos extraidos a la funcion que maneja el arreglo del carrito

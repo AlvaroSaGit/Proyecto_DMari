@@ -6,34 +6,14 @@ package com.dmari.dao;
 /*
     Conexion database
 */
-import com.dmari.helper.databaseHelper;
-
-/*Me traigo la "caja" que es el archivo producto.java*/
-import com.dmari.modelo.producto;
 import java.sql.Connection;
-
-/*
-    El java.sql.preparedstatement, lleva la consulta
-    SQL (select) de forma segura a la base de datos
-*/
 import java.sql.PreparedStatement;
-/*
-    Resulset es como una tabla temporal o una caja
-    donde java guarda la respuesta que manda mysql
-*/
 import java.sql.ResultSet;
-
-/*
-    El java.sql.sqlexception, es la alarma que suena
-    si la base de datos esta apagada o algo mal escrito
-*/
 import java.sql.SQLException;
-/*
-    Es una lista dinamica
-    donde se ira guardando cada producto
-    para mandarlos al frontend
-*/
 import java.util.ArrayList;
+
+import com.dmari.helper.databaseHelper;
+import com.dmari.modelo.producto;
 
 
 
@@ -54,10 +34,13 @@ public class productoDAO {
              "p.nombre_producto, " +
              "p.precio, " +
              "p.stock, " +
-             "i.url_ruta " +
+             "p.id_categoria_fk, " +
+             "i.url_ruta, " +
+             "c.nombre AS nombre_categoria " +
              "FROM producto p " +
              "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk " +
-             "AND i.imagen_principal = 1";
+             "AND i.imagen_principal = 1 " +
+             "LEFT JOIN categoria c ON p.id_categoria_fk = c.id_categoria_pk";
         
         /*
             Usar el try como try-with-resources,
@@ -101,6 +84,10 @@ public class productoDAO {
                 prod.setStock(rs.getInt("stock"));
                 prod.setUrlRuta(rs.getString("url_ruta"));
                 
+                /* Extraemos el ID y el nombre de la categoria */
+                prod.setIdCategoriaFk(rs.getInt("id_categoria_fk"));
+                prod.setCategoria(rs.getString("nombre_categoria"));
+                
                 /*Metemos el producto ya lleno en la lista general*/
                 lista.add(prod);
             }
@@ -113,7 +100,7 @@ public class productoDAO {
     
     public int insertarProducto(producto nuevoProducto){
         // aca solo dejamos la consulta del producto solo
-        String sql = "insert into producto (nombre_producto, precio, stock) values (?, ?, ?)";
+        String sql = "insert into producto (nombre_producto, precio, stock, id_categoria_fk) values (?, ?, ?, ?)";
         int idGenerado = 0;
 
         try (Connection con = db.conectar();
@@ -127,6 +114,7 @@ public class productoDAO {
             ps.setString(1, nuevoProducto.getNombreProducto());
             ps.setDouble(2, nuevoProducto.getPrecio());
             ps.setInt(3, nuevoProducto.getStock());
+            ps.setInt(4, nuevoProducto.getIdCategoriaFk());
 
             // ejecutamos el insert
             if (ps.executeUpdate() > 0) {
@@ -148,19 +136,20 @@ public class productoDAO {
     
     public boolean actualizarProducto(producto prod) {
     // la instruccion sql.. el where es la parte mas importante de todo el codigo
-    String sql = "update producto set nombre_producto = ?, precio = ?, stock = ? where id_producto_pk = ?";
+    String sql = "update producto set nombre_producto = ?, precio = ?, stock = ?, id_categoria_fk = ? where id_producto_pk = ?";
 
     // abrimos conexion y preparamos la consulta de una vez
     try (Connection con = db.conectar();
-         PreparedStatement ps = con.prepareStatement(sql)) {
+        PreparedStatement ps = con.prepareStatement(sql)) {
 
         // reemplazamos los signos de interrogacion con los datos nuevos
         ps.setString(1, prod.getNombreProducto());
         ps.setDouble(2, prod.getPrecio());
         ps.setInt(3, prod.getStock());
+        ps.setInt(4, prod.getIdCategoriaFk());
         
-        // el cuarto parametro es el id, para decirle a mysql cual producto exacto debe cambiar
-        ps.setInt(4, prod.getIdProductoPk());
+        // el quinto parametro es el id, para decirle a mysql cual producto exacto debe cambiar
+        ps.setInt(5, prod.getIdProductoPk());
 
         // ejecutamos la orden y guardamos cuantas filas se modificaron
         int filasAfectadas = ps.executeUpdate();
@@ -184,7 +173,7 @@ public class productoDAO {
         String sql = "delete from producto where id_producto_pk = ?";
 
         try (Connection con = db.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+            PreparedStatement ps = con.prepareStatement(sql)) {
 
             // le pasamos el id del producto que el usuario quiere quitar del catalogo
             ps.setInt(1, id);

@@ -56,6 +56,8 @@ function prepararVistaAdminProductos() {
             const nombre = document.getElementById('prod-nombre').value;
             const precio = document.getElementById('prod-precio').value;
             const stock = document.getElementById('prod-stock').value;
+            // Extraemos el ID de la categoria elegida por el administrador
+            const idCategoria = document.getElementById('prod-categoria').value;
             
             /*
              * EXPLICACION DE URLSearchParams:
@@ -68,6 +70,7 @@ function prepararVistaAdminProductos() {
             parametros.append('nombre', nombre);
             parametros.append('precio', precio);
             parametros.append('stock', stock);
+            parametros.append('id_categoria', idCategoria);
             
             // Si la variable no es nula, significa que el usuario abrio un producto para editarlo
             if (productoEditandoId) {
@@ -125,7 +128,7 @@ async function cargarListaProductos() {
                 <td>
                     <!-- Guardamos la informacion del producto directamente en el boton usando "data-" -->
                     <!-- Asì, cuando hagan clic en Editar, sabemos exactamente que datos poner en el formulario -->
-                    <button class="btn-editar" data-id="${prod.id}" data-nombre="${prod.nombre}" data-precio="${prod.precio}" data-stock="${prod.stock}"><i class='bx bx-edit'></i> Editar</button>
+                    <button class="btn-editar" data-id="${prod.id}" data-nombre="${prod.nombre}" data-precio="${prod.precio}" data-stock="${prod.stock}" data-categoria="${prod.idCategoriaFk || ''}"><i class='bx bx-edit'></i> Editar</button>
                     <button class="btn-eliminar" data-id="${prod.id}"><i class='bx bx-trash'></i> Borrar</button>
                 </td>
             `;
@@ -145,6 +148,10 @@ async function cargarListaProductos() {
             document.getElementById('prod-nombre').value = btnClic.getAttribute('data-nombre');
             document.getElementById('prod-precio').value = btnClic.getAttribute('data-precio');
             document.getElementById('prod-stock').value = btnClic.getAttribute('data-stock');
+            
+            // Si el producto ya tiene categoria asignada, pre-seleccionamos ese valor en el formulario
+            const catId = btnClic.getAttribute('data-categoria');
+            if (catId) document.getElementById('prod-categoria').value = catId;
             
             // Cambiamos el titulo de la ventana y la mostramos
             document.getElementById('modal-titulo').innerText = 'Editar Producto';
