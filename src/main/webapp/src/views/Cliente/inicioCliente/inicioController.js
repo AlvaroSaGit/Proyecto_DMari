@@ -4,6 +4,8 @@ import { cargarComponente } from '../../../services/uiService.js';
 import { agregarAlCarrito } from '../../../components/carritoSideBar/carritoController.js';
 // importamos nuestro componente de tarjeta unificado y seguro
 import { crearTarjetaHTML } from '../../../components/tarjeta/tarjetaComponent.js';
+// importamos el servicio de filtrado para separar los productos por seccion
+import { filtrarProductos } from '../../../services/filtroService.js';
 
 export async function cargarVistaInicio() {
     // cargamos la vista del inicio en el contenedor principal
@@ -11,6 +13,9 @@ export async function cargarVistaInicio() {
     
     // llamamos al backend para traer los productos reales
     cargarProductosDesdeBD();
+
+    // Asignamos el evento del carrito usando delegacion (se hace una sola vez al cargar la vista)
+    asignarEventosCarrito();
 }
 
 async function cargarProductosDesdeBD() {
@@ -32,45 +37,55 @@ async function cargarProductosDesdeBD() {
 }
 
 function renderizarProductos(productos) {
-    // buscamos el contenedor de destacados en el html
-    const contenedor = document.getElementById('contenedor-producto');
-    if (!contenedor) return;
+    // Usamos la funcion del servicio para filtrar las donas y velas
+    const listaDonas = filtrarProductos(productos, 'dona');
+    const listaVelas = filtrarProductos(productos, 'vela');
 
-    // limpiamos el contenedor por si tenia html viejo
-    contenedor.innerHTML = '';
+    // Inyectamos las donas en su seccion exclusiva
+    inyectarEnContenedor('contenedor-donas', listaDonas);
+    
+    // Inyectamos las velas en su seccion exclusiva
+    inyectarEnContenedor('contenedor-velas', listaVelas);
 
-    // recorremos la lista de productos
-    productos.forEach(prod => {
-        // creamos la tarjeta usando nuestro componente unificado
-        const tarjeta = crearTarjetaHTML(prod);
-
-        // inyectamos la tarjeta en el contenedor de la pagina web
-        contenedor.appendChild(tarjeta);
-    });
-
-    // damos accion a los botones recien dibujados
-    asignarEventosCarrito();
+    // Mantenemos todos los productos en la seccion principal de destacados
+    inyectarEnContenedor('contenedor-producto', productos);
 }
 
 /**
- * Busca todos los botones de "Agregar al carrito" generados dinamicamente
- * y les asigna un evento de clic. Extrae los datos del producto (id, nombre, precio, stock)
- * guardados en los atributos 'data-' y los envia al controlador del carrito.
+ * Funcion auxiliar para inyectar una lista de productos en un contenedor especifico
+ */
+function inyectarEnContenedor(idContenedor, lista) {
+    const contenedor = document.getElementById(idContenedor);
+    if (!contenedor) return;
+
+    contenedor.innerHTML = '';
+
+    lista.forEach(prod => {
+        const tarjeta = crearTarjetaHTML(prod);
+        contenedor.appendChild(tarjeta);
+    });
+}
+
+/**
+ * Utiliza "Delegacion de Eventos" para escuchar los clics en toda la vista.
+ * Esto es mucho mas eficiente y seguro para elementos inyectados dinamicamente.
  */
 function asignarEventosCarrito() {
-    const botones = document.querySelectorAll('.btn-agregar-carrito');
-    
-    botones.forEach(btn => {
-        btn.addEventListener('click', () => {
-            // Usamos 'btn.dataset' en lugar de 'evento.target'
-            // Esto previene valores nulos si el usuario da clic exacto en el icono interior (+)
+    const contenedorPrincipal = document.getElementById('component-main');
+    if (!contenedorPrincipal) return;
+
+    // Escuchamos los clics en todo el contenedor principal
+    contenedorPrincipal.addEventListener('click', (evento) => {
+        // Buscamos si el clic provino de un boton de agregar al carrito (o su icono interno)
+        const btn = evento.target.closest('.btn-agregar-carrito');
+        
+        if (btn) {
             const id = parseInt(btn.dataset.id);
             const nombre = btn.dataset.nombre;
             const precio = parseFloat(btn.dataset.precio);
             const stock = btn.dataset.stock ? parseInt(btn.dataset.stock) : null;
             
-            // enviamos los datos extraidos a la funcion que maneja el arreglo del carrito
             agregarAlCarrito(id, nombre, precio, stock);
-        });
+        }
     });
 }

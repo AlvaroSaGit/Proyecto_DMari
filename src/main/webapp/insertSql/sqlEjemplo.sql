@@ -75,3 +75,24 @@ INSERT INTO imagenes (id_producto_fk, url_ruta, imagen_principal) VALUES
 (3, 'src/img/productos/default/gato_programador.jpg', 1),
 (4, 'src/img/productos/default/gato_programador.jpg', 1),
 (5, 'src/img/productos/default/gato_programador.jpg', 1);
+
+-- ==========================================
+-- 10. POBLACIÓN DE ETIQUETAS
+-- ==========================================
+INSERT INTO etiqueta (nombre_etiqueta) VALUES 
+('Aromaterapia'), -- ID 1
+('Relajacion'),   -- ID 2
+('Dulce'),        -- ID 3
+('Decoracion'),   -- ID 4
+('Arequipe'),     -- ID 5
+('Regalo');       -- ID 6
+
+-- ==========================================
+-- 11. ASIGNACIÓN DE ETIQUETAS A PRODUCTOS (Tabla intermedia)
+-- ==========================================
+INSERT INTO producto_etiqueta (id_producto, id_etiqueta) VALUES 
+(1, 1), (1, 2), -- Vela de Vainilla: Aromaterapia y Relajacion
+(2, 3),         -- Dona Glaseada: Dulce
+(3, 4), (3, 2), -- Vela Flores: Decoracion y Relajacion
+(4, 3), (4, 5), -- Dona de Arequipe: Dulce y Arequipe
+(5, 6), (5, 1); -- Caja Mini Velas: Regalo y Aromaterapia

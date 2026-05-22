@@ -45,6 +45,12 @@ function prepararFormularioLogin() {
             return; // cortamos la funcion aqui si faltan datos
         }
         
+        // validacion para que la contrasena no contenga espacios en blanco
+        if (password.includes(' ')) {
+            alert('La contraseña no puede contener espacios en blanco');
+            return;
+        }
+        
         // Empaquetamos los datos con URLSearchParams para que Java los lea facil con request.getParameter
         const parametros = new URLSearchParams();
         parametros.append('correo', correo);
