@@ -58,6 +58,16 @@ public class ProductoController extends HttpServlet {
                 json.append("\"nombre\":\"").append(p.getNombreProducto()).append("\",");
                 json.append("\"precio\":").append(p.getPrecio()).append(",");
                 json.append("\"stock\":").append(p.getStock()).append(",");
+                json.append("\"categoria\":\"").append(p.getCategoria() != null ? p.getCategoria() : "Sin categoria").append("\",");
+                
+                // Agregamos las etiquetas como un arreglo (array) de JSON ["Vela", "Aromatica"]
+                json.append("\"etiquetas\":[");
+                ArrayList<String> tags = p.getEtiquetas();
+                for(int j = 0; j < tags.size(); j++){
+                    json.append("\"").append(tags.get(j)).append("\"");
+                    if(j < tags.size() - 1) json.append(",");
+                }
+                json.append("],");
                 
                 /* * Agregamos la ruta de la imagen que traemos desde la tabla 'imagenes'
                  * Asegurate de que en tu clase producto.java el metodo se llame getUrlRuta()

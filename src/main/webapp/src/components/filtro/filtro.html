@@ -4,22 +4,17 @@
     
     <!-- bloque 1: categorias -->
     <div class="filtro-grupo">
-        <h3>Categoría</h3>
-        <div class="opciones-filtro">
-            <button class="btn-filtro activo">Todas</button>
-            <button class="btn-filtro">Donas</button>
-            <button class="btn-filtro">Ramos</button>
-            <button class="btn-filtro">Velas</button>
+        <h3>Categoria</h3>
+        <div class="opciones-filtro" id="contenedor-categorias-filtro">
+            <p style="font-size: 0.8rem; color: #888;">Cargando categorías...</p>
         </div>
     </div>
 
     <!-- bloque 2: etiquetas (tematicas) -->
     <div class="filtro-grupo">
-        <h3>Temática</h3>
-        <div class="opciones-filtro">
-            <button class="btn-filtro">Día de las Madres</button>
-            <button class="btn-filtro">Halloween</button>
-            <button class="btn-filtro">Navidad</button>
+        <h3>Tematica</h3>
+        <div class="opciones-filtro" id="contenedor-etiquetas-filtro">
+            <p style="font-size: 0.8rem; color: #888;">Cargando temáticas...</p>
         </div>
     </div>
 
@@ -32,5 +27,17 @@
             <input type="number" id="precio-max" placeholder="Máx" class="input-precio">
             <button class="btn-filtro btn-buscar-precio">Filtrar</button>
         </div>
+    </div>
+
+    <!-- bloque 4: ordenar por -->
+    <div class="filtro-grupo" style="margin-top: 20px;">
+        <h3>Ordenar por</h3>
+        <select id="select-ordenar" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 10px;">
+            <option value="relevancia">Relevancia (Por defecto)</option>
+            <option value="precio-asc">Precio: Menor a Mayor</option>
+            <option value="precio-desc">Precio: Mayor a Menor</option>
+            <option value="nombre-asc">Nombre: A - Z</option>
+            <option value="nombre-desc">Nombre: Z - A</option>
+        </select>
     </div>
 </div>

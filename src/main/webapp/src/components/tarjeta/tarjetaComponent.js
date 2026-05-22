@@ -8,6 +8,7 @@ export function crearTarjetaHTML(producto) {
     const idProd = producto.idProductoPk || producto.id;
     const nombreProd = producto.nombreProducto || producto.nombre || 'Producto';
     const catProd = producto.categoria || producto.nombreCategoria || '';
+    const etiquetas = producto.etiquetas || [];
     const rutaImg = producto.urlRuta || producto.imagen;
     const imagenUrl = (rutaImg && rutaImg !== 'null') ? rutaImg : './src/assets/img/default.jpg';
 
@@ -35,11 +36,25 @@ export function crearTarjetaHTML(producto) {
     const divTags = document.createElement('div');
     divTags.classList.add('tarjeta-tags');
     if (catProd) {
-        const spanEtiqueta = document.createElement('span');
-        spanEtiqueta.classList.add('etiqueta');
-        spanEtiqueta.textContent = catProd;
-        divTags.appendChild(spanEtiqueta);
+        const spanCat = document.createElement('span');
+        spanCat.classList.add('etiqueta');
+        // Le damos un color elegante y oscuro a la categoria principal para que destaque
+        spanCat.style.backgroundColor = '#333333';
+        spanCat.style.color = '#ffffff';
+        spanCat.style.cursor = 'pointer';
+        spanCat.dataset.filtro = catProd;
+        spanCat.textContent = catProd;
+        divTags.appendChild(spanCat);
     }
+    // Dibujamos las etiquetas reales traidas de la tabla producto_etiqueta
+    etiquetas.forEach(tag => {
+        const spanTag = document.createElement('span');
+        spanTag.classList.add('etiqueta');
+        spanTag.style.cursor = 'pointer';
+        spanTag.dataset.filtro = tag;
+        spanTag.textContent = tag;
+        divTags.appendChild(spanTag);
+    });
     divCuerpo.appendChild(divTags);
 
     // titulo

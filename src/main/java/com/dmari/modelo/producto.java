@@ -1,5 +1,7 @@
 package com.dmari.modelo;
 
+import java.util.ArrayList;
+
 public class producto {
     /*
         Los mismos atributos que la tabla de la base de datos
@@ -25,6 +27,8 @@ public class producto {
     private String urlRuta;
     /* Nombre de la categoria proveniente del JOIN */
     private String categoria;
+    /* Lista de etiquetas de la tabla intermedia */
+    private ArrayList<String> etiquetas = new ArrayList<>();
     
     /*Constructor vacio para poder armar objetos en blanco*/
     public producto(){}
@@ -107,5 +111,13 @@ public class producto {
 
     public void setCategoria(String categoria) {
         this.categoria = categoria;
+    }
+
+    public ArrayList<String> getEtiquetas() {
+        return etiquetas;
+    }
+
+    public void setEtiquetas(ArrayList<String> etiquetas) {
+        this.etiquetas = etiquetas;
     }
 }

@@ -18,4 +18,5 @@
     color: white;
     background-color: var(--color_apartados);
     corner-shape: none;
+    margin:10px;
 }

@@ -21,4 +21,11 @@ export async function cargarVistaConfiguracion() {
     // inyectamos la estructura html de la configuracion en el main
     await cargarComponente('component-main', './src/views/Cliente/configuracion/configuracion.html');
     
+    // capturamos el nuevo boton para ir al historial
+    const btnIrHistorial = document.getElementById('btn-ir-historial');
+    if (btnIrHistorial) {
+        btnIrHistorial.addEventListener('click', () => {
+            navegarA('historial'); // Llama al router para cambiar de pantalla
+        });
+    }
 }

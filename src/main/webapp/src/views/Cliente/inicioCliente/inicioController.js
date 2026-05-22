@@ -61,13 +61,13 @@ function asignarEventosCarrito() {
     const botones = document.querySelectorAll('.btn-agregar-carrito');
     
     botones.forEach(btn => {
-        btn.addEventListener('click', (evento) => {
-            // Extraemos la informacion del producto desde el boton que recibio el clic
-            const id = parseInt(evento.target.getAttribute('data-id'));
-            const nombre = evento.target.getAttribute('data-nombre');
-            const precio = parseFloat(evento.target.getAttribute('data-precio'));
-            // Validamos que el stock exista y sea un numero, de lo contrario enviamos null
-            const stock = evento.target.getAttribute('data-stock') ? parseInt(evento.target.getAttribute('data-stock')) : null;
+        btn.addEventListener('click', () => {
+            // Usamos 'btn.dataset' en lugar de 'evento.target'
+            // Esto previene valores nulos si el usuario da clic exacto en el icono interior (+)
+            const id = parseInt(btn.dataset.id);
+            const nombre = btn.dataset.nombre;
+            const precio = parseFloat(btn.dataset.precio);
+            const stock = btn.dataset.stock ? parseInt(btn.dataset.stock) : null;
             
             // enviamos los datos extraidos a la funcion que maneja el arreglo del carrito
             agregarAlCarrito(id, nombre, precio, stock);
