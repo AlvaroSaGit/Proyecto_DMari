@@ -3,6 +3,7 @@ import { cargarVistaInicio } from '../views/Cliente/inicioCliente/inicioControll
 import { cargarVistaConfiguracion } from '../views/Cliente/configuracion/configuracionController.js';
 import { cargarVistaLogin } from '../views/Auth/login/loginController.js';
 import { cargarVistaRegistro } from '../views/Auth/registro/registroController.js';
+import { cargarVistaHistorialPedidos } from '../views/Cliente/historialPedidos/historialPedidosController.js';
 
 // Funcion para cambiar la URL, lo que disparara el evento de hashchange
 export function navegarA(vista) {
@@ -23,6 +24,8 @@ function manejarRuta() {
         cargarVistaLogin();
     } else if (vista === 'registro') {
         cargarVistaRegistro();
+    } else if (vista === 'historial') {
+        cargarVistaHistorialPedidos();
     } else {
         cargarVistaInicio(); // Por defecto carga el inicio
     }

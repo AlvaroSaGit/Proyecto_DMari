@@ -2,6 +2,8 @@
 import { cargarComponente } from '../../../services/uiService.js';
 // importamos la funcion del carrito para el boton de comprar
 import { agregarAlCarrito } from '../../../components/carritoSideBar/carritoController.js';
+// importamos nuestro componente de tarjeta unificado y seguro
+import { crearTarjetaHTML } from '../../../components/tarjeta/tarjetaComponent.js';
 
 export async function cargarVistaInicio() {
     // cargamos la vista del inicio en el contenedor principal
@@ -39,31 +41,9 @@ function renderizarProductos(productos) {
 
     // recorremos la lista de productos
     productos.forEach(prod => {
-        // creamos la tarjeta html para cada articulo
-        const tarjeta = document.createElement('div');
-        tarjeta.className = 'tarjeta'; 
-        
-        // Adaptamos las variables a como Java (Jackson/Gson) las envia en el JSON
-        const idProd = prod.idProductoPk || prod.id;
-        const nombreProd = prod.nombreProducto || prod.nombre || 'Producto sin nombre';
-        const categoriaProd = prod.categoria || prod.nombreCategoria || 'Sin categoria';
-        const rutaImg = prod.urlRuta || prod.imagen;
-        
-        // validamos la ruta de la imagen, usando el nombre correcto
-        const imagenUrl = (rutaImg && rutaImg !== 'null') ? rutaImg : './src/assets/img/default.jpg';
-        
-        // armamos la estructura visual del producto
-        tarjeta.innerHTML = `
-            <img src="${imagenUrl}" alt="${nombreProd}" style="width: 100%; border-radius: 8px;">
-            <span style="background-color: #f0f0f0; color: #555; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-top: 10px;">${categoriaProd}</span>
-            <h3>${nombreProd}</h3>
-            <p>Precio: $${prod.precio.toFixed(2)}</p>
-            <p>Stock disponible: ${prod.stock}</p>
-            <button class="btn-agregar-carrito" data-id="${idProd}" data-nombre="${nombreProd}" data-precio="${prod.precio}" data-stock="${prod.stock}">
-                Agregar al carrito
-            </button>
-        `;
-        
+        // creamos la tarjeta usando nuestro componente unificado
+        const tarjeta = crearTarjetaHTML(prod);
+
         // inyectamos la tarjeta en el contenedor de la pagina web
         contenedor.appendChild(tarjeta);
     });

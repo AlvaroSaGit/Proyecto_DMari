@@ -5,46 +5,18 @@
 package com.dmari.controlador;
 
 // Import del archivo productoDao y producto
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+
 import com.dmari.dao.productoDAO;
 import com.dmari.modelo.producto;
 
-/*
-    Maneja errores especificos del servidor web
-*/
 import jakarta.servlet.ServletException;
-/*
-    Es la etiqueta que define la ruta de acceso.
-    Al buscar "/listar" se activara este codigo
-*/
 import jakarta.servlet.annotation.WebServlet;
-/*
-    La clase base que debemos extender para que este
-    archvo sea un controlador
-*/
 import jakarta.servlet.http.HttpServlet;
-/*
-    Representa la peticion que llega desde el cliente
-    (frontend o navegador)
-*/
 import jakarta.servlet.http.HttpServletRequest;
-/*
-    Es la herramienta para construir
-    y enviar la respuesta de vuelta al cliente
-*/
 import jakarta.servlet.http.HttpServletResponse;
-/*
-    Captura de errores de comunicacion o escritura de datos
-*/
-import java.io.IOException;
-/*
-    El objeto que nos permite "escribir" el texto
-    (el JSON) en la respuesta
-*/
-import java.io.PrintWriter;
-/*
-    Para manejar la lista de productos que nos entregue el DAO
-*/
-import java.util.ArrayList;
 
 
 /*
@@ -131,8 +103,10 @@ public class ProductoController extends HttpServlet {
 
             // guardamos y validamos
             if (dao.insertarProducto(nuevoProd) > 0) {
+                // SC_OK equivale al codigo HTTP 200 (OK). Indica a Javascript que todo salio perfecto.
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
+                // SC_BAD_REQUEST equivale al codigo HTTP 400 (Bad Request). Indica que hubo un error al guardar.
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             }
 
@@ -144,14 +118,17 @@ public class ProductoController extends HttpServlet {
             prod.setStock(Integer.parseInt(request.getParameter("stock")));
 
             if (dao.actualizarProducto(prod)) {
+                // SC_OK (200): El producto se actualizo correctamente en la base de datos
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
+                // SC_BAD_REQUEST (400): Algo fallo, quiza el ID no existe o hubo un error SQL
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             }
 
         } else if ("/eliminar".equals(ruta)) {
             int id = Integer.parseInt(request.getParameter("id"));
-            // el DAO devuelve un boolean que usamos para el status HTTP
+            // el DAO devuelve un boolean que usamos para el status HTTP. 
+            // Usamos un operador ternario: Si devuelve true -> SC_OK (200), si devuelve false -> SC_BAD_REQUEST (400)
             response.setStatus(dao.eliminarProducto(id) ? HttpServletResponse.SC_OK : HttpServletResponse.SC_BAD_REQUEST);
         }
     }

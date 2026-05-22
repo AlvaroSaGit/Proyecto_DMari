@@ -3,14 +3,7 @@
         <h2>Mi Cuenta</h2>
     </div>
     
-    <div class="configuracion-tabs">
-        <button id="tab-perfil" class="btn-tab activo">Mis Datos</button>
-        <button id="tab-historial" class="btn-tab">Historial de Pedidos</button>
-    </div>
-    
-    <!-- Contenido de las pestanas, ahora directamente en el HTML -->
     <div class="configuracion-contenido">
-        <!-- PESTANA 1: CONFIGURACION DE MIS DATOS -->
         <div id="contenido-perfil">
             <h3>Configuracion de la Cuenta</h3>
             <form class="formulario-perfil">
@@ -20,18 +13,10 @@
                 </div>
                 <div class="grupo-form-perfil">
                     <label>Correo Electronico</label>
-                    <input type="email" id="perfil-correo" value="prueba@dmari.com" readonly title="El correo no se puede cambiar">
+                    <input type="email" id="perfil-correo" value="prueba@dmari.com">
                 </div>
                 <button type="button" class="btn-guardar-perfil">Guardar Cambios</button>
             </form>
-        </div>
-
-        <!-- PESTANA 2: HISTORIAL DE PEDIDOS -->
-        <div id="contenido-historial" class="oculto">
-            <h3>Mis Pedidos Recientes</h3>
-            <ul class="lista-historial" id="lista-historial-pedidos">
-                <!-- Se inyectaran los pedidos dinamicamente con Javascript -->
-            </ul>
         </div>
     </div>
 </section>

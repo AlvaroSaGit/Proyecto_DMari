@@ -4,6 +4,13 @@
  * @returns {HTMLElement} nodo dom estructurado de la tarjeta
  */
 export function crearTarjetaHTML(producto) {
+    // Adaptamos las variables a como Java (Jackson/Gson) las envia en el JSON
+    const idProd = producto.idProductoPk || producto.id;
+    const nombreProd = producto.nombreProducto || producto.nombre || 'Producto';
+    const catProd = producto.categoria || producto.nombreCategoria || '';
+    const rutaImg = producto.urlRuta || producto.imagen;
+    const imagenUrl = (rutaImg && rutaImg !== 'null') ? rutaImg : './src/assets/img/default.jpg';
+
     // formateamos el precio a moneda local
     const precioFormateado = producto.precio.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
 
@@ -15,8 +22,8 @@ export function crearTarjetaHTML(producto) {
     const divImg = document.createElement('div');
     divImg.classList.add('tarjeta-img');
     const img = document.createElement('img');
-    img.src = producto.imagen;
-    img.alt = producto.nombre;
+    img.src = imagenUrl;
+    img.alt = nombreProd;
     divImg.appendChild(img);
     article.appendChild(divImg);
 
@@ -27,23 +34,23 @@ export function crearTarjetaHTML(producto) {
     // tags (si tiene categoria)
     const divTags = document.createElement('div');
     divTags.classList.add('tarjeta-tags');
-    if (producto.categoria) {
+    if (catProd) {
         const spanEtiqueta = document.createElement('span');
         spanEtiqueta.classList.add('etiqueta');
-        spanEtiqueta.textContent = producto.categoria;
+        spanEtiqueta.textContent = catProd;
         divTags.appendChild(spanEtiqueta);
     }
     divCuerpo.appendChild(divTags);
 
     // titulo
     const h3 = document.createElement('h3');
-    h3.textContent = producto.nombre;
+    h3.textContent = nombreProd;
     divCuerpo.appendChild(h3);
 
-    // descripcion
+    // descripcion (o stock si esta vacia)
     const pDesc = document.createElement('p');
     pDesc.classList.add('descripcion');
-    pDesc.textContent = producto.descripcion || 'delicioso producto artesanal.';
+    pDesc.textContent = producto.descripcion || `Stock disponible: ${producto.stock || 0} uds.`;
     divCuerpo.appendChild(pDesc);
 
     // footer de la tarjeta
@@ -58,10 +65,12 @@ export function crearTarjetaHTML(producto) {
 
     // boton agregar
     const btnAgregar = document.createElement('button');
-    btnAgregar.classList.add('btn-agregar-catalogo');
-    btnAgregar.dataset.id = producto.id;
-    btnAgregar.dataset.nombre = producto.nombre;
+    // IMPORTANTE: Le damos la clase exacta que busca inicioController.js para el carrito
+    btnAgregar.classList.add('btn-agregar-carrito');
+    btnAgregar.dataset.id = idProd;
+    btnAgregar.dataset.nombre = nombreProd;
     btnAgregar.dataset.precio = producto.precio;
+    btnAgregar.dataset.stock = producto.stock || 0;
 
     // icono del boton
     const spanIcono = document.createElement('span');
