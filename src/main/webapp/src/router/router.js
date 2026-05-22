@@ -4,12 +4,19 @@ import { cargarVistaConfiguracion } from '../views/Cliente/configuracion/configu
 import { cargarVistaLogin } from '../views/Auth/login/loginController.js';
 import { cargarVistaRegistro } from '../views/Auth/registro/registroController.js';
 
-// Funcion centralizada para cambiar de pantalla en toda la aplicacion
+// Funcion para cambiar la URL, lo que disparara el evento de hashchange
 export function navegarA(vista) {
-    // 1. Guardamos la vista en memoria para mantenerla si el usuario presiona F5
-    sessionStorage.setItem('vistaActual', vista);
+    // Al cambiar el hash, el navegador dispara automaticamente el evento 'hashchange'
+    window.location.hash = vista;
+}
 
-    // 2. Cargamos el controlador correspondiente
+// Funcion interna que lee el hash actual y carga la vista correspondiente
+function manejarRuta() {
+    // Leemos el hash de la URL, le quitamos el '#' (ej: de '#login' a 'login')
+    // Si no hay hash, usamos 'inicio' por defecto
+    let vista = window.location.hash.replace('#', '') || 'inicio';
+
+    // Cargamos el controlador correspondiente segun la vista
     if (vista === 'configuracion') {
         cargarVistaConfiguracion();
     } else if (vista === 'login') {
@@ -21,8 +28,11 @@ export function navegarA(vista) {
     }
 }
 
-// Funcion para arrancar la aplicacion la primera vez o al recargar con F5
+// Funcion para arrancar la aplicacion la primera vez
 export function inicializarEnrutador() {
-    const vistaGuardada = sessionStorage.getItem('vistaActual') || 'inicio';
-    navegarA(vistaGuardada);
+    // Escuchamos los cambios en el hash (cuando el usuario usa botones atras/adelante o cambiamos location.hash)
+    window.addEventListener('hashchange', manejarRuta);
+
+    // Ejecutamos la funcion una vez para cargar la vista inicial al entrar a la pagina o presionar F5
+    manejarRuta();
 }

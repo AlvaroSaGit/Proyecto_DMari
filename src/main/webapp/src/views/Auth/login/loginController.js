@@ -60,9 +60,9 @@ function prepararFormularioLogin() {
             if (respuesta.ok) {
             alert('¡Inicio de sesion exitoso!');
                 formulario.reset();
-            // Al loguearnos exitosamente, queremos ir al inicio
-            sessionStorage.setItem('vistaActual', 'inicio');
-                // Recargamos la pagina completa para que el header detecte la sesion
+            // Al loguearnos exitosamente, cambiamos el hash a inicio para que al recargar se muestre el inicio
+            window.location.hash = 'inicio';
+                // Recargamos la pagina para que el header detecte la sesion guardada en backend
                 window.location.reload();
             } else {
             alert('Correo o contrasena incorrectos');

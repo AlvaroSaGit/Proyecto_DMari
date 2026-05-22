@@ -96,6 +96,33 @@ function prepararVistaAdminProductos() {
 
     // Al entrar por primera vez a la pantalla, pedimos los productos a la base de datos
     cargarListaProductos();
+    
+    // Tambien llenamos las opciones dinamicas del <select> de categorias
+    cargarCategoriasFormulario();
+}
+
+/**
+ * Llama al backend para obtener las categorias y llenar el <select> del modal.
+ */
+async function cargarCategoriasFormulario() {
+    try {
+        const respuesta = await fetch('categorias');
+        if (respuesta.ok) {
+            const categorias = await respuesta.json();
+            const select = document.getElementById('prod-categoria');
+            if (!select) return;
+            
+            // Vaciamos el select y dejamos una opcion inicial deshabilitada
+            select.innerHTML = '<option value="" disabled selected>Seleccione una categoría</option>';
+            
+            // Iteramos sobre las categorias activas extraidas de la Base de Datos
+            categorias.forEach(cat => {
+                select.innerHTML += `<option value="${cat.id}">${cat.nombre}</option>`;
+            });
+        }
+    } catch (error) {
+        console.error('Error al cargar categorias en el formulario:', error);
+    }
 }
 
 /**
@@ -118,18 +145,28 @@ async function cargarListaProductos() {
  
         // Recorremos el arreglo de productos que llego de MySQL
         productosBD.forEach(prod => {
+            // Extraemos los datos adaptandonos a los posibles nombres que arroja Java (JSON)
+            const idProd = prod.idProductoPk || prod.id;
+            const nombreProd = prod.nombreProducto || prod.nombre || 'Producto';
+            // Extraemos el nombre de la categoria que manda el backend (o ponemos un texto por defecto)
+            const nombreCategoria = prod.categoria || prod.nombreCategoria || 'Sin categoría';
+            const catFk = prod.idCategoriaFk || '';
+            
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>#00${prod.id}</td>
+                <td>#00${idProd}</td>
                 <td><i class='bx bx-image' style='font-size: 2rem; color: #ccc;'></i></td>
-                <td>${prod.nombre}</td>
+                <td>
+                    <div style="font-weight: bold;">${nombreProd}</div>
+                    <span style="font-size: 0.75rem; color: #666; background-color: #f0f0f0; padding: 2px 6px; border-radius: 10px;">${nombreCategoria}</span>
+                </td>
                 <td>$${prod.precio.toFixed(2)}</td>
                 <td>${prod.stock} uds</td>
                 <td>
                     <!-- Guardamos la informacion del producto directamente en el boton usando "data-" -->
                     <!-- Asì, cuando hagan clic en Editar, sabemos exactamente que datos poner en el formulario -->
-                    <button class="btn-editar" data-id="${prod.id}" data-nombre="${prod.nombre}" data-precio="${prod.precio}" data-stock="${prod.stock}" data-categoria="${prod.idCategoriaFk || ''}"><i class='bx bx-edit'></i> Editar</button>
-                    <button class="btn-eliminar" data-id="${prod.id}"><i class='bx bx-trash'></i> Borrar</button>
+                    <button class="btn-editar" data-id="${idProd}" data-nombre="${nombreProd}" data-precio="${prod.precio}" data-stock="${prod.stock}" data-categoria="${catFk}"><i class='bx bx-edit'></i> Editar</button>
+                    <button class="btn-eliminar" data-id="${idProd}"><i class='bx bx-trash'></i> Borrar</button>
                 </td>
             `;
             // Metemos la fila recien creada en el cuerpo de la tabla

@@ -34,12 +34,15 @@ public class productoDAO {
              "p.nombre_producto, " +
              "p.precio, " +
              "p.stock, " +
+             "p.estado, " +
              "p.id_categoria_fk, " +
              "i.url_ruta, " +
              "c.nombre AS nombre_categoria " +
              "FROM producto p " +
+              // Busqueda en la tabla imagenes sobre la id si coinciden, tambien si es la imagne principal
              "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk " +
              "AND i.imagen_principal = 1 " +
+              // Busqueda de categorias y la id si coinciden
              "LEFT JOIN categoria c ON p.id_categoria_fk = c.id_categoria_pk";
         
         /*
@@ -82,6 +85,7 @@ public class productoDAO {
                 prod.setNombreProducto(rs.getString("nombre_producto"));
                 prod.setPrecio(rs.getDouble("precio"));
                 prod.setStock(rs.getInt("stock"));
+                prod.setEstado(rs.getBoolean("estado"));
                 prod.setUrlRuta(rs.getString("url_ruta"));
                 
                 /* Extraemos el ID y el nombre de la categoria */
@@ -100,7 +104,7 @@ public class productoDAO {
     
     public int insertarProducto(producto nuevoProducto){
         // aca solo dejamos la consulta del producto solo
-        String sql = "insert into producto (nombre_producto, precio, stock, id_categoria_fk) values (?, ?, ?, ?)";
+        String sql = "insert into producto (nombre_producto, precio, stock, id_categoria_fk, estado) values (?, ?, ?, ?, ?)";
         int idGenerado = 0;
 
         try (Connection con = db.conectar();
@@ -115,6 +119,7 @@ public class productoDAO {
             ps.setDouble(2, nuevoProducto.getPrecio());
             ps.setInt(3, nuevoProducto.getStock());
             ps.setInt(4, nuevoProducto.getIdCategoriaFk());
+            ps.setBoolean(5, nuevoProducto.isEstado());
 
             // ejecutamos el insert
             if (ps.executeUpdate() > 0) {
@@ -136,7 +141,7 @@ public class productoDAO {
     
     public boolean actualizarProducto(producto prod) {
     // la instruccion sql.. el where es la parte mas importante de todo el codigo
-    String sql = "update producto set nombre_producto = ?, precio = ?, stock = ?, id_categoria_fk = ? where id_producto_pk = ?";
+    String sql = "update producto set nombre_producto = ?, precio = ?, stock = ?, id_categoria_fk = ?, estado = ? where id_producto_pk = ?";
 
     // abrimos conexion y preparamos la consulta de una vez
     try (Connection con = db.conectar();
@@ -147,9 +152,10 @@ public class productoDAO {
         ps.setDouble(2, prod.getPrecio());
         ps.setInt(3, prod.getStock());
         ps.setInt(4, prod.getIdCategoriaFk());
+        ps.setBoolean(5, prod.isEstado());
         
         // el quinto parametro es el id, para decirle a mysql cual producto exacto debe cambiar
-        ps.setInt(5, prod.getIdProductoPk());
+        ps.setInt(6, prod.getIdProductoPk());
 
         // ejecutamos la orden y guardamos cuantas filas se modificaron
         int filasAfectadas = ps.executeUpdate();
