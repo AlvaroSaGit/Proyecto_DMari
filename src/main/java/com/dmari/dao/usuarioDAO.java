@@ -18,8 +18,8 @@ public class usuarioDAO {
     // metodo para registrar un nuevo usuario de forma segura en la base de datos
     public boolean registrarUsuario(usuario nuevoUsuario) {
         // la informacion del usuario se divide e inserta en 3 tablas: usuario, correo y credenciales
-        // por defecto se asigna el rol 2 (cliente) y estado_cuenta = 1 (activo)
-        String sqlUsuario = "INSERT INTO usuario (nombre, id_rol_fk, estado_cuenta) VALUES (?, 2, 1)";
+        // Buscamos dinamicamente el rol 'cliente' para evitar errores de llave foranea si el ID no es 2
+        String sqlUsuario = "INSERT INTO usuario (nombre, id_rol_fk, estado_cuenta) VALUES (?, (SELECT id_rol_pk FROM rol WHERE tipo_rol = 'cliente' LIMIT 1), 1)";
         String sqlCorreo = "INSERT INTO correo (id_usuario_fk, correo, correo_primario) VALUES (?, ?, 1)";
         // usamos AES_ENCRYPT para convertir la contrasena en formato binario antes de guardarla en el BLOB
         String sqlCredenciales = "INSERT INTO credenciales (id_usuario, passwd_encript) VALUES (?, AES_ENCRYPT(?, ?))";
@@ -75,7 +75,12 @@ public class usuarioDAO {
             System.err.println("==================================\n");
             return false;
         } finally {
-            try { if (con != null) con.close(); } catch (SQLException e) {}
+            try { 
+                if (con != null) {
+                    con.setAutoCommit(true); // Restauramos autocommit para evitar bugs si usas Pool de conexiones
+                    con.close(); 
+                }
+            } catch (SQLException e) {}
         }
     }
 

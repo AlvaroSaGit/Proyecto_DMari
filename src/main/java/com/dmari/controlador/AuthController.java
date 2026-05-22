@@ -10,6 +10,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 /*
     Mapeamos este controlador a dos rutas diferentes.
@@ -18,26 +19,34 @@ import jakarta.servlet.http.HttpServletResponse;
 @WebServlet(name = "AuthController", urlPatterns = {"/login", "/registro", "/logout", "/session"})
 public class AuthController extends HttpServlet {
 
-    // GET lo usamos para cerrar sesión y consultar quién está logueado
+    // GET lo usamos para cerrar sesion y consultar quien esta logueado
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String ruta = request.getServletPath();
         
         if ("/logout".equals(ruta)) {
-            // Invalida (destruye) la sesión actual
-            request.getSession().invalidate();
+            // Obtenemos la sesion actual con "false" para evitar crear una nueva por accidente
+            HttpSession sesion = request.getSession(false);
+            
+            if (sesion != null) {
+                sesion.invalidate(); // Invalida y destruye la sesion actual
+            }
             response.setStatus(HttpServletResponse.SC_OK);
             
         } else if ("/session".equals(ruta)) {
-            // Verifica si hay un usuario en la sesión
-            usuario user = (usuario) request.getSession().getAttribute("usuarioLogueado");
+            // Usamos false para no crear sesiones vacias en memoria a los visitantes
+            HttpSession sesion = request.getSession(false);
             
-            if (user != null) {
-                response.setContentType("application/json;charset=UTF-8");
-                response.setStatus(HttpServletResponse.SC_OK);
-                // Devolvemos un pequeño JSON con el nombre del usuario
-                response.getWriter().print("{\"nombre\": \"" + user.getNombre() + "\"}");
+            if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
+                usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
+                
+                if (user != null) {
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    // Devolvemos un pequeno JSON con el nombre del usuario
+                    response.getWriter().print("{\"nombre\": \"" + user.getNombre() + "\"}");
+                }
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
             }
@@ -48,12 +57,12 @@ public class AuthController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // Saber a qué ruta exacta hizo la petición el Frontend
+        // Saber a que ruta exacta hizo la peticion el Frontend
         String ruta = request.getServletPath();
         usuarioDAO dao = new usuarioDAO();
 
         if ("/registro".equals(ruta)) {
-            // Capturamos los datos que envió Javascript (gracias al URLSearchParams)
+            // Capturamos los datos que envio Javascript (gracias al URLSearchParams)
             String nombre = request.getParameter("nombre");
             String correo = request.getParameter("correo");
             String password = request.getParameter("password");
@@ -78,7 +87,7 @@ public class AuthController extends HttpServlet {
             usuario usuarioLogueado = dao.verificarLogin(correo, password);
 
             if (usuarioLogueado != null) {
-                // Si las credenciales son correctas, GUARDAMOS EL USUARIO EN SESIÓN
+                // Si las credenciales son correctas, GUARDAMOS EL USUARIO EN SESION
                 request.getSession(true).setAttribute("usuarioLogueado", usuarioLogueado);
                 response.setStatus(HttpServletResponse.SC_OK); // 200 - Login correcto
             } else {

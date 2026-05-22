@@ -1,8 +1,7 @@
 import { cargarComponente } from './services/uiService.js';
 // importamos el controlador de registro
-import { cargarVistaRegistro } from './views/Auth/registro/registroController.js';
-// importamos el controlador de inicio
-import { cargarVistaInicio } from './views/Cliente/inicioCliente/inicioController.js';
+// importamos el enrutador central
+import { inicializarEnrutador, navegarA } from './router/router.js';
 // importamos el controlador del carrito
 import { inicializarCarrito, abrirCarrito } from './components/carritoSideBar/carritoController.js';
 // importamos el controlador de categorias
@@ -22,8 +21,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- HEADER ---
     // Carga del header
     await cargarComponente('header-container','./src/components/header/header.html');
-    // cargamos el inicio usando su controlador para que inyecte los productos dinamicos
-    cargarVistaInicio();
+    
+    // Inicializamos nuestro enrutador central para que decida que vista cargar
+    inicializarEnrutador();
+
     // nueva carga del footer
     cargarComponente('footer-container', './src/components/footer/footer.html');
 
@@ -58,8 +59,8 @@ function configurarBotonesHeader() {
     // clic en el logo: carga el inicio
     if (btnLogo) {
         btnLogo.addEventListener('click', function() {
-            // usamos el controlador en vez de solo cargar el html
-            cargarVistaInicio();
+            // usamos el enrutador para volver al inicio
+            navegarA('inicio');
         });
     }
 
@@ -96,21 +97,11 @@ async function verificarSesion() {
         // Si responde 200 OK, es porque hay un usuario logueado en Java (HttpSession)
         if (respuesta.ok) {
             const datos = await respuesta.json();
-            const btnUsuario = document.querySelector('.btn-usuario');
             
+            // Cambiamos el contenido del boton del header para que muestre el nombre del usuario
+            const btnUsuario = document.querySelector('.btn-usuario');
             if (btnUsuario) {
-                // Cambiamos el icono y el texto para mostrar su nombre y opcion de salir
-                btnUsuario.innerHTML = `<span class="material-symbols-outlined">logout</span> <span class="btn-text" style="font-size: 0.9rem;">Salir (${datos.nombre})</span>`;
-                
-                // Clonamos el boton para quitarle el evento viejo (que abria el panel lateral)
-                const nuevoBtn = btnUsuario.cloneNode(true);
-                btnUsuario.parentNode.replaceChild(nuevoBtn, btnUsuario);
-                
-                // Le agregamos el evento para cerrar sesion usando funcion tradicional
-                nuevoBtn.addEventListener('click', async function() {
-                    await fetch('logout'); // Llama al servlet de logout
-                    window.location.reload(); // Recarga la pagina para volver al estado "deslogueado"
-                });
+                btnUsuario.innerHTML = `<span class="material-symbols-outlined">person</span> <span class="btn-text" style="font-size: 0.9rem;">Hola, ${datos.nombre}</span>`;
             }
         } else if (respuesta.status === 401) {
             // Atrapamos el 401 especificamente para que la app sepa que estamos en modo visitante

@@ -1,7 +1,7 @@
 // importamos tu servicio de ui para inyectar componentes
 import { cargarComponente } from '../../../services/uiService.js';
-// importamos la vista de login para navegar hacia ella cuando le den al enlace
-import { cargarVistaLogin } from '../login/loginController.js';
+// importamos el enrutador
+import { navegarA } from '../../../router/router.js';
 
 // funcion principal encargada de mostrar el formulario de registro en pantalla
 export async function cargarVistaRegistro() {
@@ -14,8 +14,8 @@ export async function cargarVistaRegistro() {
 
 // funcion interna para configurar eventos y capturar los datos ingresados
 function prepararFormularioRegistro() {
-    // buscamos el formulario entero por su clase css
-    const formulario = document.querySelector('.formulario-registro');
+    // buscamos el formulario (soporta busqueda por id o por clase para evitar fallos silenciosos)
+    const formulario = document.getElementById('form-registro') || document.querySelector('.formulario-registro');
     const linkLogin = document.getElementById('link-ir-login');
     
     // damos accion al boton inferior por si el usuario ya tenia cuenta
@@ -23,13 +23,16 @@ function prepararFormularioRegistro() {
         linkLogin.addEventListener('click', function(evento) {
             // prevenimos que la pagina salte a arriba
             evento.preventDefault();
-            // llamamos al login para reemplazar la vista
-            cargarVistaLogin();
+            // llamamos al enrutador para reemplazar la vista
+            navegarA('login');
         });
     }
     
     // validacion de seguridad por si falla la carga html
-    if (!formulario) return;
+    if (!formulario) {
+        console.error('Critico: No se encontro el formulario de registro en el DOM. Verifica que exista id="form-registro" en tu HTML.');
+        return;
+    }
     
     // escuchamos el submit cuando apretan el boton ingresar
     formulario.addEventListener('submit', async function(evento) {
@@ -71,9 +74,9 @@ function prepararFormularioRegistro() {
             if (respuesta.ok) {
                 alert('¡Registro exitoso! Ahora inicia sesion.');
                 formulario.reset();
-                cargarVistaLogin(); // Enviamos al usuario a la vista de login
+                navegarA('login'); // Enviamos al usuario a la vista de login
             } else {
-                alert('Hubo un error en el registro.');
+            alert('Hubo un error en el registro. Revisa la consola de tu navegador o el output de NetBeans.');
             }
         } catch (error) {
             // si falla la promesa de java caera aqui sin crashear la pagina

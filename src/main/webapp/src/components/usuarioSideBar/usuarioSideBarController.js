@@ -1,10 +1,7 @@
 // importamos el servicio de ui para poder inyectar html
 import { cargarComponente } from '../../services/uiService.js';
-// importamos las vistas de auth para poder navegar a ellas
-import { cargarVistaLogin } from '../../views/Auth/login/loginController.js';
-import { cargarVistaRegistro } from '../../views/Auth/registro/registroController.js';
-// importamos la vista de configuracion del cliente
-import { cargarVistaConfiguracion } from '../../views/Cliente/configuracion/configuracionController.js';
+// importamos el enrutador
+import { navegarA } from '../../router/router.js';
 
 // funcion principal que inyecta el sidebar de usuario oculto en el index al inicio
 export async function inicializarUsuario() {
@@ -26,9 +23,52 @@ export async function inicializarUsuario() {
 
     // configuramos la navegacion de los botones del menu
     // cada boton cierra primero el sidebar y luego carga la vista solicitada
-    if (btnLogin) btnLogin.addEventListener('click', () => { cerrarUsuario(); cargarVistaLogin(); });
-    if (btnRegistro) btnRegistro.addEventListener('click', () => { cerrarUsuario(); cargarVistaRegistro(); });
-    if (btnConfiguracion) btnConfiguracion.addEventListener('click', () => { cerrarUsuario(); cargarVistaConfiguracion(); });
+    if (btnLogin) btnLogin.addEventListener('click', () => { cerrarUsuario(); navegarA('login'); });
+    if (btnRegistro) btnRegistro.addEventListener('click', () => { cerrarUsuario(); navegarA('registro'); });
+    if (btnConfiguracion) btnConfiguracion.addEventListener('click', () => { cerrarUsuario(); navegarA('configuracion'); });
+
+    // Validamos la sesion especificamente para configurar el menu del sidebar
+    try {
+        const respuesta = await fetch('session');
+        if (respuesta.ok) {
+            // 1. Ocultamos las opciones que solo son para invitados
+            if (btnLogin) btnLogin.style.display = 'none';
+            if (btnRegistro) btnRegistro.style.display = 'none';
+
+            // 2. Creamos y agregamos dinamicamente el boton de Cerrar Sesion
+            // Asi no tienes que modificar el HTML manualmente
+            let btnSalir = document.getElementById('btn-nav-salir');
+            if (!btnSalir) {
+                btnSalir = document.createElement('button'); // Ahora es un boton
+                btnSalir.className = 'btn-usuario-item'; // Misma clase que Configuracion
+                btnSalir.id = 'btn-nav-salir';
+                btnSalir.style.color = '#ff4d4d'; // Color rojo
+
+                // Usamos el icono Boxicons para que coincida exactamente con los otros
+                btnSalir.innerHTML = "<i class='bx bx-log-out'></i> Salir de sesion";
+
+                // Lo insertamos en el menu, justo ANTES del separador gris
+                if (btnConfiguracion && btnConfiguracion.parentNode) {
+                    const separador = document.querySelector('.sidebar-body .separador');
+                    if (separador) {
+                        btnConfiguracion.parentNode.insertBefore(btnSalir, separador);
+                    } else {
+                        btnConfiguracion.parentNode.insertBefore(btnSalir, btnConfiguracion);
+                    }
+                }
+            }
+
+            // 3. Le damos la orden para destruir la sesion en el servidor al hacerle clic
+            btnSalir.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await fetch('logout');
+                sessionStorage.setItem('vistaActual', 'inicio'); // Volvemos al inicio tras salir
+                window.location.reload();
+            });
+        }
+    } catch (error) {
+        console.error('Error comprobando sesion en el sidebar:', error);
+    }
 }
 
 // funcion para mostrar el menu lateral deslizando su contenedor

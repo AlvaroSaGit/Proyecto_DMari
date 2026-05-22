@@ -1,7 +1,7 @@
 // importamos el servicio de ui para la inyeccion de componentes
 import { cargarComponente } from '../../services/uiService.js';
-// importamos la funcion para cargar el login en caso de que no este registrado
-import { cargarVistaLogin } from '../../views/Auth/login/loginController.js';
+// importamos el enrutador para la navegacion
+import { navegarA } from '../../router/router.js';
 
 // intentamos cargar el carrito guardado en el navegador, si no hay, iniciamos vacio
 let carrito = JSON.parse(localStorage.getItem('carritoDMari')) || [];
@@ -59,13 +59,37 @@ async function procesarCompra() {
 
         if (respuesta.ok) {
             // Respondio 200 OK: Esta logueado
-            alert('¡Excelente! Procesando tu compra...');
-            // A futuro: Aqui enviaremos los datos del carrito a Java para crear el Pedido en BD.
+            
+            // SIMULACION TEMPORAL: Guardamos el pedido en memoria del navegador
+            let historial = JSON.parse(localStorage.getItem('historialPedidosDMari')) || [];
+            
+            // Calculamos el total de esta compra
+            let totalCompra = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            
+            // Creamos un objeto de pedido simulado
+            const nuevoPedido = {
+                id: Math.floor(Math.random() * 9000) + 1000, // ID aleatorio simulado (ej: 4829)
+                fecha: new Date().toLocaleDateString(), // Fecha de hoy
+                items: [...carrito], // Copiamos los productos del carrito
+                total: totalCompra,
+                estado: 'Pendiente' // Guardamos el estado dinamico para poder cambiarlo luego
+            };
+            
+            historial.push(nuevoPedido);
+            localStorage.setItem('historialPedidosDMari', JSON.stringify(historial)); // Guardamos
+            
+            alert('¡Compra realizada con exito! Puedes ver los detalles en tu perfil.');
+            
+            // Vaciamos el carrito tras la compra
+            carrito = [];
+            localStorage.setItem('carritoDMari', JSON.stringify(carrito));
+            renderizarCarrito();
+            cerrarCarrito();
         } else {
             // Respondio 401: No esta logueado
             alert('Por favor, inicia sesion o registrate para poder finalizar tu compra.');
             cerrarCarrito(); // Ocultamos el carrito
-            cargarVistaLogin(); // Lo llevamos a la pantalla de login
+            navegarA('login'); // Lo llevamos a la pantalla de login mediante el enrutador
         }
     } catch (error) {
         console.error('Error al verificar la sesion:', error);

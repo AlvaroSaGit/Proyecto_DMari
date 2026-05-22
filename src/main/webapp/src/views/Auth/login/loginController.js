@@ -1,6 +1,6 @@
-// importamos el servicio para inyectar html y el controlador de registro
 import { cargarComponente } from '../../../services/uiService.js';
-import { cargarVistaRegistro } from '../registro/registroController.js';
+// importamos el enrutador para la navegacion
+import { navegarA } from '../../../router/router.js';
 
 // funcion principal que carga la vista de login en el contenedor principal
 export async function cargarVistaLogin() {
@@ -22,8 +22,8 @@ function prepararFormularioLogin() {
         linkRegistro.addEventListener('click', function(evento) {
             // evitamos que el enlace recargue la pagina (comportamiento por defecto)
             evento.preventDefault();
-            // llamamos al controlador de registro para cambiar de vista
-            cargarVistaRegistro();
+            // usamos el enrutador para ir a la vista de registro
+            navegarA('registro');
         });
     }
     
@@ -58,12 +58,14 @@ function prepararFormularioLogin() {
             });
             
             if (respuesta.ok) {
-                alert('¡Inicio de sesión exitoso!');
+            alert('¡Inicio de sesion exitoso!');
                 formulario.reset();
+            // Al loguearnos exitosamente, queremos ir al inicio
+            sessionStorage.setItem('vistaActual', 'inicio');
                 // Recargamos la pagina completa para que el header detecte la sesion
                 window.location.reload();
             } else {
-                alert('Correo o contraseña incorrectos');
+            alert('Correo o contrasena incorrectos');
             }
         } catch (error) {
             // si falla la red o el servidor, lo mostramos en consola
