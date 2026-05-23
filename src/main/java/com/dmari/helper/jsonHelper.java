@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import com.dmari.modelo.producto;
 import com.dmari.modelo.categoria;
 import com.dmari.modelo.etiqueta;
+import com.dmari.modelo.detallePedido;
 
 public class jsonHelper {
     

@@ -100,7 +100,11 @@ public class AuthController extends HttpServlet {
             if (usuarioLogueado != null) {
                 // getsession(true) fuerza la creacion de un espacio en memoria para guardar quien es el usuario.
                 request.getSession(true).setAttribute("usuarioLogueado", usuarioLogueado);
+                
+                // devolvemos el id del rol en formato json para que javascript sepa a donde redirigir
+                response.setContentType("application/json;charset=UTF-8");
                 response.setStatus(HttpServletResponse.SC_OK); 
+                response.getWriter().print("{\"idRol\": " + usuarioLogueado.getIdRol() + "}");
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); 
             }

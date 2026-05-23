@@ -64,19 +64,29 @@ function prepararFormularioLogin() {
             });
             
             if (respuesta.ok) {
-            alert('¡Inicio de sesion exitoso!');
+                // extraemos el json que nos mando java con el id del rol
+                const datos = await respuesta.json();
+                
+                alert('¡inicio de sesion exitoso!');
                 formulario.reset();
-            // Al loguearnos exitosamente, cambiamos el hash a inicio para que al recargar se muestre el inicio
-            window.location.hash = 'inicio';
-                // Recargamos la pagina para que el header detecte la sesion guardada en backend
+                
+                // redirigimos a la vista correspondiente segun el rol asignado en la base de datos.
+                // nota: verifica y cambia estos numeros (1, 2 o 3) por los ids exactos de tu tabla 'rol'
+                if (datos.idRol === 3) { // asumiendo que 3 es administrador
+                    window.location.hash = 'admin-productos';
+                } else if (datos.idRol === 2) { // asumiendo que 2 es proveedor / repartidor
+                    window.location.hash = 'proveedor-productos';
+                } else { // asumiendo que 1 es el cliente
+                    window.location.hash = 'inicio';
+                }
+                
                 window.location.reload();
             } else {
-            alert('Correo o contrasena incorrectos');
+                alert('correo o contrasena incorrectos');
             }
         } catch (error) {
-            // si falla la red o el servidor, lo mostramos en consola
-            console.error('error al conectar con el servidor:', error);
-            alert('hubo un problema de conexion');
+            console.error('error al iniciar sesion:', error);
+            alert('hubo un problema de conexion al intentar entrar.');
         }
     });
 }
