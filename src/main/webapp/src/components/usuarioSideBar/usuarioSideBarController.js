@@ -21,6 +21,10 @@ export async function inicializarUsuario() {
     if (btnCerrar) btnCerrar.addEventListener('click', cerrarUsuario);
     if (overlay) overlay.addEventListener('click', cerrarUsuario);
 
+    // capturamos el boton del header para abrir el panel de usuario
+    const btnPerfilHeader = document.getElementById('btn-usuario-perfil');
+    if (btnPerfilHeader) btnPerfilHeader.addEventListener('click', abrirUsuario);
+
     // configuramos la navegacion de los botones del menu
     // cada boton cierra primero el sidebar y luego carga la vista solicitada
     if (btnLogin) btnLogin.addEventListener('click', () => { cerrarUsuario(); navegarA('login'); });

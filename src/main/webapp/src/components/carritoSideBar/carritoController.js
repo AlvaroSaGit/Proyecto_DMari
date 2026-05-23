@@ -36,6 +36,10 @@ export async function inicializarCarrito() {
     if (btnCerrar) btnCerrar.addEventListener('click', cerrarCarrito);
     if (overlay) overlay.addEventListener('click', cerrarCarrito);
 
+    // capturamos el boton del header para abrir el carrito
+    const btnCarritoHeader = document.getElementById('btn-carrito-header');
+    if (btnCarritoHeader) btnCarritoHeader.addEventListener('click', abrirCarrito);
+
     // si el usuario da clic en comprar, verificamos su sesion
     if (btnComprar) {
         btnComprar.addEventListener('click', procesarCompra);

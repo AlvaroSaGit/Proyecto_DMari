@@ -1,9 +1,7 @@
 // importamos el servicio de ui para poder inyectar html
 import { cargarComponente } from '../../../services/uiService.js';
-// importamos la nueva vista de productos
-import { cargarVistaAdminProductos } from '../productos/adminProductosController.js';
-// importamos la vista de solicitudes
-import { cargarVistaAdminSolicitudes } from '../adminSolicitudes/adminSolicitudesController.js';
+// importamos el enrutador para navegación dinámica SPA
+import { navegarA } from '../../../router/router.js';
 
 // funcion principal que inyecta el sidebar de administrador
 export async function inicializarAdmin() {
@@ -19,28 +17,29 @@ export async function inicializarAdmin() {
     // configuramos la navegacion
     if (btnProductos) {
         btnProductos.addEventListener('click', () => {
-            console.log('cargar vista de gestion de productos');
-            // aqui llamaremos a cargarVistaAdminProductos();
-            cargarVistaAdminProductos();
+            navegarA('admin-productos');
         });
     }
     
     if (btnPedidos) {
         btnPedidos.addEventListener('click', () => {
-            console.log('cargar vista de gestion de pedidos');
-            // aqui llamaremos a cargarVistaAdminPedidos();
+            navegarA('admin-pedidos');
         });
     }
     
     if (btnSolicitudes) {
         btnSolicitudes.addEventListener('click', () => {
-            console.log('cargar vista de solicitudes de proveedores');
-            cargarVistaAdminSolicitudes();
+            navegarA('admin-solicitudes');
         });
     }
 
     if (btnSalir) {
-        // simulamos cerrar sesion de admin recargando la pagina hacia la tienda
-        btnSalir.addEventListener('click', () => window.location.reload());
+        // Cierre de sesión seguro y reinicio gráfico del sistema
+        btnSalir.addEventListener('click', async () => {
+            try { await fetch('logout'); } catch(e) {}
+            sessionStorage.removeItem('rolUsuario');
+            window.location.hash = 'inicio';
+            window.location.reload();
+        });
     }
 }

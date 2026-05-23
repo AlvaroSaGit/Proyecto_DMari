@@ -29,6 +29,9 @@
 /* ESTILO DE CONFIGURACION */
 @import url("../configuracion/configuracion.css");
 
+/* ESTILOS DEL ADMINISTRADOR */
+@import url("../../admin/adminProductos.css");
+
 .container-inicio{
     display: flex;
     flex-direction: column;

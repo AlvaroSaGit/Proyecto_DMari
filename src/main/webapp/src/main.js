@@ -53,62 +53,70 @@ function configurarBotonesHeader() {
     // buscamos los contenedores en el html
     const btnLogo = document.getElementById('component-logo');
     const btnCategoria = document.querySelector('.btn-categoria');
-    const btnUsuario = document.querySelector('.btn-usuario');
-    const btnCarrito = document.querySelector('.btn-carrito');
+    const btnUsuario = document.getElementById('btn-usuario-perfil');
+    const btnCarrito = document.getElementById('btn-carrito-header');
 
     // clic en el logo: carga el inicio
     if (btnLogo) {
         btnLogo.addEventListener('click', function() {
-            // usamos el enrutador para volver al inicio
             navegarA('inicio');
         });
     }
 
-    // clic en usuario: preparamos el espacio para el sidebar
     if (btnUsuario) {
         btnUsuario.addEventListener('click', function() {
-            // abrimos la barra lateral del usuario
             abrirUsuario();
         });
     }
 
-    // clic en categoria: preparamos el espacio para el sidebar
     if (btnCategoria) {
         btnCategoria.addEventListener('click', function() {
-            // abrimos la barra lateral de categorias
             abrirCategoria();
         });
     }
 
-    // clic en carrito: preparamos el espacio
     if (btnCarrito) {
         btnCarrito.addEventListener('click', function() {
-            // llamamos a la funcion para deslizar el carrito
             abrirCarrito();
         });
     }
 }
 
-// funcion para consultar a Java si el usuario ya inicio sesion
+/**
+ * Solicita al Servlet `/session` en Java verificar si existe una HttpSession válida.
+ * Si responde OK, actualiza visualmente la interfaz y sincroniza la memoria local del navegador.
+ */
 async function verificarSesion() {
     try {
         const respuesta = await fetch('session');
         
-        // Si responde 200 OK, es porque hay un usuario logueado en Java (HttpSession)
+        // ESTADO 200: Existe una sesión válida y logueada en el servidor Tomcat/Java
         if (respuesta.ok) {
             const datos = await respuesta.json();
             
-            // Cambiamos el contenido del boton del header para que muestre el nombre del usuario
-            const btnUsuario = document.querySelector('.btn-usuario');
-            if (btnUsuario) {
-                btnUsuario.innerHTML = `<span class="material-symbols-outlined">person</span> <span class="btn-text" style="font-size: 0.9rem;">Hola, ${datos.nombre}</span>`;
+            // PROTECCIÓN CRÍTICA:
+            // Si el backend /session no envía explícitamente el 'idRol', evitamos guardar "undefined"
+            // para que no se rompa la vista del Administrador al recargar la página.
+            if (datos.idRol !== undefined) {
+                sessionStorage.setItem('rolUsuario', datos.idRol);
+            } else if (datos.rol !== undefined) {
+                sessionStorage.setItem('rolUsuario', datos.rol);
+            }
+            
+            // Evento Forzado: Disparamos un cambio de Hash falso para obligar al Enrutador a redibujar el header
+            window.dispatchEvent(new Event('hashchange'));
+            
+            // Personalizamos el botón de usuario inyectando un saludo con su nombre
+            const btnPerfil = document.getElementById('btn-usuario-perfil');
+            if (btnPerfil) {
+                btnPerfil.innerHTML = `<span class="material-symbols-outlined">person</span> <span class="btn-text" style="font-size: 0.9rem;">Hola, ${datos.nombre}</span>`;
             }
         } else if (respuesta.status === 401) {
-            // Atrapamos el 401 especificamente para que la app sepa que estamos en modo visitante
+            // ESTADO 401 (No Autorizado): El usuario es un invitado. JS ignora el error silenciosamente.
             console.log("Modo visitante: No hay sesion activa en el sistema.");
         }
     } catch (error) {
-        // Esto solo saltara si el backend esta apagado o no hay conexion
+        // Error de red: Tomcat está apagado, CORS bloqueado o caída de internet.
         console.error('Error de comunicacion con el servidor:', error);
     }
 }

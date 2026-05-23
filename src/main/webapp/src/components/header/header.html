@@ -11,7 +11,7 @@
         <img src="src/img/logo/logo_Dmari.png" alt="DMari">
     </div>
     <!--Parte de categoria-->
-    <div class="header-categoria">
+    <div class="header-categoria" id="header-bloque-categoria">
     <button class="btn-categoria">
         <span class="material-symbols-outlined">menu</span>
         <span class="btn-text">Categoria</span>
@@ -20,13 +20,17 @@
 </div>
 <!--Parte derecha del header-->
 <div class="header-accion">
+    <!-- BOTON CERRAR SESION (Oculto por defecto) -->
+    <button id="btn-cerrar-sesion" class="btn-usuario" type="button" style="display: none;" title="Cerrar Sesión">
+        <span class="material-symbols-outlined">logout</span>
+    </button>
     <!--ICONO USUARIO-->
     <!--Type button para no sea un submit-->
-    <button class="btn-usuario" type="button">
+    <button id="btn-usuario-perfil" class="btn-usuario" type="button" title="Perfil">
         <span class="material-symbols-outlined">account_circle</span>
     </button>
     <!--CARRITO-->
-    <button class="btn-carrito" type="button">
+    <button id="btn-carrito-header" class="btn-carrito" type="button" title="Carrito">
         <span class="material-symbols-outlined">shopping_cart</span>
     </button>
 </div>

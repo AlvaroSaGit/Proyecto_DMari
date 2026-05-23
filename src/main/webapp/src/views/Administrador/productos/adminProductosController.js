@@ -1,18 +1,18 @@
-// Importamos la funcion para inyectar el HTML en la pantalla principal
 import { cargarComponente } from '../../../services/uiService.js';
-// Importamos nuestro servicio que hace el trabajo sucio de comunicarse con Java
 import { obtenerProductos, guardarProducto, eliminarProducto, cambiarEstadoProducto } from '../../../services/productoService.js';
-// importamos el componente de tabla para modularizar la creacion de filas
 import { crearFilaProducto } from '../../../components/tablas/filaProductoComponent.js';
 
-// Variable global en este archivo para saber el estado del formulario.
-// Si es 'null', significa que estamos creando un producto nuevo.
-// Si tiene un numero (ej: 5), significa que estamos editando el producto con ID 5.
+/** 
+ * VARIABLE DE ESTADO GLOBAL:
+ * Controla el comportamiento del formulario Modal.
+ * - Si es `null`: El formulario se comportará como un creador de nuevos productos.
+ * - Si contiene un `ID` (ej: 15): El formulario se comportará como un actualizador para el producto 15.
+ */
 let productoEditandoId = null;
 
 /**
- * Funcion de arranque de la vista de administrador de productos.
- * Primero inyecta el HTML y luego configura todos los botones.
+ * Función de Arranque (Entry Point) exclusiva para la vista del Administrador.
+ * Inyecta el HTML base del panel y manda a inicializar todos sus comportamientos.
  */
 export async function cargarVistaAdminProductos() {
     await cargarComponente('component-main', './src/views/Administrador/productos/adminProductos.html');
@@ -21,54 +21,78 @@ export async function cargarVistaAdminProductos() {
 }
 
 /**
- * Busca todos los botones y formularios en el HTML que recien cargamos
- * y les asigna eventos (click, submit) para darles vida.
+ * Mapea los elementos clave del DOM del Administrador y les asigna "Escuchadores de Eventos" (Listeners).
+ * Aquí se controla cuándo abrir/cerrar modales, crear productos y gestionar la tabla principal.
  */
 function prepararVistaAdminProductos() {
-    // Capturamos los elementos del DOM (HTML)
+    // Extracción de Referencias al DOM (Caché local para rendimiento)
     const btnAgregar = document.getElementById('btn-nuevo-producto');
     const modal = document.getElementById('modal-producto');
     const btnCerrar = document.getElementById('btn-cerrar-modal');
     const btnCancelar = document.getElementById('btn-cancelar-modal');
     const form = document.getElementById('form-producto');
     
-    // Evento para el boton "+ Nuevo Producto"
+    // Elementos para la previsualizacion de imagen
+    const inputImagen = document.getElementById('prod-imagen');
+    const previewContenedor = document.getElementById('contenedor-preview');
+    const previewImg = document.getElementById('prod-imagen-preview');
+
+    // EVENTO: Mostrar la foto cuando el usuario selecciona un archivo de su PC
+    if (inputImagen) {
+        inputImagen.addEventListener('change', function() {
+            const archivo = this.files[0];
+            if (archivo) {
+                const lector = new FileReader(); // API nativa para leer archivos locales
+                lector.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewContenedor.style.display = 'block'; // Mostramos el recuadro
+                }
+                lector.readAsDataURL(archivo);
+            } else {
+                previewImg.src = '';
+                previewContenedor.style.display = 'none'; // Lo volvemos a esconder si cancela
+            }
+        });
+    }
+
+    // CREAR NUEVO PRODUCTO: Preparar y abrir la ventana flotante (Modal) limpia
     if (btnAgregar) {
         btnAgregar.addEventListener('click', () => {
-            // Como es nuevo, nos aseguramos de que el ID este vacio
-            productoEditandoId = null; 
+            productoEditandoId = null; // Reseteamos la variable de estado
             document.getElementById('modal-titulo').innerText = 'Nuevo Producto';
             if (form) form.reset(); // Vaciamos las cajas de texto
-            if (modal) modal.classList.remove('oculto'); // Mostramos la ventana popup
+            
+            // Escondemos la previsualizacion porque es un producto nuevo
+            if (previewContenedor) previewContenedor.style.display = 'none';
+            if (inputImagen) inputImagen.required = true; // La imagen es obligatoria
+            
+            if (modal) modal.classList.remove('oculto'); 
         });
     }
     
-    // Funcion cortita para ocultar la ventana popup
+    // Función auxiliar anónima para esconder el Modal inyectando la clase CSS `oculto`
     const cerrarModal = () => { if (modal) modal.classList.add('oculto'); };
-    // Se la asignamos a la X de la esquina y al boton Cancelar
+    
     if (btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
     if (btnCancelar) btnCancelar.addEventListener('click', cerrarModal);
     
     // Evento principal: Cuando el usuario da clic en "Guardar Producto" en el formulario
     if (form) {
         form.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Evita que la pagina parpadee o se recargue al enviar
+            e.preventDefault(); // Detenemos el submit tradicional (recarga de página)
             
-            // 1. Extraemos lo que el usuario escribio en las cajitas de texto
+            // 1. LECTURA DEL FORMULARIO
             const nombre = document.getElementById('prod-nombre').value;
-            // extraemos la descripcion si la caja de texto existe en tu formulario
             const descripcion = document.getElementById('prod-descripcion') ? document.getElementById('prod-descripcion').value : '';
             const precio = document.getElementById('prod-precio').value;
             const stock = document.getElementById('prod-stock').value;
-            // Extraemos el ID de la categoria elegida por el administrador
             const idCategoria = document.getElementById('prod-categoria').value;
             
             /*
-             * EXPLICACION DE URLSearchParams:
-             * Normalmente, enviar JSON a Java requiere librerias complejas en el backend.
-             * URLSearchParams emula un formulario HTML clasico. Transforma nuestros datos en algo como:
-             * "nombre=Vela&precio=15.50&stock=20"
-             * Esto hace que en Java podamos leerlos super facil usando request.getParameter("nombre");
+             * TÉCNICA DE ENVÍO URLSearchParams:
+             * Para evitar configuraciones complejas de JSON en el Servidor (Java Servlet), 
+             * empaquetamos los datos como si fueran un formulario tradicional clásico application/x-www-form-urlencoded.
+             * Java podrá leer esto nativamente con: request.getParameter("nombre");
              */
             const parametros = new URLSearchParams();
             parametros.append('nombre', nombre);
@@ -77,21 +101,20 @@ function prepararVistaAdminProductos() {
             parametros.append('stock', stock);
             parametros.append('id_categoria', idCategoria);
             
-            // por defecto los nuevos entran activos
+            // REGLA DE NEGOCIO: Los productos nacen activos en la tienda por defecto.
             parametros.append('estado', 'true');
             
-            // Si la variable no es nula, significa que el usuario abrio un producto para editarlo
+            // ¿CREAR O EDITAR? Modificación dinámica de la carga útil
             if (productoEditandoId) {
-                // Agregamos el ID a la mochila de parametros para que Java sepa cual actualizar
-                parametros.append('id', productoEditandoId);
+                parametros.append('id', productoEditandoId); // Avisamos a Java que esto es un UPDATE, no un INSERT
             }
             
             try {
-                // 2. Le pasamos el paquete de datos a nuestro servicio.
-                // El segundo parametro (true/false) le avisa al servicio si debe usar la ruta de actualizar o insertar
+                // 2. TRANSMISIÓN AL SERVICIO
+                // El booleano `productoEditandoId !== null` dirige la ruta interna hacia el Servlet apropiado
                 await guardarProducto(parametros, productoEditandoId !== null);
                 
-                // 3. Si no hubo errores, avisamos al usuario, cerramos la ventana y recargamos la tabla
+                // 3. POST-PROCESAMIENTO: Refresco gráfico sin recargar la web
                 alert('¡Producto guardado correctamente!');
                 cerrarModal();
                 cargarListaProductos(); 
@@ -102,20 +125,24 @@ function prepararVistaAdminProductos() {
         });
     }
 
-    // asignamos un solo evento a toda la tabla usando "delegacion de eventos".
-    // esto ahorra memoria y reduce decenas de lineas repetidas que estaban sueltas.
+    /*
+     * PATRÓN DE DISEÑO: Delegación de Eventos (Event Delegation).
+     * En lugar de asignarle un 'EventListener' a cada botón "Editar" y "Eliminar" (lo cual saturaría la RAM 
+     * y fallaría si llegan productos nuevos), le asignamos un único escuchador padre a la tabla entera (tbody).
+     */
     const tbody = document.getElementById('tabla-productos-body');
     if (tbody) {
         tbody.addEventListener('click', async (evento) => {
-            const btnClic = evento.target.closest('button');
-            if (!btnClic) return; // si no fue un boton, ignoramos el clic
+            const btnClic = evento.target.closest('button'); // Verificamos si lo que se clicó fue realmente un botón
+            if (!btnClic) return; 
 
             const id = btnClic.getAttribute('data-id');
 
             if (btnClic.classList.contains('btn-editar')) {
+                // MODO EDICIÓN: Extraemos los datos "quemados" en el HTML del botón (`data-nombre`, `data-precio`, etc)
+                // y los inyectamos directamente en el formulario Modal
                 productoEditandoId = id;
                 document.getElementById('prod-nombre').value = btnClic.getAttribute('data-nombre');
-                // rellenamos la caja de descripcion si existe
                 if (document.getElementById('prod-descripcion')) {
                     document.getElementById('prod-descripcion').value = btnClic.getAttribute('data-descripcion') || '';
                 }
@@ -125,17 +152,31 @@ function prepararVistaAdminProductos() {
                 const catId = btnClic.getAttribute('data-categoria');
                 if (catId) document.getElementById('prod-categoria').value = catId;
                 
+                // MODO EDICION - IMAGEN: Mostramos la imagen actual si el producto ya tiene una
+                const urlImagen = btnClic.getAttribute('data-imagen');
+                if (urlImagen && urlImagen !== 'null' && urlImagen !== 'undefined') {
+                    if (previewImg) previewImg.src = urlImagen;
+                    if (previewContenedor) previewContenedor.style.display = 'block';
+                    // Si ya tiene foto, NO obligamos al administrador a subir una nueva
+                    if (inputImagen) inputImagen.required = false; 
+                } else {
+                    if (previewContenedor) previewContenedor.style.display = 'none';
+                    if (inputImagen) inputImagen.required = true;
+                }
+
                 document.getElementById('modal-titulo').innerText = 'Editar Producto';
                 if (modal) modal.classList.remove('oculto');
                 
             } else if (btnClic.classList.contains('btn-estado')) {
+                // CAMBIO RÁPIDO DE ESTADO (Activar / Pausar Producto)
                 const estadoActual = btnClic.getAttribute('data-estado') === 'true';
                 try {
                     await cambiarEstadoProducto(id, !estadoActual);
-                    cargarListaProductos();
+                    cargarListaProductos(); // Refrescamos la tabla tras el cambio
                 } catch (error) { alert('error al cambiar el estado del producto'); }
                 
             } else if (btnClic.classList.contains('btn-eliminar')) {
+                // ELIMINACIÓN DE PRODUCTO (Requiere confirmación de seguridad)
                 if (confirm('¿seguro que deseas eliminar este producto de forma permanente?')) {
                     try {
                         await eliminarProducto(id);
@@ -149,7 +190,7 @@ function prepararVistaAdminProductos() {
     // Al entrar por primera vez a la pantalla, pedimos los productos a la base de datos
     cargarListaProductos();
     
-    // Tambien llenamos las opciones dinamicas del <select> de categorias
+    // Llenamos las opciones dinámicas del formulario para que el Admin no tenga que escribirlas
     cargarCategoriasFormulario();
 }
 

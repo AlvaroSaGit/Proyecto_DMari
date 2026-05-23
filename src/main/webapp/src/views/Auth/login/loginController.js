@@ -67,6 +67,9 @@ function prepararFormularioLogin() {
                 // extraemos el json que nos mando java con el id del rol
                 const datos = await respuesta.json();
                 
+                // Guardamos el rol en la memoria del navegador para que el enrutador sepa quién está navegando
+                sessionStorage.setItem('rolUsuario', datos.idRol);
+                
                 alert('¡inicio de sesion exitoso!');
                 formulario.reset();
                 
