@@ -2,6 +2,8 @@
 import { cargarComponente } from '../../services/uiService.js';
 // importamos el enrutador para la navegacion
 import { navegarA } from '../../router/router.js';
+// importamos el servicio encargado de los pedidos
+import { enviarPedido } from '../pedido/pedidoService.js';
 
 // intentamos cargar el carrito guardado en el navegador, si no hay, iniciamos vacio
 let carrito = JSON.parse(localStorage.getItem('carritoDMari')) || [];
@@ -58,33 +60,22 @@ async function procesarCompra() {
         const respuesta = await fetch('session');
 
         if (respuesta.ok) {
-            // Respondio 200 OK: Esta logueado
+            // respondio 200 ok: esta logueado
             
-            // SIMULACION TEMPORAL: Guardamos el pedido en memoria del navegador
-            let historial = JSON.parse(localStorage.getItem('historialPedidosDMari')) || [];
+            // usamos el nuevo servicio modularizado para enviar el carrito a java
+            const exito = await enviarPedido(carrito);
             
-            // Calculamos el total de esta compra
-            let totalCompra = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-            
-            // Creamos un objeto de pedido simulado
-            const nuevoPedido = {
-                id: Math.floor(Math.random() * 9000) + 1000, // ID aleatorio simulado (ej: 4829)
-                fecha: new Date().toLocaleDateString(), // Fecha de hoy
-                items: [...carrito], // Copiamos los productos del carrito
-                total: totalCompra,
-                estado: 'Pendiente' // Guardamos el estado dinamico para poder cambiarlo luego
-            };
-            
-            historial.push(nuevoPedido);
-            localStorage.setItem('historialPedidosDMari', JSON.stringify(historial)); // Guardamos
-            
-            alert('¡Compra realizada con exito! Puedes ver los detalles en tu perfil.');
-            
-            // Vaciamos el carrito tras la compra
-            carrito = [];
-            localStorage.setItem('carritoDMari', JSON.stringify(carrito));
-            renderizarCarrito();
-            cerrarCarrito();
+            if (exito) {
+                alert('¡compra realizada con exito! el pedido se ha guardado en tu historial.');
+                
+                // vaciamos el carrito tras la compra real
+                carrito = [];
+                localStorage.setItem('carritoDMari', JSON.stringify(carrito));
+                renderizarCarrito();
+                cerrarCarrito();
+            } else {
+                alert('hubo un problema al registrar tu pedido en el sistema.');
+            }
         } else {
             // Respondio 401: No esta logueado
             alert('Por favor, inicia sesion o registrate para poder finalizar tu compra.');

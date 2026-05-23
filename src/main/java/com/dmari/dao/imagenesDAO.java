@@ -1,11 +1,10 @@
-
+/*
+    objetivo de este archivo:
+    gestiona la insercion y borrado de las rutas (url) de las imagenes
+    que estan asociadas a los productos en la base de datos.
+*/
 package com.dmari.dao;
-/*
-    DAO ESTRUCTURA CRUD
-*/
-/*
-    Conexion database
-*/
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;

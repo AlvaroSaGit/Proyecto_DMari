@@ -22,6 +22,10 @@ import jakarta.servlet.http.HttpServletResponse;
 @WebServlet(name = "EtiquetaController", urlPatterns = {"/etiquetas"})
 public class EtiquetaController extends HttpServlet {
 
+    /*
+        doget: atiende las peticiones de lectura que hace javascript.
+        su objetivo es recolectar las etiquetas desde mysql y enviarlas al frontend.
+    */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

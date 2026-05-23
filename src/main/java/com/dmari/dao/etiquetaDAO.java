@@ -1,3 +1,9 @@
+/*
+    objetivo de este archivo:
+    gestiona la extraccion de etiquetas desde la base de datos.
+    permite traer todas las etiquetas globales o cruzar tablas (joins)
+    para encontrar las etiquetas que pertenecen a un producto especifico.
+*/
 package com.dmari.dao;
 
 import java.sql.Connection;

@@ -2,6 +2,8 @@
 import { cargarComponente } from '../../../services/uiService.js';
 // Importamos nuestro servicio que hace el trabajo sucio de comunicarse con Java
 import { obtenerProductos, guardarProducto, eliminarProducto, cambiarEstadoProducto } from '../../../services/productoService.js';
+// importamos el nuevo componente para modularizar la creacion de filas
+import { crearFilaProducto } from '../../../components/tablas/filaProductoComponent.js';
 
 // Variable global en este archivo para saber el estado del formulario.
 // Si es 'null', significa que estamos creando un producto nuevo.
@@ -97,6 +99,46 @@ function prepararVistaAdminProductos() {
         });
     }
 
+    // asignamos un solo evento a toda la tabla usando "delegacion de eventos".
+    // esto ahorra memoria y reduce decenas de lineas repetidas que estaban sueltas.
+    const tbody = document.getElementById('tabla-productos-body');
+    if (tbody) {
+        tbody.addEventListener('click', async (evento) => {
+            const btnClic = evento.target.closest('button');
+            if (!btnClic) return; // si no fue un boton, ignoramos el clic
+
+            const id = btnClic.getAttribute('data-id');
+
+            if (btnClic.classList.contains('btn-editar')) {
+                productoEditandoId = id;
+                document.getElementById('prod-nombre').value = btnClic.getAttribute('data-nombre');
+                document.getElementById('prod-precio').value = btnClic.getAttribute('data-precio');
+                document.getElementById('prod-stock').value = btnClic.getAttribute('data-stock');
+                
+                const catId = btnClic.getAttribute('data-categoria');
+                if (catId) document.getElementById('prod-categoria').value = catId;
+                
+                document.getElementById('modal-titulo').innerText = 'Editar Producto';
+                if (modal) modal.classList.remove('oculto');
+                
+            } else if (btnClic.classList.contains('btn-estado')) {
+                const estadoActual = btnClic.getAttribute('data-estado') === 'true';
+                try {
+                    await cambiarEstadoProducto(id, !estadoActual);
+                    cargarListaProductos();
+                } catch (error) { alert('error al cambiar el estado del producto'); }
+                
+            } else if (btnClic.classList.contains('btn-eliminar')) {
+                if (confirm('¿seguro que deseas eliminar este producto de forma permanente?')) {
+                    try {
+                        await eliminarProducto(id);
+                        cargarListaProductos();
+                    } catch (err) { alert('error al intentar borrar el producto'); }
+                }
+            }
+        });
+    }
+
     // Al entrar por primera vez a la pantalla, pedimos los productos a la base de datos
     cargarListaProductos();
     
@@ -148,60 +190,11 @@ async function cargarListaProductos() {
  
         // Recorremos el arreglo de productos que llego de MySQL
         productosBD.forEach(prod => {
-            // Extraemos los datos adaptandonos a los posibles nombres que arroja Java (JSON)
-            const idProd = prod.idProductoPk || prod.id;
-            const nombreProd = prod.nombreProducto || prod.nombre || 'Producto';
-            // Extraemos el nombre de la categoria que manda el backend (o ponemos un texto por defecto)
-            const nombreCategoria = prod.categoria || prod.nombreCategoria || 'Sin categoría';
-            const catFk = prod.idCategoriaFk || '';
-            
-            const estadoBadge = prod.estado ? '<span style="background: #d4edda; color: #155724; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 5px;">Activo</span>' : '<span style="background: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 5px;">Inactivo</span>';
-            
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>#00${idProd}</td>
-                <td><i class='bx bx-image' style='font-size: 2rem; color: #ccc;'></i></td>
-                <td>
-                    <div style="font-weight: bold; display: flex; align-items: center;">${nombreProd} ${estadoBadge}</div>
-                    <span style="font-size: 0.75rem; color: #666; background-color: #f0f0f0; padding: 2px 6px; border-radius: 10px;">${nombreCategoria}</span>
-                </td>
-                <td>$${prod.precio.toFixed(2)}</td>
-                <td>${prod.stock} uds</td>
-                <td>
-                    <!-- Guardamos la informacion del producto directamente en el boton usando "data-" -->
-                    <!-- Asì, cuando hagan clic en Editar, sabemos exactamente que datos poner en el formulario -->
-                    <button class="btn-editar" data-id="${idProd}" data-nombre="${nombreProd}" data-precio="${prod.precio}" data-stock="${prod.stock}" data-categoria="${catFk}"><i class='bx bx-edit'></i> Editar</button>
-                    <button class="btn-estado" data-id="${idProd}"><i class='bx bx-refresh'></i> ${prod.estado ? 'Pausar' : 'Activar'}</button>
-                    <button class="btn-eliminar" data-id="${idProd}"><i class='bx bx-trash'></i> Borrar</button>
-                </td>
-            `;
-            
-            // Le damos vida al boton de cambiar estado de forma independiente
-            tr.querySelector('.btn-estado').addEventListener('click', async () => {
-                try {
-                    await cambiarEstadoProducto(idProd, !prod.estado);
-                    cargarListaProductos(); // recargamos la tabla al terminar
-                } catch (error) {
-                    alert('Error al cambiar el estado del producto');
-                }
-            });
-            
-            // Metemos la fila recien creada en el cuerpo de la tabla
-            tbody.appendChild(tr);
+            // usamos el componente modularizado para fabricar la fila e inyectarla
+            tbody.appendChild(crearFilaProducto(prod));
         });
-        
-        // Le damos vida a los botones "Editar" de cada fila
-        const modal = document.getElementById('modal-producto');
-        
-        tbody.querySelectorAll('.btn-editar').forEach(btn => btn.addEventListener('click', (evento) => {
-            // Extraemos los datos que escondimos en el boton especifico que recibio el clic
-            const btnClic = evento.currentTarget;
-            productoEditandoId = btnClic.getAttribute('data-id');
-            
-            // Pre-llenamos las cajas de texto del formulario con los datos viejos
-            document.getElementById('prod-nombre').value = btnClic.getAttribute('data-nombre');
-            document.getElementById('prod-precio').value = btnClic.getAttribute('data-precio');
-            document.getElementById('prod-stock').value = btnClic.getAttribute('data-stock');
-            
-            // Si el producto ya tiene categoria asignada, pre-seleccionamos ese valor en el formulario
-            const catId = btnClic.getAttribute('data-catego
+
+    } catch (error) {
+        console.error('error general al cargar la lista:', error);
+    }
+}

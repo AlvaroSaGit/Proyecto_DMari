@@ -1,3 +1,8 @@
+/*
+    objetivo de este archivo:
+    se encarga de realizar las consultas sql rapidas hacia la tabla 'categoria',
+    especificamente filtrando aquellas que se encuentran activas para el catalogo.
+*/
 package com.dmari.dao;
 
 import java.sql.Connection;

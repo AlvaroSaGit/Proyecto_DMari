@@ -1,4 +1,4 @@
-// importamos tu servicio de ui para inyectar componentes
+// importamos el servicio de ui para inyectar componentes
 import { cargarComponente } from '../../../services/uiService.js';
 // importamos el enrutador
 import { navegarA } from '../../../router/router.js';
@@ -30,7 +30,7 @@ function prepararFormularioRegistro() {
     
     // validacion de seguridad por si falla la carga html
     if (!formulario) {
-        console.error('Critico: No se encontro el formulario de registro en el DOM. Verifica que exista id="form-registro" en tu HTML.');
+        console.error('critico: no se encontro el formulario de registro en el dom. verifica que exista el id "form-registro" en el html.');
         return;
     }
     
@@ -65,7 +65,7 @@ function prepararFormularioRegistro() {
         
         // envolvemos en un trycatch para atajar problemas de internet o de base de datos
         try {
-            // peticion fetch hacia tu nuevo AuthController en Java en la ruta /registro
+            // peticion fetch hacia el controlador de autenticacion en java en la ruta /registro
             const respuesta = await fetch('registro', {
                 method: 'POST',
                 body: parametros

@@ -113,4 +113,35 @@ public class pedidoDAO {
         } catch (SQLException e) { System.out.println("error al listar pedidos del proveedor: " + e.getMessage()); }
         return lista;
     }
+
+    /*
+        metodo para obtener el historial de compras de un cliente especifico.
+    */
+    public ArrayList<detallePedido> listarPedidosPorCliente(int idCliente) {
+        ArrayList<detallePedido> lista = new ArrayList<>();
+        String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, " +
+                     "prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal " +
+                     "FROM pedido p " +
+                     "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
+                     "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
+                     "WHERE p.id_cliente_fk = ? ORDER BY p.fecha DESC";
+                     
+        try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
+             ps.setInt(1, idCliente);
+             try (ResultSet rs = ps.executeQuery()) {
+                 while(rs.next()) {
+                     detallePedido dp = new detallePedido();
+                     dp.setIdPedidoFk(rs.getInt("id_pedido_pk"));
+                     dp.setFechaPedido(rs.getString("fecha"));
+                     dp.setEstadoPedido(rs.getString("estado_pedido"));
+                     dp.setNombreProducto(rs.getString("nombre_producto"));
+                     dp.setCantidad(rs.getInt("cantidad"));
+                     dp.setPrecioUnitario(rs.getDouble("precio_unitario"));
+                     dp.setSubtotal(rs.getDouble("subtotal"));
+                     lista.add(dp);
+                 }
+             }
+        } catch (SQLException e) { System.out.println("error al listar pedidos del cliente: " + e.getMessage()); }
+        return lista;
+    }
 }

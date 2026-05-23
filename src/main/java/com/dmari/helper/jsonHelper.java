@@ -103,4 +103,37 @@ public class jsonHelper {
         json.append("]");
         return json.toString();
     }
+
+    /*
+        metodo para convertir el historial de pedidos a formato json.
+    */
+    public String pedidosAJson(ArrayList<detallePedido> lista) {
+        StringBuilder json = new StringBuilder();
+        json.append("[");
+        
+        for (int i = 0; i < lista.size(); i++) {
+            detallePedido dp = lista.get(i);
+            
+            json.append("{");
+            json.append("\"idPedido\":").append(dp.getIdPedidoFk()).append(",");
+            json.append("\"fecha\":\"").append(dp.getFechaPedido() != null ? dp.getFechaPedido() : "").append("\",");
+            json.append("\"estado\":\"").append(dp.getEstadoPedido() != null ? dp.getEstadoPedido() : "").append("\",");
+            json.append("\"producto\":\"").append(dp.getNombreProducto() != null ? dp.getNombreProducto() : "").append("\",");
+            json.append("\"cantidad\":").append(dp.getCantidad()).append(",");
+            json.append("\"precio\":").append(dp.getPrecioUnitario()).append(",");
+            json.append("\"subtotal\":").append(dp.getSubtotal());
+            
+            if (dp.getNombreCliente() != null) {
+                json.append(",\"cliente\":\"").append(dp.getNombreCliente()).append("\"");
+            }
+            json.append("}");
+            
+            if (i < lista.size() - 1) {
+                json.append(",");
+            }
+        }
+        
+        json.append("]");
+        return json.toString();
+    }
 }
