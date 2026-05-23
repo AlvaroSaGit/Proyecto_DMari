@@ -14,9 +14,9 @@ INSERT INTO rol (tipo_rol) VALUES
 -- 2. POBLACIÓN DE CATEGORÍAS
 -- ==========================================
 INSERT INTO categoria (nombre, descripcion, estado_activo) VALUES 
-('Donas', 'Donas artesanales con diferentes glaseados y rellenos', true),
-('Velas Aromaticas', 'Velas decorativas y con aromas relajantes', true),
-('Combos de Regalo', 'Cajas especiales combinando donas y velas', true);
+('Reposteria', 'Postres, donas y dulces artesanales', true), -- ID 1
+('Decoracion', 'Velas y articulos decorativos para el hogar', true), -- ID 2
+('Floristeria', 'Arreglos florales hermosos para toda ocasion', true); -- ID 3
 
 -- ==========================================
 -- 3. REGISTRO DE USUARIOS BASE (Con sus roles reales)
@@ -60,11 +60,12 @@ INSERT INTO proveedor (id_datos_proveedor_fk) VALUES (3);
 -- 8. REGISTRO DE PRODUCTOS
 -- ==========================================
 INSERT INTO producto (id_categoria_fk, nombre_producto, descripcion, precio, stock, estado) VALUES 
-(2, 'Vela de Vainilla y Canela', 'Aroma dulce ideal para relajacion', 18000, 15, true),
-(1, 'Dona Glaseada Especial', 'Clasica con glaseado de azucar', 4500, 30, true),
-(2, 'Vela Decorativa de Flores', 'Vela artesanal con petalos secos', 22000, 10, true),
-(1, 'Dona Rellena de Arequipe', 'Masa suave con relleno tradicional', 5500, 25, true),
-(3, 'Caja de Mini Velas Regalo', 'Set de 3 mini velas surtidas', 35000, 5, true);
+(2, 'Vela de Vainilla y Canela', 'Aroma dulce ideal para relajacion', 18000, 15, true),     -- prod 1 (decoracion)
+(1, 'Dona Glaseada Especial', 'Clasica con glaseado de azucar', 4500, 30, true),          -- prod 2 (reposteria)
+(2, 'Vela Decorativa de Flores', 'Vela artesanal con petalos secos', 22000, 10, true),    -- prod 3 (decoracion)
+(3, 'Ramo de Rosas Rojas', 'Hermoso arreglo floral para regalar a mama', 65000, 5, true), -- prod 4 (floristeria)
+(1, 'Dona Rellena de Arequipe', 'Masa suave con relleno tradicional', 5500, 25, true),    -- prod 5 (reposteria)
+(1, 'Caja de Mini Donas', 'Set de 6 mini donas surtidas para regalo', 15000, 10, true);   -- prod 6 (reposteria)
 
 -- ==========================================
 -- 9. REGISTRO DE IMÁGENES RELACIONADAS
@@ -74,7 +75,8 @@ INSERT INTO imagenes (id_producto_fk, url_ruta, imagen_principal) VALUES
 (2, 'src/img/productos/default/gato_programador.jpg', 1),
 (3, 'src/img/productos/default/gato_programador.jpg', 1),
 (4, 'src/img/productos/default/gato_programador.jpg', 1),
-(5, 'src/img/productos/default/gato_programador.jpg', 1);
+(5, 'src/img/productos/default/gato_programador.jpg', 1),
+(6, 'src/img/productos/default/gato_programador.jpg', 1);
 
 -- ==========================================
 -- 10. POBLACIÓN DE ETIQUETAS
@@ -96,8 +98,9 @@ INSERT INTO producto_etiqueta (id_producto, id_etiqueta) VALUES
 (1, 1), (1, 2), -- Vela de Vainilla: Aromaterapia y Relajacion
 (2, 3),         -- Dona Glaseada: Dulce
 (3, 4), (3, 2), (3, 7), -- Vela Flores: Decoracion, Relajacion, Dia de la Madre
-(4, 3), (4, 5), -- Dona de Arequipe: Dulce y Arequipe
-(5, 6), (5, 1), (5, 8); -- Caja Mini Velas: Regalo, Aromaterapia, San Valentin
+(4, 4), (4, 6), (4, 7), -- Ramo de Rosas: Decoracion, Regalo, Dia de la Madre
+(5, 3), (5, 5), -- Dona de Arequipe: Dulce y Arequipe
+(6, 6), (6, 3), (6, 8); -- Caja Mini Donas: Regalo, Dulce, San Valentin
 
 -- ==========================================
 -- 12. RELACION PROVEEDOR - PRODUCTO (Otorgando dueños)
@@ -108,4 +111,5 @@ INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) VALUES
 (1, 2),
 (1, 3),
 (1, 4),
-(1, 5);
+(1, 5),
+(1, 6);

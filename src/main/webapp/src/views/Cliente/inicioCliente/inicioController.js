@@ -37,22 +37,20 @@ async function cargarProductosDesdeBD() {
 }
 
 function renderizarProductos(productos) {
-    // usamos la nueva funcion exacta para no confundir categorias.
-    // asi, si un producto se llama "vela de flor", no aparecera jamas en la seccion de floristeria.
-    const listaDonas = filtrarPorCategoriaExacta(productos, 'dona');
-    const listaVelas = filtrarPorCategoriaExacta(productos, 'vela');
-    
-    // en el futuro, cuando se agregue la seccion html de floristeria, solo se requerira esta linea:
-    // const listaFloristeria = filtrarPorCategoriaExacta(productos, 'floristeria');
+    // se extraen los productos segun los tres nuevos pilares de la tienda
+    const listaReposteria = filtrarPorCategoriaExacta(productos, 'reposteria');
+    const listaDecoracion = filtrarPorCategoriaExacta(productos, 'decoracion');
+    const listaFloristeria = filtrarPorCategoriaExacta(productos, 'floristeria');
 
-    // Inyectamos las donas en su seccion exclusiva
-    inyectarEnContenedor('contenedor-donas', listaDonas);
-    
-    // Inyectamos las velas en su seccion exclusiva
-    inyectarEnContenedor('contenedor-velas', listaVelas);
+    // intentamos inyectar en las vitrinas separadas
+    const okReposteria = inyectarEnContenedor('contenedor-reposteria', listaReposteria);
+    const okDecoracion = inyectarEnContenedor('contenedor-decoracion', listaDecoracion);
+    const okFloristeria = inyectarEnContenedor('contenedor-floristeria', listaFloristeria);
 
-    // Mantenemos todos los productos en la seccion principal de destacados
-    inyectarEnContenedor('contenedor-producto', productos);
+    // si el html no tiene los contenedores separados, usamos el general como respaldo
+    if (!okReposteria && !okDecoracion && !okFloristeria) {
+        inyectarEnContenedor('contenedor-producto', productos);
+    }
 }
 
 /**
@@ -60,7 +58,7 @@ function renderizarProductos(productos) {
  */
 function inyectarEnContenedor(idContenedor, lista) {
     const contenedor = document.getElementById(idContenedor);
-    if (!contenedor) return;
+    if (!contenedor) return false;
 
     contenedor.innerHTML = '';
 
@@ -68,6 +66,8 @@ function inyectarEnContenedor(idContenedor, lista) {
         const tarjeta = crearTarjetaHTML(prod);
         contenedor.appendChild(tarjeta);
     });
+
+    return true;
 }
 
 /**

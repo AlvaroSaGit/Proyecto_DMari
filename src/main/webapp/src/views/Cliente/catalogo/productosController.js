@@ -50,8 +50,16 @@ async function renderizarProductosCatalogo() {
         return;
     }
 
-    // Dibujamos todos los productos inicialmente
-    dibujarGridCatalogo(todosLosProductos);
+    // revisamos si venimos desde el sidebar de categorias con una orden de filtrado en espera
+    const filtroPendiente = sessionStorage.getItem('filtroCategoriaSidebar');
+    
+    if (filtroPendiente !== null) {
+        aplicarFiltroInteligente(filtroPendiente, filtroPendiente === '' ? 'general' : 'categoria');
+        sessionStorage.removeItem('filtroCategoriaSidebar');
+    } else {
+        // si no habia ordenes del sidebar, dibujamos todos los productos inicialmente
+        dibujarGridCatalogo(todosLosProductos);
+    }
 
     // 4. Asignamos los eventos de clics al contenedor principal (solo una vez)
     if (!eventosAsignados) {

@@ -1,36 +1,41 @@
 <div class="container-inicio">
-    <!--Novedades-->
+    <!-- novedades de la tienda -->
     <section class="novedades">
         <div class="novedades-contenido">
             <h1>¡Descubre lo mas nuevo de DMari!</h1>
             <div class="novedades-etiqueta">
-                <div class="etiqueta">Hola</div>
-                <div class="etiqueta">Adios</div>
-                <div class="etiqueta">Como estan</div>
+                <div class="etiqueta">Regalos</div>
+                <div class="etiqueta">Ofertas</div>
+                <div class="etiqueta">Nuevos</div>
             </div>
         </div>
     </section>
-    <!--Seccion de destacado-->
+    
+    <!-- vitrina de reposteria -->
+    <section class="donas categoria-seccion">
+        <h1>Reposteria deliciosa</h1>
+        <!-- aqui javascript inyectara las donas y postres -->
+        <div id="contenedor-reposteria" class="producto-grid"></div>
+    </section>
+
+    <!-- vitrina de decoracion -->
+    <section class="velas categoria-seccion">
+        <h1>Decoracion y hogar</h1>
+        <!-- aqui javascript inyectara las velas y accesorios -->
+        <div id="contenedor-decoracion" class="producto-grid"></div>
+    </section>
+
+    <!-- vitrina de floristeria -->
+    <section class="destacados categoria-seccion">
+        <h1>Arreglos florales</h1>
+        <!-- aqui javascript inyectara las rosas y ramos -->
+        <div id="contenedor-floristeria" class="producto-grid"></div>
+    </section>
+
+    <!-- contenedor general para respaldo o para busquedas en el futuro -->
     <section class="destacados">
-        <h1>Destacado</h1>
-        <!--El grid o template que va a tener todos los productos-->
-        <div id="contenedor-producto" class="producto-grid">
-            <!-- javascript inyectara los destacados aqui -->
-        </div>
-    </section>
-    <!--Seccion con velas y donas-->
-    <!--DOnas-->
-    <section class="donas">
-        <h1>Donas</h1>
-        <div id="contenedor-donas" class="producto-grid">
-            <!-- javascript inyectara las donas aqui -->
-        </div>
-    </section>
-    <!--Velas-->
-    <section class="velas">
-        <h1>Velas</h1>
-        <div id="contenedor-velas" class="producto-grid">
-            <!-- javascript inyectara las velas aqui -->
+        <div id="contenedor-producto" class="producto-grid" style="margin-top: 40px;">
+            <!-- javascript inyectara los productos aqui si los contenedores anteriores fallan o si se hace una busqueda -->
         </div>
     </section>
 </div>

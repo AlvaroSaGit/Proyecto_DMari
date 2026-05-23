@@ -1,7 +1,9 @@
 // importamos el servicio de ui
 import { cargarComponente } from '../../services/uiService.js';
-// importamos el controlador del catalogo
-import { cargarVistaCatalogo } from '../../views/Cliente/catalogo/productosController.js';
+// importamos la funcion de filtros del catalogo
+import { aplicarFiltroInteligente } from '../../views/Cliente/catalogo/productosController.js';
+// importamos el enrutador para poder viajar entre paginas
+import { navegarA } from '../../router/router.js';
 
 // funcion para inyectar las categorias al inicio
 export async function inicializarCategoria() {
@@ -30,10 +32,21 @@ export async function inicializarCategoria() {
             
             const categoriaSeleccionada = this.getAttribute('data-categoria');
             
-            if (categoriaSeleccionada === 'todo') {
-                cargarVistaCatalogo();
+            // revisamos si el usuario ya se encuentra en la pantalla del catalogo
+            const hashActual = window.location.hash.replace('#', '');
+            
+            if (hashActual === 'catalogo') {
+                // si ya estamos en el catalogo, aplicamos el filtro al instante sin recargar la pagina
+                if (categoriaSeleccionada === 'todo') {
+                    aplicarFiltroInteligente('', 'general');
+                } else {
+                    aplicarFiltroInteligente(categoriaSeleccionada, 'categoria');
+                }
             } else {
-                alert('proximamente filtraremos los productos por: ' + categoriaSeleccionada);
+                // si estamos en otra pantalla (como el inicio), guardamos el filtro en memoria
+                // y le ordenamos al router que nos lleve al catalogo
+                sessionStorage.setItem('filtroCategoriaSidebar', categoriaSeleccionada === 'todo' ? '' : categoriaSeleccionada);
+                navegarA('catalogo');
             }
             
             // cerramos el panel automaticamente

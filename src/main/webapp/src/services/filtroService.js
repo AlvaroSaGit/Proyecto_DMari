@@ -1,4 +1,13 @@
 /**
+ * funcion interna para normalizar textos.
+ * convierte a minusculas, quita espacios y elimina tildes o acentos para lograr comparaciones exactas.
+ */
+function limpiarTexto(texto) {
+    // usamos string() para evitar errores si llega un numero
+    return String(texto || '').toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+/**
  * realiza una busqueda de texto general en una lista de productos.
  * busca en nombre, categoria y etiquetas.
  *
@@ -12,25 +21,23 @@ export function busquedaGeneral(lista, termino) {
         return lista;
     }
     
-    // normalizamos el termino a minusculas y sin espacios extra para evitar fallos de coincidencia
-    const terminoLower = termino.toLowerCase().trim();
+    // limpiamos el termino de busqueda quitando tildes y mayusculas
+    const terminoLimpio = limpiarTexto(termino);
     
     // iteramos sobre cada producto para verificar si cumple la condicion de busqueda
     return lista.filter(prod => {
-        // extraemos el nombre y la categoria. usamos el operador || (or) como fallback de seguridad:
-        // si la propiedad no existe, le asignamos una cadena vacia '' para que .toLowerCase() no rompa la aplicacion.
-        const nombre = (prod.nombreProducto || prod.nombre || '').toLowerCase();
-        const categoria = (prod.categoria || prod.nombreCategoria || '').toLowerCase();
+        // extraemos y limpiamos el nombre y la categoria. usamos el operador || (or) como fallback de seguridad.
+        const nombre = limpiarTexto(prod.nombreProducto || prod.nombre);
+        const categoria = limpiarTexto(prod.categoria || prod.nombreCategoria);
         
         // extraemos las etiquetas. si el producto no tiene la propiedad etiquetas, inicializamos un arreglo vacio []
-        // esto garantiza que podamos usar el metodo de arreglos .some() en la siguiente linea sin lanzar errores.
         const etiquetas = prod.etiquetas || [];
 
         // verificamos si la palabra escrita por el usuario existe dentro del nombre o de la categoria
-        const coincideNombreOCategoria = nombre.includes(terminoLower) || categoria.includes(terminoLower);
+        const coincideNombreOCategoria = nombre.includes(terminoLimpio) || categoria.includes(terminoLimpio);
         
         // el metodo .some() revisa si al menos una etiqueta dentro del arreglo contiene el termino buscado
-        const coincideEtiqueta = etiquetas.some(tag => tag.toLowerCase().includes(terminoLower));
+        const coincideEtiqueta = etiquetas.some(tag => limpiarTexto(tag).includes(terminoLimpio));
         
         // el producto sobrevive al filtro si coincide en cualquiera de los tres lugares evaluados
         return coincideNombreOCategoria || coincideEtiqueta;
@@ -61,14 +68,20 @@ export function filtrarPorPrecio(lista, min = 0, max = Infinity) {
 export function filtrarPorCategoriaExacta(lista, nombreCategoria) {
     if (!nombreCategoria) return lista;
     
-    // limpiamos el termino de la categoria a buscar
-    const catBuscada = nombreCategoria.toLowerCase().trim();
+    // limpiamos el termino de la categoria a buscar (sin tildes)
+    const catBuscada = limpiarTexto(nombreCategoria);
     
     return lista.filter(prod => {
-        // aplicamos el fallback de cadena vacia por seguridad y normalizamos a minusculas
-        const catProducto = (prod.categoria || prod.nombreCategoria || '').toLowerCase().trim();
+        // contingencia: buscar por el id numerico si el texto falla
+        const idCat = prod.idCategoriaFk || prod.id_categoria_fk;
+        if (catBuscada === 'reposteria' && idCat === 1) return true;
+        if (catBuscada === 'decoracion' && idCat === 2) return true;
+        if (catBuscada === 'floristeria' && idCat === 3) return true;
+
+        // aplicamos el fallback de cadena vacia por seguridad y limpiamos el texto
+        const catProducto = limpiarTexto(prod.categoria || prod.nombreCategoria);
         // se usa 'includes' por si la base de datos devuelve 'donas' y se busca 'dona'
-        return catProducto === catBuscada || catProducto.includes(catBuscada);
+        return catProducto === catBuscada || (catProducto !== '' && catProducto.includes(catBuscada));
     });
 }
 
@@ -84,14 +97,14 @@ export function filtrarPorCategoriaExacta(lista, nombreCategoria) {
 export function filtrarPorEtiqueta(lista, nombreEtiqueta) {
     if (!nombreEtiqueta) return lista;
     
-    // limpiamos la etiqueta que vamos a buscar
-    const tagBuscado = nombreEtiqueta.toLowerCase().trim();
+    // limpiamos la etiqueta que vamos a buscar (sin tildes)
+    const tagBuscado = limpiarTexto(nombreEtiqueta);
     
     return lista.filter(prod => {
         // aplicamos el fallback de arreglo vacio por seguridad
         const etiquetas = prod.etiquetas || [];
         // verificamos si al menos una de las etiquetas del producto es exactamente igual a la que se necesita
-        return etiquetas.some(tag => tag.toLowerCase().trim() === tagBuscado);
+        return etiquetas.some(tag => limpiarTexto(tag) === tagBuscado);
     });
 }
 
