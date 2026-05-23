@@ -22,7 +22,7 @@
     font-size: 1.8rem;
 }
 
-/* Diseño de la tabla */
+/* Diseno de la tabla */
 .admin-tabla-contenedor {
     background: #fff;
     border-radius: 8px;
@@ -84,7 +84,7 @@
     transform: translateY(-2px);
 }
 
-/* Botón principal de "Nuevo Producto" */
+/* Boton principal de "Nuevo Producto" */
 .btn-nuevo-prod {
     background-color: #212529; /* Color sólido oscuro y elegante */
     color: #fff;
@@ -107,7 +107,7 @@
     transform: translateY(-2px);
 }
 
-/* Botones de acción en la tabla */
+/* Botones de accion en la tabla */
 .btn-editar, .btn-estado, .btn-eliminar {
     border: 1px solid transparent;
     padding: 8px 12px;
@@ -282,14 +282,32 @@
 /* ESTILOS GLOBALES DEL DASHBOARD DEL ADMIN  */
 /* ========================================= */
 
+/* Ocultamos elementos inyectados del cliente de forma limpia (sin !important en JS) */
+body.layout-dashboard #header-bloque-categoria,
+body.layout-dashboard .btn-categoria,
+body.layout-dashboard .header-categoria,
+body.layout-dashboard #btn-carrito-header,
+body.layout-dashboard .btn-carrito,
+body.layout-dashboard #component-logo,
+body.layout-dashboard .header-logo,
+body.layout-dashboard #btn-cerrar-sesion,
+body.layout-dashboard #footer-container {
+    display: none;
+}
+
 /* 1. Darle más altura, espacio y prioridad al Header */
 body.layout-dashboard #header-container {
+    height: 80px; /* Obligamos a que el header mida exactamente 80px */
     min-height: 80px;
+    width: 100%; /* Al cambiar a fixed, necesitamos forzar que ocupe todo el ancho */
+    box-sizing: border-box; /* Evita que el padding sume altura extra */
     padding: 0 30px;
     display: flex;
     align-items: center;
     background-color: #fff;
-    position: relative;
+    position: fixed; /* Cambiamos sticky por fixed para forzar el anclaje a la ventana SIEMPRE */
+    top: 0;
+    left: 0;
     z-index: 1050; /* Mantiene el Header por encima de la sidebar */
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 }
@@ -300,9 +318,11 @@ body.layout-dashboard #btn-usuario-perfil {
     color: #333;
     font-size: 1.1rem;
     padding: 0;
+    display: flex; /* Forzamos a que muestre el texto de bienvenida */
+    pointer-events: none; /* Lo hacemos intocable para que no abra el sidebar de cliente */
 }
 
-/* 3. Estilizar el Botón de "Salir" a la derecha */
+/* 3. Estilizar el Boton de "Salir" a la derecha */
 body.layout-dashboard #btn-cerrar-sesion {
     background-color: #fee2e2;
     color: #dc2626;
@@ -337,4 +357,5 @@ body.layout-dashboard .main,
 body.layout-dashboard .main-footer {
     margin-left: 250px;
     width: calc(100% - 250px);
+    margin-top: 80px; /* Empujamos el contenido hacia abajo para que el header fijo no lo tape */
 }

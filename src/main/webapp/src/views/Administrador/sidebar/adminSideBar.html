@@ -1,0 +1,37 @@
+<!-- Contenedor principal del menu lateral de navegacion del administrador -->
+<nav class="admin-sidebar-menu">
+    <!-- Usamos boxicons para la iconografia visual del menu -->
+    
+    <!-- Boton para ir a la vista del inventario de todos los productos -->
+    <button id="btn-nav-productos" class="admin-nav-item activo">
+        <i class='bx bx-box'></i>
+        <span>Gestion de Productos</span>
+    </button>
+    
+    <!-- Boton para administrar las familias de productos (Categorias maestras) -->
+    <button id="btn-nav-categorias" class="admin-nav-item">
+        <i class='bx bx-category'></i>
+        <span>Gestion de Categorias</span>
+    </button>
+
+    <!-- Boton para ir a la vista donde se gestionan las entregas y pedidos de los clientes -->
+    <button id="btn-nav-pedidos" class="admin-nav-item">
+        <i class='bx bx-receipt'></i>
+        <span>Despacho de Pedidos</span>
+    </button>
+    
+    <!-- Boton para revisar a los usuarios que quieren unirse como proveedores -->
+    <button id="btn-nav-solicitudes" class="admin-nav-item">
+        <i class='bx bx-user-plus'></i>
+        <span>Solicitudes Proveedores</span>
+    </button>
+    
+    <!-- Linea decorativa para separar las opciones principales del cierre de sesion -->
+    <div class="admin-sidebar-divisor"></div>
+    
+    <!-- Boton de seguridad para salir de la cuenta (mata la sesion y redirige) -->
+    <button id="btn-nav-salir" class="admin-nav-item">
+        <i class='bx bx-log-out'></i>
+        <span>Cerrar Sesion</span>
+    </button>
+</nav>

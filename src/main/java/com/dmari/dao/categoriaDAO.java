@@ -40,4 +40,54 @@ public class categoriaDAO {
         
         return lista;
     }
+
+    public boolean cambiarEstado(int idCategoria, boolean nuevoEstado) {
+        // Hacemos un UPDATE solo a la columna de estado
+        String sql = "UPDATE categoria SET estado_activo = ? WHERE id_categoria_pk = ?";
+        
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+             
+            ps.setBoolean(1, nuevoEstado);
+            ps.setInt(2, idCategoria);
+            
+            // Si filasAfectadas es mayor a 0, significa que se actualizó correctamente
+            int filasAfectadas = ps.executeUpdate();
+            return filasAfectadas > 0;
+            
+        } catch (SQLException e) {
+            System.out.println("Error al cambiar estado de la categoria: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Metodo para crear una nueva categoria en la BD
+    public boolean insertarCategoria(String nombre, String descripcion) {
+        String sql = "INSERT INTO categoria (nombre, descripcion, estado_activo) VALUES (?, ?, 1)";
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nombre);
+            ps.setString(2, descripcion);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("Error al insertar categoria: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Metodo para editar el nombre o descripcion de una categoria
+    public boolean actualizarCategoria(int id, String nombre, String descripcion) {
+        String sql = "UPDATE categoria SET nombre = ?, descripcion = ? WHERE id_categoria_pk = ?";
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nombre);
+            ps.setString(2, descripcion);
+            ps.setInt(3, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("Error al actualizar categoria: " + e.getMessage());
+            return false;
+        }
+    }
+
 }

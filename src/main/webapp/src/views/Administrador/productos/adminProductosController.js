@@ -64,7 +64,8 @@ function prepararVistaAdminProductos() {
             
             // Escondemos la previsualizacion porque es un producto nuevo
             if (previewContenedor) previewContenedor.style.display = 'none';
-            if (inputImagen) inputImagen.required = true; // La imagen es obligatoria
+            if (previewImg) previewImg.src = '';
+            if (inputImagen) { inputImagen.value = ''; inputImagen.setAttribute('required', 'required'); } // La imagen es obligatoria
             
             if (modal) modal.classList.remove('oculto'); 
         });
@@ -87,32 +88,40 @@ function prepararVistaAdminProductos() {
             const precio = document.getElementById('prod-precio').value;
             const stock = document.getElementById('prod-stock').value;
             const idCategoria = document.getElementById('prod-categoria').value;
+            // Capturamos el texto de las etiquetas
+            const etiquetas = document.getElementById('prod-etiquetas') ? document.getElementById('prod-etiquetas').value : '';
             
             /*
-             * TÉCNICA DE ENVÍO URLSearchParams:
-             * Para evitar configuraciones complejas de JSON en el Servidor (Java Servlet), 
-             * empaquetamos los datos como si fueran un formulario tradicional clásico application/x-www-form-urlencoded.
-             * Java podrá leer esto nativamente con: request.getParameter("nombre");
+             * TECNICA DE ENVIO CON FormData:
+             * FormData permite enviar archivos fisicos combinados con texto.
+             * Es el estandar de HTML5 para subir imagenes al servidor.
              */
-            const parametros = new URLSearchParams();
-            parametros.append('nombre', nombre);
-            parametros.append('descripcion', descripcion);
-            parametros.append('precio', precio);
-            parametros.append('stock', stock);
-            parametros.append('id_categoria', idCategoria);
+            const formData = new FormData();
+            formData.append('nombre', nombre);
+            formData.append('descripcion', descripcion);
+            formData.append('precio', precio);
+            formData.append('stock', stock);
+            formData.append('id_categoria', idCategoria);
+            formData.append('etiquetas', etiquetas);
             
             // REGLA DE NEGOCIO: Los productos nacen activos en la tienda por defecto.
-            parametros.append('estado', 'true');
+            formData.append('estado', 'true');
             
             // ¿CREAR O EDITAR? Modificación dinámica de la carga útil
             if (productoEditandoId) {
-                parametros.append('id', productoEditandoId); // Avisamos a Java que esto es un UPDATE, no un INSERT
+                formData.append('id', productoEditandoId); // Avisamos a Java que esto es un UPDATE, no un INSERT
+            }
+
+            // Atrapamos el archivo fisico de la imagen si el usuario selecciono una
+            const inputImagenFile = document.getElementById('prod-imagen');
+            if (inputImagenFile && inputImagenFile.files.length > 0) {
+                formData.append('imagen', inputImagenFile.files[0]);
             }
             
             try {
                 // 2. TRANSMISIÓN AL SERVICIO
                 // El booleano `productoEditandoId !== null` dirige la ruta interna hacia el Servlet apropiado
-                await guardarProducto(parametros, productoEditandoId !== null);
+                await guardarProducto(formData, productoEditandoId !== null);
                 
                 // 3. POST-PROCESAMIENTO: Refresco gráfico sin recargar la web
                 alert('¡Producto guardado correctamente!');
@@ -151,17 +160,25 @@ function prepararVistaAdminProductos() {
                 
                 const catId = btnClic.getAttribute('data-categoria');
                 if (catId) document.getElementById('prod-categoria').value = catId;
+
+                if (document.getElementById('prod-etiquetas')) {
+                    document.getElementById('prod-etiquetas').value = btnClic.getAttribute('data-etiquetas') || '';
+                }
                 
                 // MODO EDICION - IMAGEN: Mostramos la imagen actual si el producto ya tiene una
                 const urlImagen = btnClic.getAttribute('data-imagen');
-                if (urlImagen && urlImagen !== 'null' && urlImagen !== 'undefined') {
+                
+                // Limpiamos el input file por si quedo basura de una edicion anterior
+                if (inputImagen) inputImagen.value = '';
+                
+                if (urlImagen && urlImagen !== 'null' && urlImagen !== 'undefined' && urlImagen.trim() !== '') {
                     if (previewImg) previewImg.src = urlImagen;
                     if (previewContenedor) previewContenedor.style.display = 'block';
-                    // Si ya tiene foto, NO obligamos al administrador a subir una nueva
-                    if (inputImagen) inputImagen.required = false; 
+                    // Si ya tiene foto, removemos el atributo para NO obligar a subir una nueva
+                    if (inputImagen) inputImagen.removeAttribute('required'); 
                 } else {
                     if (previewContenedor) previewContenedor.style.display = 'none';
-                    if (inputImagen) inputImagen.required = true;
+                    if (inputImagen) inputImagen.setAttribute('required', 'required');
                 }
 
                 document.getElementById('modal-titulo').innerText = 'Editar Producto';

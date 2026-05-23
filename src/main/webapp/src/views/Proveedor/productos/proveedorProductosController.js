@@ -1,95 +1,101 @@
-/*
-    objetivo de este archivo:
-    controlador encargado de la vista de productos del proveedor.
-    gestiona la peticion de los productos que le pertenecen al proveedor logueado,
-    los dibuja en la tabla usando el componente reutilizable y maneja los eventos 
-    de los botones (solicitar edicion, pausar, solicitar borrado).
-*/
 import { cargarComponente } from '../../../services/uiService.js';
-import { obtenerProductos, cambiarEstadoProducto } from '../../../services/productoService.js';
-import { crearFilaProducto } from '../../../components/tablas/filaProductoComponent.js';
 
-// carga la vista principal del proveedor
+/**
+ * Funcion de arranque para la vista del proveedor.
+ * 1. Inyecta el HTML en el contenedor principal.
+ * 2. Llama a la base de datos para cargar los productos.
+ * 3. Prepara la logica de la ventana emergente (Modal).
+ */
 export async function cargarVistaProveedorProductos() {
     await cargarComponente('component-main', './src/views/Proveedor/productos/proveedorProductos.html');
-    prepararVistaProveedor();
+    cargarMisProductos();
+    configurarModalProveedor();
 }
 
-function prepararVistaProveedor() {
-    const btnNuevaSolicitud = document.getElementById('btn-nueva-solicitud');
-    const modal = document.getElementById('modal-solicitud-proveedor');
-    const btnCerrar = document.getElementById('btn-cerrar-modal-prov');
-    const btnCancelar = document.getElementById('btn-cancelar-modal-prov');
-    const form = document.getElementById('form-solicitud-prov');
-    
-    // evento para abrir el modal al solicitar nuevo producto
-    if (btnNuevaSolicitud) {
-        btnNuevaSolicitud.addEventListener('click', () => {
-            document.getElementById('modal-solicitud-titulo').innerText = 'Solicitar Nuevo Producto';
-            form.reset();
+/**
+ * Se comunica con el backend de Java (Servlet) para traer unicamente
+ * los productos que le pertenecen al proveedor logueado y construye la tabla visual.
+ */
+async function cargarMisProductos() {
+    const tbody = document.getElementById('tabla-prov-productos-body');
+    // Proteccion: Si la tabla no existe en el HTML, detenemos la funcion
+    if (!tbody) return;
+
+    try {
+        // Peticion real al Servlet de Java
+        const respuesta = await fetch('productosProveedor');
+        if (!respuesta.ok) throw new Error('No se pudo conectar con el servidor');
+        
+        const misProductos = await respuesta.json();
+        
+        tbody.innerHTML = ''; // Limpiar mensaje de carga
+
+        // Recorremos el arreglo de productos y creamos una fila <tr> por cada uno
+        misProductos.forEach(prod => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>#00${prod.idProductoPk}</td>
+                <td><img src="${prod.urlRuta || 'src/img/productos/default/gato_programador.jpg'}" alt="imagen"></td>
+                <td>${prod.nombreProducto}</td>
+                <td>$${prod.precio}</td>
+                <td>${prod.stock} uds</td>
+                <td><span class="badge-estado ${prod.estado ? 'badge-activo' : 'badge-inactivo'}">${prod.estado ? 'ACTIVO' : 'INACTIVO'}</span></td>
+                <td>
+                    <button class="btn-editar"><i class='bx bx-edit'></i> Editar</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (error) {
+        console.error('Error al cargar mis productos:', error);
+    }
+}
+
+/**
+ * Mapea los botones del HTML y les asigna los eventos (clics) necesarios
+ * para abrir, limpiar y cerrar el formulario de agregar/editar productos.
+ */
+function configurarModalProveedor() {
+    const btnNuevo = document.getElementById('btn-nuevo-producto');
+    const modal = document.getElementById('modal-producto');
+    const btnCerrar = document.getElementById('btn-cerrar-modal');
+    const btnCancelar = document.getElementById('btn-cancelar-modal');
+
+    // EVENTO ABRIR: Resetea el formulario, carga las categorias y muestra la ventana
+    if (btnNuevo) {
+        btnNuevo.addEventListener('click', () => {
+            document.getElementById('modal-titulo').innerText = 'Nuevo Producto';
+            document.getElementById('form-producto').reset();
+            document.getElementById('contenedor-preview').style.display = 'none';
+            cargarCategorias(); // Llenamos el <select>
             modal.classList.remove('oculto');
         });
     }
 
-    // cerrar modal
+    // EVENTO CERRAR: Le agrega la clase 'oculto' al modal para que desaparezca
     const cerrarModal = () => modal.classList.add('oculto');
     if (btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
     if (btnCancelar) btnCancelar.addEventListener('click', cerrarModal);
-
-    // simulacion del envio del formulario (aqui iria el fetch a java)
-    if (form) {
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            alert('simulacion: tu solicitud ha sido enviada al administrador.');
-            cerrarModal();
-        });
-    }
-
-    // aplicamos delegacion de eventos a la tabla entera del proveedor
-    const tbody = document.getElementById('tabla-proveedor-productos-body');
-    if (tbody) {
-        tbody.addEventListener('click', async (evento) => {
-            const btnClic = evento.target.closest('button');
-            if (!btnClic) return;
-
-            const id = btnClic.getAttribute('data-id');
-
-            if (btnClic.classList.contains('btn-editar')) {
-                document.getElementById('modal-solicitud-titulo').innerText = 'Solicitar Edicion de Producto';
-                modal.classList.remove('oculto');
-                
-            } else if (btnClic.classList.contains('btn-estado')) {
-                const estadoActual = btnClic.getAttribute('data-estado') === 'true';
-                try {
-                    await cambiarEstadoProducto(id, !estadoActual);
-                    cargarMisProductos(); 
-                } catch (error) { alert('error al cambiar el estado del producto'); }
-                
-            } else if (btnClic.classList.contains('btn-eliminar')) {
-                if(confirm('¿seguro que deseas enviar una solicitud para eliminar este producto?')) {
-                    alert('simulacion: solicitud de borrado enviada al admin.');
-                }
-            }
-        });
-    }
-
-    cargarMisProductos();
 }
 
-async function cargarMisProductos() {
-    const tbody = document.getElementById('tabla-proveedor-productos-body');
-    if (!tbody) return;
+/**
+ * Hace una peticion al servidor para obtener las categorias maestras 
+ * (Reposteria, Decoracion, etc.) y llena el <select> del formulario.
+ */
+async function cargarCategorias() {
+    const select = document.getElementById('prod-categoria');
+    if (!select) return;
 
     try {
-        // pedimos especificamente los productos del proveedor en sesion
-        const misProductos = await obtenerProductos('?proveedor=true');
+        const respuesta = await fetch('categorias');
+        const categorias = await respuesta.json();
         
-        if (!misProductos) throw new Error('No se pudieron obtener los productos');
-        
-        tbody.innerHTML = '';
-
-        misProductos.forEach(prod => {
-            tbody.appendChild(crearFilaProducto(prod));
+        // Vaciamos el select y le ponemos una opcion por defecto
+        select.innerHTML = '<option value="">Seleccione una categoria...</option>';
+        categorias.forEach(cat => {
+            select.innerHTML += `<option value="${cat.id_categoria_pk}">${cat.nombre}</option>`;
         });
-    } catch (error) { console.error(error); }
+    } catch (error) {
+        console.error('Error al cargar categorias:', error);
+    }
 }

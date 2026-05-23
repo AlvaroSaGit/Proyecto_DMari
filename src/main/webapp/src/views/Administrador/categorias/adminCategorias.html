@@ -1,0 +1,50 @@
+<!-- VISTA PRINCIPAL DE CATEGORIAS DEL ADMINISTRADOR -->
+<section class="admin-vista-productos">
+    <div class="admin-header-seccion">
+        <h2>gestion de categorias</h2>
+        <button id="btn-nueva-categoria" class="btn-nuevo-prod"><i class='bx bx-plus'></i> Nueva Categoria</button>
+    </div>
+    
+    <div class="admin-tabla-contenedor">
+        <table class="tabla-admin">
+            <thead>
+                <tr>
+                    <th>id</th>
+                    <th>nombre</th>
+                    <th>descripcion</th>
+                    <th>estado</th>
+                    <th>acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-categorias-body">
+                <tr><td colspan="5" style="text-align:center;">cargando categorias...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- MODAL (VENTANA EMERGENTE) PARA CREAR CATEGORIAS -->
+<div id="modal-categoria" class="modal-admin oculto">
+    <div class="modal-contenido">
+        <div class="modal-header">
+            <h3 id="modal-titulo-cat">Nueva Categoria</h3>
+            <button id="btn-cerrar-modal-cat" class="btn-cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-categoria" class="admin-form">
+                <div class="admin-form__group">
+                    <label class="admin-form__label" for="cat-nombre">Nombre de la categoria</label>
+                    <input class="admin-form__input" type="text" id="cat-nombre" name="nombre" required>
+                </div>
+                <div class="admin-form__group">
+                    <label class="admin-form__label" for="cat-descripcion">Descripcion</label>
+                    <textarea class="admin-form__input" id="cat-descripcion" name="descripcion" rows="3" placeholder="Ej: Velas y arreglos para el hogar"></textarea>
+                </div>
+                <div class="admin-form__actions">
+                    <button type="button" id="btn-cancelar-modal-cat" class="admin-form__btn admin-form__btn--secondary">Cancelar</button>
+                    <button type="submit" class="admin-form__btn admin-form__btn--primary">Guardar Categoria</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

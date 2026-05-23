@@ -2,7 +2,7 @@
 USE DMari;
 
 -- ==========================================
--- 1. POBLACIÓN DE ROLES (Ahora con proveedor)
+-- 1. POBLACION DE ROLES (Ahora con proveedor)
 -- ==========================================
 INSERT INTO rol (tipo_rol) VALUES 
 ('administrador'), -- ID 1
@@ -11,7 +11,7 @@ INSERT INTO rol (tipo_rol) VALUES
 ('proveedor');     -- ID 4
 
 -- ==========================================
--- 2. POBLACIÓN DE CATEGORÍAS
+-- 2. POBLACION DE CATEGORIAS
 -- ==========================================
 INSERT INTO categoria (nombre, descripcion, estado_activo) VALUES 
 ('Reposteria', 'Postres, donas y dulces artesanales', true), -- ID 1
@@ -27,7 +27,7 @@ INSERT INTO usuario (nombre, apellido, id_rol_fk, estado_cuenta) VALUES
 ('Carlos', 'Suministros', 4, true); -- ID 3: Proveedor (Ahora sí con rol 4!)
 
 -- ==========================================
--- 4. REGISTRO DE CORREOS SATÉLITE
+-- 4. REGISTRO DE CORREOS SATELITE
 -- ==========================================
 INSERT INTO correo (id_usuario_fk, correo, correo_primario) VALUES 
 (1, 'alvaro@dmari.com', true),
@@ -35,7 +35,7 @@ INSERT INTO correo (id_usuario_fk, correo, correo_primario) VALUES
 (3, 'carlos@ceras.com', true);
 
 -- ==========================================
--- 5. ENCRIPTACOÓN DE CONTRASEÑAS (Formatos BLOB)
+-- 5. ENCRIPTACION DE CONTRASENAS (Formatos BLOB)
 -- ==========================================
 INSERT INTO credenciales (id_usuario, passwd_encript) VALUES 
 (1, AES_ENCRYPT('admin123', 'llave_dmari')),
@@ -43,7 +43,7 @@ INSERT INTO credenciales (id_usuario, passwd_encript) VALUES
 (3, AES_ENCRYPT('proveedor123', 'llave_dmari'));
 
 -- ==========================================
--- 6. COMPLETAR PERFIL DE CLIENTE (María - ID 2)
+-- 6. COMPLETAR PERFIL DE CLIENTE (Maria - ID 2)
 -- ==========================================
 INSERT INTO cliente (id_cliente_pk, direccion_envio, telefono_secundario, referencia_ubicacion) VALUES 
 (2, 'Calle 10 # 5-20, Giron', '3100000000', 'Casa blanca esquinera');
@@ -68,7 +68,7 @@ INSERT INTO producto (id_categoria_fk, nombre_producto, descripcion, precio, sto
 (1, 'Caja de Mini Donas', 'Set de 6 mini donas surtidas para regalo', 15000, 10, true);   -- prod 6 (reposteria)
 
 -- ==========================================
--- 9. REGISTRO DE IMÁGENES RELACIONADAS
+-- 9. REGISTRO DE IMAGENES RELACIONADAS
 -- ==========================================
 INSERT INTO imagenes (id_producto_fk, url_ruta, imagen_principal) VALUES 
 (1, 'src/img/productos/default/gato_programador.jpg', 1),
@@ -79,7 +79,7 @@ INSERT INTO imagenes (id_producto_fk, url_ruta, imagen_principal) VALUES
 (6, 'src/img/productos/default/gato_programador.jpg', 1);
 
 -- ==========================================
--- 10. POBLACIÓN DE ETIQUETAS
+-- 10. POBLACION DE ETIQUETAS
 -- ==========================================
 INSERT INTO etiqueta (nombre_etiqueta) VALUES 
 ('Aromaterapia'), -- ID 1
@@ -92,7 +92,7 @@ INSERT INTO etiqueta (nombre_etiqueta) VALUES
 ('San Valentin'); -- ID 8
 
 -- ==========================================
--- 11. ASIGNACIÓN DE ETIQUETAS A PRODUCTOS (Tabla intermedia)
+-- 11. ASIGNACION DE ETIQUETAS A PRODUCTOS (Tabla intermedia)
 -- ==========================================
 INSERT INTO producto_etiqueta (id_producto, id_etiqueta) VALUES 
 (1, 1), (1, 2), -- Vela de Vainilla: Aromaterapia y Relajacion
@@ -103,7 +103,7 @@ INSERT INTO producto_etiqueta (id_producto, id_etiqueta) VALUES
 (6, 6), (6, 3), (6, 8); -- Caja Mini Donas: Regalo, Dulce, San Valentin
 
 -- ==========================================
--- 12. RELACION PROVEEDOR - PRODUCTO (Otorgando dueños)
+-- 12. RELACION PROVEEDOR - PRODUCTO (Otorgando duenos)
 -- ==========================================
 -- Carlos es el proveedor 1 en la tabla proveedor
 INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) VALUES 

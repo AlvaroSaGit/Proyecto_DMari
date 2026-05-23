@@ -44,4 +44,51 @@ public class CategoriaController extends HttpServlet {
             out.print(jsonString);
         }
     }
+    
+    /*
+        dopost: atiende las peticiones para modificar datos (crear, editar o cambiar estado).
+    */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+            
+        // 1. Leemos si JavaScript nos mando una bandera de "accion"
+        String accion = request.getParameter("accion");
+        categoriaDAO dao = new categoriaDAO();
+        
+        // 2. Si la accion es cambiar_estado, ejecutamos esto y cortamos la funcion
+        if ("cambiar_estado".equals(accion)) {
+            int id = Integer.parseInt(request.getParameter("id"));
+            boolean nuevoEstado = Boolean.parseBoolean(request.getParameter("estado"));
+            
+            if (dao.cambiarEstado(id, nuevoEstado)) {
+                response.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
+            return; // Detenemos la ejecucion aqui para no seguir leyendo abajo
+        }
+
+        // 3. Si no fue "cambiar_estado", entonces es Crear o Editar una categoria desde el Modal
+        String idStr = request.getParameter("id");
+        String nombre = request.getParameter("nombre");
+        String descripcion = request.getParameter("descripcion");
+        
+        boolean exito;
+        
+        if (idStr != null && !idStr.isEmpty()) {
+            // Si viene con ID, significa que estamos Editando
+            int id = Integer.parseInt(idStr);
+            exito = dao.actualizarCategoria(id, nombre, descripcion);
+        } else {
+            // Si no trae ID, es una categoria nueva
+            exito = dao.insertarCategoria(nombre, descripcion);
+        }
+        
+        if (exito) {
+            response.setStatus(HttpServletResponse.SC_OK);
+        } else {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
+    }
 }

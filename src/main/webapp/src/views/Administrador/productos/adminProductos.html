@@ -2,12 +2,12 @@
   VISTA PRINCIPAL DE PRODUCTOS DEL ADMINISTRADOR
   Nota de Arquitectura: Esta vista se inyecta en el contenedor principal (#component-main).
   Gracias al Enrutador (router.js) y a la clase global 'layout-dashboard', esta tabla se acomoda 
-  automáticamente a la derecha, mientras que la barra lateral oscura (adminSideBar.html) se queda a la izquierda.
+  automaticamente a la derecha, mientras que la barra lateral oscura (adminSideBar.html) se queda a la izquierda.
 -->
 <section class="admin-vista-productos">
     <div class="admin-header-seccion">
         <h2>gestion de productos</h2>
-        <!-- Este botón es escuchado por JS para limpiar el formulario y abrir la ventana flotante (Modal) -->
+        <!-- Este boton es escuchado por JS para limpiar el formulario y abrir la ventana flotante (Modal) -->
         <button id="btn-nuevo-producto" class="btn-nuevo-prod"><i class='bx bx-plus'></i> Nuevo Producto</button>
     </div>
     
@@ -24,9 +24,9 @@
                 </tr>
             </thead>
             <!-- 
-              El cuerpo de la tabla (tbody) nace vacío (solo con un mensaje de carga). 
+              El cuerpo de la tabla (tbody) nace vacio (solo con un mensaje de carga). 
               El controlador hace un 'fetch' a la Base de Datos en Java, y usa el componente modular 
-              'filaProductoComponent.js' para inyectar los <tr> reales aquí adentro.
+              'filaProductoComponent.js' para inyectar los <tr> reales aqui adentro.
             -->
             <tbody id="tabla-productos-body">
                 <tr><td colspan="6" style="text-align:center;">cargando productos...</td></tr>
@@ -39,17 +39,17 @@
   ===================================================================
   MODAL (VENTANA EMERGENTE) PARA CREAR O EDITAR PRODUCTOS
   ===================================================================
-  ¿Por qué está oculto?
-  Tiene la clase CSS 'oculto' que aplica 'display: none'. Se mantiene escondido en el fondo 
+  Por que esta oculto?
+  Tiene la clase CSS 'oculto' que aplica 'display: none'. Se mantiene escondido en el fondo
   hasta que JavaScript le quita esa clase al darle clic a "Nuevo Producto" o a "Editar".
-  Este mismo bloque HTML sirve para un doble propósito: Crear nuevos o Actualizar existentes.
+  Este mismo bloque HTML sirve para un doble proposito: Crear nuevos o Actualizar existentes.
 -->
 <div id="modal-producto" class="modal-admin oculto">
     <div class="modal-contenido">
         <div class="modal-header">
-            <!-- El título cambia dinámicamente con JS ("Nuevo Producto" vs "Editar Producto") -->
+            <!-- El titulo cambia dinamicamente con JS ("Nuevo Producto" vs "Editar Producto") -->
             <h3 id="modal-titulo">Nuevo Producto</h3>
-            <!-- Botón para cerrar el modal volviéndole a poner la clase 'oculto' -->
+            <!-- Boton para cerrar el modal volviendole a poner la clase 'oculto' -->
             <button id="btn-cerrar-modal" class="btn-cerrar">&times;</button>
         </div>
         <div class="modal-body">
@@ -59,15 +59,15 @@
                     <input class="admin-form__input" type="text" id="prod-nombre" name="nombre" required>
                 </div>
                 <div class="admin-form__group">
-                    <label class="admin-form__label" for="prod-descripcion">Descripción</label>
+                    <label class="admin-form__label" for="prod-descripcion">Descripcion</label>
                     <textarea class="admin-form__input" id="prod-descripcion" name="descripcion" rows="3" placeholder="Detalles del producto..."></textarea>
                 </div>
                 <div class="admin-form__group">
-                    <label class="admin-form__label" for="prod-categoria">Categoría</label>
+                    <label class="admin-form__label" for="prod-categoria">Categoria</label>
                     <!-- 
-                      El <select> nace vacío en el HTML.
-                      JavaScript hace una petición a la Base de Datos para traer las categorías 
-                      reales (Repostería, Decoración, etc.) y las inyecta aquí como <option>.
+                      El <select> nace vacio en el HTML.
+                      JavaScript hace una peticion a la Base de Datos para traer las categorias 
+                      reales (Reposteria, Decoracion, etc.) y las inyecta aqui como <option>.
                     -->
                     <select class="admin-form__input" id="prod-categoria" name="id_categoria" required>
                     </select>
@@ -81,23 +81,31 @@
                     <input class="admin-form__input" type="number" id="prod-stock" name="stock" required>
                 </div>
                 <div class="admin-form__group">
+                    <label class="admin-form__label" for="prod-etiquetas">Etiquetas (separadas por coma)</label>
+                    <!-- 
+                      El administrador podra escribir etiquetas nuevas o existentes separadas por coma.
+                      Java se encargara de leer este texto, cortarlo y guardarlo en la base de datos.
+                    -->
+                    <input class="admin-form__input" type="text" id="prod-etiquetas" name="etiquetas" placeholder="Ej: Aromaterapia, Dulce, Dia de la Madre">
+                </div>
+                <div class="admin-form__group">
                     <label class="admin-form__label" for="prod-imagen">Imagen del producto</label>
                     <!-- 
-                      CONTENEDOR DE PREVISUALIZACIÓN DE IMAGEN
+                      CONTENEDOR DE PREVISUALIZACION DE IMAGEN
                       Nace con 'display: none'. Solo se hace visible ('display: block') desde JS cuando:
-                      1. El usuario selecciona un archivo válido de su computadora (leyéndolo localmente).
+                      1. El usuario selecciona un archivo valido de su computadora (leyendolo localmente).
                       2. El admin le da clic a "Editar" un producto que ya tiene una imagen guardada en la BD.
                     -->
                     <div id="contenedor-preview" style="display: none; margin-bottom: 10px; text-align: center; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ccc;">
-                        <img id="prod-imagen-preview" src="" alt="Previsualización" style="max-width: 100%; max-height: 150px; border-radius: 6px; object-fit: contain;">
+                        <img id="prod-imagen-preview" src="" alt="Previsualizacion" style="max-width: 100%; max-height: 150px; border-radius: 6px; object-fit: contain;">
                     </div>
                     <input class="admin-form__input" type="file" id="prod-imagen" name="imagen" accept="image/png, image/jpeg, image/webp" required>
                 </div>
                 <div class="admin-form__actions">
                     <button type="button" id="btn-cancelar-modal" class="admin-form__btn admin-form__btn--secondary">Cancelar</button>
                     <!-- 
-                      Al darle "submit", JS intercepta el evento, frena la recarga de la página, 
-                      toma todos estos datos y los envía al Servlet de Java por detrás (Fetch).
+                      Al darle "submit", JS intercepta el evento, frena la recarga de la pagina, 
+                      toma todos estos datos y los envia al Servlet de Java por detras (Fetch).
                     -->
                     <button type="submit" class="admin-form__btn admin-form__btn--primary">Guardar Producto</button>
                 </div>
