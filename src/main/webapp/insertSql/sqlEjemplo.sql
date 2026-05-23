@@ -85,7 +85,9 @@ INSERT INTO etiqueta (nombre_etiqueta) VALUES
 ('Dulce'),        -- ID 3
 ('Decoracion'),   -- ID 4
 ('Arequipe'),     -- ID 5
-('Regalo');       -- ID 6
+('Regalo'),       -- ID 6
+('Dia de la Madre'), -- ID 7
+('San Valentin'); -- ID 8
 
 -- ==========================================
 -- 11. ASIGNACIÓN DE ETIQUETAS A PRODUCTOS (Tabla intermedia)
@@ -93,6 +95,17 @@ INSERT INTO etiqueta (nombre_etiqueta) VALUES
 INSERT INTO producto_etiqueta (id_producto, id_etiqueta) VALUES 
 (1, 1), (1, 2), -- Vela de Vainilla: Aromaterapia y Relajacion
 (2, 3),         -- Dona Glaseada: Dulce
-(3, 4), (3, 2), -- Vela Flores: Decoracion y Relajacion
+(3, 4), (3, 2), (3, 7), -- Vela Flores: Decoracion, Relajacion, Dia de la Madre
 (4, 3), (4, 5), -- Dona de Arequipe: Dulce y Arequipe
-(5, 6), (5, 1); -- Caja Mini Velas: Regalo y Aromaterapia
+(5, 6), (5, 1), (5, 8); -- Caja Mini Velas: Regalo, Aromaterapia, San Valentin
+
+-- ==========================================
+-- 12. RELACION PROVEEDOR - PRODUCTO (Otorgando dueños)
+-- ==========================================
+-- Carlos es el proveedor 1 en la tabla proveedor
+INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) VALUES 
+(1, 1),
+(1, 2),
+(1, 3),
+(1, 4),
+(1, 5);

@@ -2,7 +2,7 @@
 import { cargarComponente } from '../../../services/uiService.js';
 // Importamos nuestro servicio que hace el trabajo sucio de comunicarse con Java
 import { obtenerProductos, guardarProducto, eliminarProducto, cambiarEstadoProducto } from '../../../services/productoService.js';
-// importamos el nuevo componente para modularizar la creacion de filas
+// importamos el componente de tabla para modularizar la creacion de filas
 import { crearFilaProducto } from '../../../components/tablas/filaProductoComponent.js';
 
 // Variable global en este archivo para saber el estado del formulario.

@@ -4,8 +4,8 @@ import { cargarComponente } from '../../../services/uiService.js';
 import { agregarAlCarrito } from '../../../components/carritoSideBar/carritoController.js';
 // importamos nuestro componente de tarjeta unificado y seguro
 import { crearTarjetaHTML } from '../../../components/tarjeta/tarjetaComponent.js';
-// importamos el servicio de filtrado para separar los productos por seccion
-import { filtrarProductos } from '../../../services/filtroService.js';
+// importamos el servicio de filtrado exacto para sentar bases solidas en las secciones
+import { filtrarPorCategoriaExacta } from '../../../services/filtroService.js';
 
 export async function cargarVistaInicio() {
     // cargamos la vista del inicio en el contenedor principal
@@ -37,9 +37,13 @@ async function cargarProductosDesdeBD() {
 }
 
 function renderizarProductos(productos) {
-    // Usamos la funcion del servicio para filtrar las donas y velas
-    const listaDonas = filtrarProductos(productos, 'dona');
-    const listaVelas = filtrarProductos(productos, 'vela');
+    // usamos la nueva funcion exacta para no confundir categorias.
+    // asi, si un producto se llama "vela de flor", no aparecera jamas en la seccion de floristeria.
+    const listaDonas = filtrarPorCategoriaExacta(productos, 'dona');
+    const listaVelas = filtrarPorCategoriaExacta(productos, 'vela');
+    
+    // en el futuro, cuando se agregue la seccion html de floristeria, solo se requerira esta linea:
+    // const listaFloristeria = filtrarPorCategoriaExacta(productos, 'floristeria');
 
     // Inyectamos las donas en su seccion exclusiva
     inyectarEnContenedor('contenedor-donas', listaDonas);

@@ -4,8 +4,8 @@ import { agregarAlCarrito } from '../../../components/carritoSideBar/carritoCont
 import { obtenerProductos } from '../../../services/productoService.js';
 // importamos nuestro nuevo componente ui de tarjeta
 import { crearTarjetaHTML } from '../../../components/tarjeta/tarjetaComponent.js';
-// importamos nuestro nuevo servicio de filtrado y ordenamiento logico
-import { filtrarProductos, ordenarProductos } from '../../../services/filtroService.js';
+// importamos los pilares de filtrado y ordenamiento logico
+import { busquedaGeneral, filtrarPorPrecio, filtrarPorCategoriaExacta, filtrarPorEtiqueta, ordenarProductos } from '../../../services/filtroService.js';
 
 // Variables globales para manejar el estado del catalogo sin recargar la BD
 let todosLosProductos = [];
@@ -112,8 +112,8 @@ function configurarBuscadorFiltros() {
 
     // Si tienes un input (caja de texto) en tu filtro.html para buscar, atrapara cuando escribas
     contenedorFiltros.addEventListener('input', (evento) => {
-        if (evento.target.tagName === 'INPUT' && evento.target.type === 'text') {
-            aplicarFiltroInteligente(evento.target.value);
+        if (evento.target.id === 'input-busqueda-texto') {
+            aplicarFiltroInteligente(evento.target.value, 'general');
         }
     });
     
@@ -130,7 +130,9 @@ function configurarBuscadorFiltros() {
             document.getElementById('precio-max').value = '';
             precioMinActual = 0; precioMaxActual = Infinity;
 
-            aplicarFiltroInteligente(btnFiltro.dataset.filtro);
+            // leemos el tipo de filtro y el termino desde el boton
+            const tipo = btnFiltro.dataset.tipo || 'general';
+            aplicarFiltroInteligente(btnFiltro.dataset.filtro, tipo);
         }
     });
     
@@ -165,15 +167,26 @@ function configurarBuscadorFiltros() {
 /**
  * El cerebro del sistema: Mapea palabras maestras a palabras reales de la BD y filtra.
  */
-export function aplicarFiltroInteligente(terminoBusqueda) {
+export function aplicarFiltroInteligente(terminoBusqueda, tipoFiltro = 'general') {
     // Guardamos el termino actual en memoria por si el usuario cambia el orden luego
     terminoBusquedaActual = terminoBusqueda || '';
 
-    // 1. Delegamos el filtrado puro a nuestro servicio
-    const listaFiltrada = filtrarProductos(todosLosProductos, terminoBusquedaActual, precioMinActual, precioMaxActual);
+    let listaFiltrada;
+
+    // 1. aplicamos el filtro de texto segun el tipo (categoria, etiqueta o general)
+    if (tipoFiltro === 'categoria') {
+        listaFiltrada = filtrarPorCategoriaExacta(todosLosProductos, terminoBusquedaActual);
+    } else if (tipoFiltro === 'etiqueta') {
+        listaFiltrada = filtrarPorEtiqueta(todosLosProductos, terminoBusquedaActual);
+    } else {
+        listaFiltrada = busquedaGeneral(todosLosProductos, terminoBusquedaActual);
+    }
     
-    // 2. Delegamos el ordenamiento a nuestro servicio
-    const listaOrdenada = ordenarProductos(listaFiltrada, criterioOrdenActual);
+    // 2. sobre el resultado anterior, aplicamos el filtro de precio
+    const listaFiltradaPrecio = filtrarPorPrecio(listaFiltrada, precioMinActual, precioMaxActual);
+    
+    // 3. delegamos el ordenamiento a nuestro servicio
+    const listaOrdenada = ordenarProductos(listaFiltradaPrecio, criterioOrdenActual);
     
     // 3. Dibujamos en pantalla el resultado final
     dibujarGridCatalogo(listaOrdenada);
@@ -191,9 +204,9 @@ async function cargarBotonesFiltroDinamicos() {
             const contenedorCat = document.getElementById('contenedor-categorias-filtro');
             
             if (contenedorCat) {
-                contenedorCat.innerHTML = '<button class="btn-filtro btn-macro-filtro activo" data-filtro="">Todas</button>';
+                contenedorCat.innerHTML = '<button class="btn-filtro btn-macro-filtro activo" data-tipo="general" data-filtro="">Todas</button>';
                 categoriasBD.forEach(cat => {
-                    contenedorCat.innerHTML += `<button class="btn-filtro btn-macro-filtro" data-filtro="${cat.nombre}">${cat.nombre}</button>`;
+                    contenedorCat.innerHTML += `<button class="btn-filtro btn-macro-filtro" data-tipo="categoria" data-filtro="${cat.nombre}">${cat.nombre}</button>`;
                 });
             }
         }
@@ -209,7 +222,7 @@ async function cargarBotonesFiltroDinamicos() {
             if (contenedorTag) {
                 contenedorTag.innerHTML = ''; // borramos el texto de carga
                 etiquetasBD.forEach(tag => {
-                    contenedorTag.innerHTML += `<button class="btn-filtro btn-macro-filtro" data-filtro="${tag.nombre}">${tag.nombre}</button>`;
+                    contenedorTag.innerHTML += `<button class="btn-filtro btn-macro-filtro" data-tipo="etiqueta" data-filtro="${tag.nombre}">${tag.nombre}</button>`;
                 });
             }
         }

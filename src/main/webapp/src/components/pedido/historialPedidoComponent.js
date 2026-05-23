@@ -1,19 +1,25 @@
 /*
     objetivo de este archivo:
-    componente reutilizable que fabrica el html de una tarjeta o bloque de pedido
-    para el historial del cliente. al separar esto, limpiamos el controlador y 
-    mantenemos el diseno visual centralizado.
+    este componente visual aisla la logica de construccion html para el historial de compras.
+    recibe un objeto de pedido agrupado y retorna un elemento div listo para ser inyectado 
+    en la interfaz, mejorando la legibilidad y el mantenimiento del controlador principal.
 */
 
 export function crearBloquePedido(pedido) {
-    // se asigna un color semantico dependiendo de en que fase se encuentra el pedido
+    // se define un color por defecto (gris oscuro) para estados desconocidos
     let colorEstado = '#333';
+    
+    // se asigna un color semantico dependiendo de la fase actual del pedido.
+    // tolowercase garantiza que la comparacion no falle por diferencias de mayusculas.
     if (pedido.estado.toLowerCase() === 'entregado') colorEstado = 'green';
     if (pedido.estado.toLowerCase() === 'pendiente') colorEstado = 'orange';
 
+    // variable para acumular el codigo html de cada producto individual dentro de la factura
     let htmlProductos = '';
-    // se genera una fila por cada producto comprado dentro de esta factura
+    
+    // se itera sobre el sub-arreglo de productos que pertenecen exclusivamente a este pedido
     pedido.productos.forEach(prod => {
+        // se concatena una fila limpia con la cantidad, el nombre y el subtotal formateado a 2 decimales
         htmlProductos += `
             <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:5px 0; font-size:0.9rem;">
                 <span>${prod.cantidad}x ${prod.producto}</span>
@@ -22,12 +28,16 @@ export function crearBloquePedido(pedido) {
         `;
     });
 
-    // se crea el contenedor principal de la factura
+    // se instancia un nuevo elemento div en la memoria del navegador (dom virtual)
     const div = document.createElement('div');
+    
+    // se asigna una clase css por si en el futuro se desea aplicar estilos desde una hoja externa
     div.className = 'item-historial';
+    
+    // se inyectan los estilos en linea para asegurar que la tarjeta se vea como un bloque separado
     div.style.cssText = 'display:block; margin-bottom:15px; border:1px solid #ddd; padding:15px; border-radius:8px; background:#fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02);';
     
-    // se inyecta la informacion agrupada
+    // se ensambla el esqueleto principal de la tarjeta inyectando las variables del pedido y el acumulado de productos
     div.innerHTML = `
         <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:2px solid #f5f5f5; padding-bottom:10px;">
             <div>
@@ -44,5 +54,7 @@ export function crearBloquePedido(pedido) {
             ${htmlProductos}
         </div>
     `;
+    
+    // se retorna el nodo html completo y listo para ser adjuntado al contenedor principal
     return div;
 }

@@ -38,7 +38,9 @@ public class productoDAO {
              "p.estado, " +
              "p.id_categoria_fk, " +
              "i.url_ruta, " +
-             "c.nombre AS nombre_categoria " +
+             "c.nombre AS nombre_categoria, " +
+             // subconsulta eficiente para traer multiples etiquetas separadas por coma
+             "(SELECT GROUP_CONCAT(e.nombre_etiqueta SEPARATOR ',') FROM producto_etiqueta pe INNER JOIN etiqueta e ON pe.id_etiqueta = e.id_etiqueta_pk WHERE pe.id_producto = p.id_producto_pk) AS etiquetas_str " +
              "FROM producto p " +
               // busqueda en la tabla imagenes sobre la id si coinciden y si es la principal
              "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk " +
@@ -97,6 +99,17 @@ public class productoDAO {
                 prod.setIdCategoriaFk(rs.getInt("id_categoria_fk"));
                 prod.setCategoria(rs.getString("nombre_categoria"));
                 
+                // extraemos la cadena de multiples etiquetas y la convertimos en un arreglo (lista)
+                String etiquetasStr = rs.getString("etiquetas_str");
+                ArrayList<String> listaTags = new ArrayList<>();
+                if (etiquetasStr != null && !etiquetasStr.isEmpty()) {
+                    String[] tagsArray = etiquetasStr.split(",");
+                    for (String t : tagsArray) {
+                        listaTags.add(t);
+                    }
+                }
+                prod.setEtiquetas(listaTags);
+
                 /*metemos el producto ya lleno en la lista general*/
                 lista.add(prod);
             }
@@ -122,7 +135,9 @@ public class productoDAO {
              "p.estado, " +
              "p.id_categoria_fk, " +
              "i.url_ruta, " +
-             "c.nombre AS nombre_categoria " +
+             "c.nombre AS nombre_categoria, " +
+             // aplicamos la misma subconsulta para el panel del proveedor
+             "(SELECT GROUP_CONCAT(e.nombre_etiqueta SEPARATOR ',') FROM producto_etiqueta pe INNER JOIN etiqueta e ON pe.id_etiqueta = e.id_etiqueta_pk WHERE pe.id_producto = p.id_producto_pk) AS etiquetas_str " +
              "FROM producto p " +
              "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk AND i.imagen_principal = 1 " +
              "LEFT JOIN categoria c ON p.id_categoria_fk = c.id_categoria_pk " +
@@ -149,6 +164,16 @@ public class productoDAO {
                      
                      prod.setIdCategoriaFk(rs.getInt("id_categoria_fk"));
                      prod.setCategoria(rs.getString("nombre_categoria"));
+                     
+                     String etiquetasStr = rs.getString("etiquetas_str");
+                     ArrayList<String> listaTags = new ArrayList<>();
+                     if (etiquetasStr != null && !etiquetasStr.isEmpty()) {
+                         String[] tagsArray = etiquetasStr.split(",");
+                         for (String t : tagsArray) {
+                             listaTags.add(t);
+                         }
+                     }
+                     prod.setEtiquetas(listaTags);
                      
                      lista.add(prod);
                  }
