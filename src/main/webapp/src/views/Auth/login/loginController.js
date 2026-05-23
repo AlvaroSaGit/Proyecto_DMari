@@ -71,12 +71,12 @@ function prepararFormularioLogin() {
                 formulario.reset();
                 
                 // redirigimos a la vista correspondiente segun el rol asignado en la base de datos.
-                // nota: verifica y cambia estos numeros (1, 2 o 3) por los ids exactos de tu tabla 'rol'
-                if (datos.idRol === 3) { // asumiendo que 3 es administrador
+                // Se corrigen los IDs segun los INSERTs reales en la BD (Admin = 1, Proveedor = 4, Cliente = 2)
+                if (datos.idRol === 1) { 
                     window.location.hash = 'admin-productos';
-                } else if (datos.idRol === 2) { // asumiendo que 2 es proveedor / repartidor
+                } else if (datos.idRol === 4) { 
                     window.location.hash = 'proveedor-productos';
-                } else { // asumiendo que 1 es el cliente
+                } else { // Cliente (ID 2) u otros roles
                     window.location.hash = 'inicio';
                 }
                 

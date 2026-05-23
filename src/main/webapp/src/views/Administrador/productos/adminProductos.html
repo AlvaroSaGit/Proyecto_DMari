@@ -38,6 +38,16 @@
                     <input class="admin-form__input" type="text" id="prod-nombre" name="nombre" required>
                 </div>
                 <div class="admin-form__group">
+                    <label class="admin-form__label" for="prod-descripcion">Descripción</label>
+                    <textarea class="admin-form__input" id="prod-descripcion" name="descripcion" rows="3" placeholder="Detalles del producto..."></textarea>
+                </div>
+                <div class="admin-form__group">
+                    <label class="admin-form__label" for="prod-categoria">Categoría</label>
+                    <select class="admin-form__input" id="prod-categoria" name="id_categoria" required>
+                        <!-- Las opciones se inyectarán desde la BD automáticamente con JS -->
+                    </select>
+                </div>
+                <div class="admin-form__group">
                     <label class="admin-form__label" for="prod-precio">Precio</label>
                     <input class="admin-form__input" type="number" id="prod-precio" name="precio" step="0.01" required>
                 </div>

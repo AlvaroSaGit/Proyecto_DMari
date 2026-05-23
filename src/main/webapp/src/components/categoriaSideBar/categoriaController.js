@@ -1,7 +1,5 @@
 // importamos el servicio de ui
 import { cargarComponente } from '../../services/uiService.js';
-// importamos la funcion de filtros del catalogo
-import { aplicarFiltroInteligente } from '../../views/Cliente/catalogo/productosController.js';
 // importamos el enrutador para poder viajar entre paginas
 import { navegarA } from '../../router/router.js';
 
@@ -30,22 +28,33 @@ export async function inicializarCategoria() {
             // se la ponemos solo al que acabamos de clickear
             this.classList.add('activo');
             
-            const categoriaSeleccionada = this.getAttribute('data-categoria');
+            // Extraemos la categoria limpiando espacios fantasma y comparamos en minusculas por seguridad
+            const categoriaRaw = (this.getAttribute('data-categoria') || '').trim();
+            const esBotonTodo = categoriaRaw.toLowerCase() === 'todo' || categoriaRaw === '';
+            
+            // Transformamos "reposteria" a "Reposteria" para que coincida exactamente con MySQL
+            const categoriaFormateada = categoriaRaw.charAt(0).toUpperCase() + categoriaRaw.slice(1);
             
             // revisamos si el usuario ya se encuentra en la pantalla del catalogo
-            const hashActual = window.location.hash.replace('#', '');
+            const hashActual = window.location.hash.replace(/^#\/?/, '');
             
             if (hashActual === 'catalogo') {
                 // si ya estamos en el catalogo, aplicamos el filtro al instante sin recargar la pagina
-                if (categoriaSeleccionada === 'todo') {
-                    aplicarFiltroInteligente('', 'general');
+                // Usamos la funcion global para evitar el error de doble instancia de modulos ES6
+                if (typeof window.aplicarFiltroCatalogo === 'function') {
+                    if (esBotonTodo) {
+                        window.aplicarFiltroCatalogo('', 'general');
+                    } else {
+                        window.aplicarFiltroCatalogo(categoriaFormateada, 'categoria');
+                    }
                 } else {
-                    aplicarFiltroInteligente(categoriaSeleccionada, 'categoria');
+                    // Respaldo por si la funcion no cargo a tiempo
+                    window.location.reload();
                 }
             } else {
                 // si estamos en otra pantalla (como el inicio), guardamos el filtro en memoria
                 // y le ordenamos al router que nos lleve al catalogo
-                sessionStorage.setItem('filtroCategoriaSidebar', categoriaSeleccionada === 'todo' ? '' : categoriaSeleccionada);
+                sessionStorage.setItem('filtroCategoriaSidebar', esBotonTodo ? '' : categoriaFormateada);
                 navegarA('catalogo');
             }
             

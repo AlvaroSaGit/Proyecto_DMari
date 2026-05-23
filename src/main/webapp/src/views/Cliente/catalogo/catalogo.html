@@ -1,0 +1,24 @@
+<div class="catalogo-wrapper" style="padding: 20px;">
+    <!-- Sección superior: Título a la izquierda, filtros a la derecha -->
+    <section class="catalogo-top-section" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+        <h1 style="margin: 0; font-size: 1.8rem; color: #333; transition: all 0.3s ease;">Catálogo de Productos</h1>
+    
+        <!-- Filtros simples agregados -->
+        <div class="filtros-simples">
+            <input type="text" id="filtro-texto" placeholder="Buscar producto...">
+            <select id="filtro-etiqueta">
+                <option value="">Todas las etiquetas</option>
+            </select>
+            <select id="filtro-orden">
+                <option value="relevancia">Relevancia</option>
+                <option value="precio-asc">Menor precio</option>
+                <option value="precio-desc">Mayor precio</option>
+            </select>
+        </div>
+    </section>
+
+    <!-- Contenedor principal donde JS inyectará las tarjetas de los productos -->
+    <div id="catalogo-productos-grid" class="producto-grid">
+        <!-- Las tarjetas se generan dinámicamente aquí -->
+    </div>
+</div>

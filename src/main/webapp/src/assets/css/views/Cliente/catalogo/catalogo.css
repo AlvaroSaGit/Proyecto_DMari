@@ -1,102 +1,21 @@
-/* Estilos específicos para la vista del Catálogo */
-
-/* Importar las variables globales */
-@import url("../../../base/variables.css");
-
-.catalogo-container {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-}
-
-.catalogo-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-}
-
-/* Contenedor principal del panel de filtros */
-.catalogo-filtros-avanzados {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 30px;
-    background-color: #fdfdfd;
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-    width: 100%;
-    max-width: 900px;
-}
-
-/* Agrupación individual */
-.filtro-grupo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    flex: 1 1 250px;
-}
-
-.filtro-grupo h3 {
-    font-size: 1rem;
-    color: #555;
-    margin: 0;
-}
-
-/* Contenedores internos de los botones */
-.opciones-filtro {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.btn-filtro {
-    background-color: transparent;
-    border: 2px solid var(--color_rosa);
-    color: #333;
-    padding: 8px 25px;
-    border-radius: 25px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.3s ease;
-}
-
-.btn-filtro:hover, 
-.btn-filtro.activo {
-    background-color: var(--color_rosa);
-    color: var(--color_apartados);
-}
-
-/* Estilos para los campos de Precio */
-.opciones-precio {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.input-precio {
-    width: 80px;
-    padding: 8px;
-    border: 2px solid #eee;
-    border-radius: 20px;
-    outline: none;
-    text-align: center;
-    transition: border-color 0.3s;
-}
-
-.input-precio:focus {
-    border-color: var(--color_rosa);
-}
-
-/* Estilos para la cuadrícula (Grid) de productos */
+/* Forzamos la cuadrícula para que los productos se acomoden perfectamente */
 .producto-grid {
     display: grid;
-    /* Crea columnas automáticas de mínimo 250px de ancho */
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 25px;
-    padding-top: 20px;
+    padding: 10px;
+}
+
+.filtros-simples {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filtros-simples select, .filtros-simples input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    outline: none;
 }

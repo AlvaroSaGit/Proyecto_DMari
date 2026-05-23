@@ -38,9 +38,10 @@ async function cargarProductosDesdeBD() {
 
 function renderizarProductos(productos) {
     // se extraen los productos segun los tres nuevos pilares de la tienda
-    const listaReposteria = filtrarPorCategoriaExacta(productos, 'reposteria');
-    const listaDecoracion = filtrarPorCategoriaExacta(productos, 'decoracion');
-    const listaFloristeria = filtrarPorCategoriaExacta(productos, 'floristeria');
+    // IMPORTANTE: Respetamos las mayusculas tal cual vienen de la Base de Datos
+    const listaReposteria = filtrarPorCategoriaExacta(productos, 'Reposteria');
+    const listaDecoracion = filtrarPorCategoriaExacta(productos, 'Decoracion');
+    const listaFloristeria = filtrarPorCategoriaExacta(productos, 'Floristeria');
 
     // intentamos inyectar en las vitrinas separadas
     const okReposteria = inyectarEnContenedor('contenedor-reposteria', listaReposteria);

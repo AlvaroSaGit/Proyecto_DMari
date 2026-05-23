@@ -1,34 +1,38 @@
 import { cargarComponente } from '../../../services/uiService.js';
 import { agregarAlCarrito } from '../../../components/carritoSideBar/carritoController.js';
-// importamos el servicio que maneja los datos
-import { obtenerProductos } from '../../../services/productoService.js';
 // importamos nuestro nuevo componente ui de tarjeta
 import { crearTarjetaHTML } from '../../../components/tarjeta/tarjetaComponent.js';
 // importamos los pilares de filtrado y ordenamiento logico
-import { busquedaGeneral, filtrarPorPrecio, filtrarPorCategoriaExacta, filtrarPorEtiqueta, ordenarProductos } from '../../../services/filtroService.js';
+import { busquedaGeneral, filtrarPorCategoriaExacta, filtrarPorEtiqueta, ordenarProductos } from '../../../services/filtroService.js';
 
 // Variables globales para manejar el estado del catalogo sin recargar la BD
 let todosLosProductos = [];
-let eventosAsignados = false;
-// Variables de estado para recordar que estamos buscando y como ordenarlo
+// Variables de estado para recordar que categoria estamos viendo
 let terminoBusquedaActual = ''; 
-let criterioOrdenActual = 'relevancia';
-let precioMinActual = 0;
-let precioMaxActual = Infinity;
+let tipoFiltroActual = 'general';
+
+// Variables para los filtros simples de la vista (texto, etiqueta, orden)
+let textoFiltroSimple = '';
+let etiquetaFiltroSimple = '';
+let ordenFiltroSimple = 'relevancia';
 
 /**
  * funcion principal para cargar la vista del catalogo.
  * inyecta el html base y luego renderiza los productos.
  */
 export async function cargarVistaCatalogo() {
-    // 1. inyectamos el contenedor principal para el catalogo
-    await cargarComponente('component-main', 'src/views/Cliente/catalogo/catalogo.html');
+    // 1. inyectamos el contenedor principal para el catalogo (Se añade ./ a la ruta)
+    await cargarComponente('component-main', './src/views/Cliente/catalogo/catalogo.html');
     
-    // 1.5 Inyectamos el componente de filtros avanzado que armamos
-    await cargarComponente('component-filtros', './src/assets/components/filtro/filtro.html');
-
     // 2. obtenemos y mostramos los productos desde el backend
     renderizarProductosCatalogo();
+    
+    // 3. Cargamos las etiquetas de la base de datos de forma dinamica en el select
+    cargarEtiquetasFiltro();
+    
+    // Exponemos la funcion al objeto global (window) para que el sidebar pueda usarla
+    // sin sufrir el error de "clones vacios" por las rutas de importacion
+    window.aplicarFiltroCatalogo = aplicarFiltroInteligente;
 }
 
 /**
@@ -41,8 +45,19 @@ async function renderizarProductosCatalogo() {
     // mostramos un estado de carga mientras esperamos los datos
     contenedor.innerHTML = '<p>Cargando productos...</p>';
 
-    // 3. obtenemos los datos limpios desde nuestro servicio
-    todosLosProductos = await obtenerProductos();
+    // 3. Obtenemos los datos limpios directamente mediante fetch (mismo metodo que usa inicio)
+    try {
+        // Agregamos un timestamp (&t=...) para obligar al navegador a pedirle los datos a Java y burlar el caché
+        const respuesta = await fetch('listar?activos=true&t=' + new Date().getTime());
+        if (respuesta.ok) {
+            todosLosProductos = await respuesta.json();
+        } else {
+            todosLosProductos = null;
+        }
+    } catch (error) {
+        console.error('Error al traer productos para el catálogo:', error);
+        todosLosProductos = null;
+    }
 
     // si el servicio devuelve null, hubo un error de conexion
     if (!todosLosProductos) {
@@ -61,11 +76,10 @@ async function renderizarProductosCatalogo() {
         dibujarGridCatalogo(todosLosProductos);
     }
 
-    // 4. Asignamos los eventos de clics al contenedor principal (solo una vez)
-    if (!eventosAsignados) {
-        contenedor.addEventListener('click', (evento) => {
-            
-            // CASO A: El usuario hizo clic en el boton del carrito
+    // 4. Asignamos los eventos de clics al nuevo contenedor
+    contenedor.addEventListener('click', (evento) => {
+        
+        // CASO A: El usuario hizo clic en el boton del carrito
         const boton = evento.target.closest('.btn-agregar-carrito');
         if (boton) {
             const id = parseInt(boton.dataset.id);
@@ -75,20 +89,59 @@ async function renderizarProductosCatalogo() {
             const stock = boton.dataset.stock ? parseInt(boton.dataset.stock) : null;
             
             agregarAlCarrito(id, nombre, precio, stock);
-                return;
-            }
+            return;
+        }
 
-            // CASO B: El usuario hizo clic en la etiqueta de la categoria de la tarjeta
-            const etiqueta = evento.target.closest('.etiqueta');
-            if (etiqueta && etiqueta.dataset.filtro) {
-                aplicarFiltroInteligente(etiqueta.dataset.filtro);
-            }
+        // CASO B: El usuario hizo clic en la etiqueta de la categoria de la tarjeta
+        const etiqueta = evento.target.closest('.etiqueta');
+        if (etiqueta && etiqueta.dataset.filtro) {
+            aplicarFiltroInteligente(etiqueta.dataset.filtro, 'categoria');
+        }
+    });
+    
+    // 5. Asignamos los eventos a los nuevos filtros simples de la vista
+    const inputTexto = document.getElementById('filtro-texto');
+    const selectEtiqueta = document.getElementById('filtro-etiqueta');
+    const selectOrden = document.getElementById('filtro-orden');
+
+    if (inputTexto) {
+        inputTexto.addEventListener('input', (e) => {
+            textoFiltroSimple = e.target.value;
+            aplicarFiltroInteligente(); // Refrescamos la vista llamando sin parametros
         });
-        
-        // Activamos la escucha del componente de filtros (por si escribes en un input o haces clic en un boton alli)
-        configurarBuscadorFiltros();
-        
-        eventosAsignados = true;
+    }
+    if (selectEtiqueta) {
+        selectEtiqueta.addEventListener('change', (e) => {
+            etiquetaFiltroSimple = e.target.value;
+            aplicarFiltroInteligente();
+        });
+    }
+    if (selectOrden) {
+        selectOrden.addEventListener('change', (e) => {
+            ordenFiltroSimple = e.target.value;
+            aplicarFiltroInteligente();
+        });
+    }
+}
+
+/**
+ * Llama al backend para obtener todas las etiquetas registradas
+ * y llena automaticamente el menu desplegable de los filtros.
+ */
+async function cargarEtiquetasFiltro() {
+    try {
+        const respuesta = await fetch('etiquetas');
+        if (respuesta.ok) {
+            const etiquetas = await respuesta.json();
+            const selectEtiqueta = document.getElementById('filtro-etiqueta');
+            if (!selectEtiqueta) return;
+            
+            etiquetas.forEach(tag => {
+                selectEtiqueta.innerHTML += `<option value="${tag.nombreEtiqueta}">${tag.nombreEtiqueta}</option>`;
+            });
+        }
+    } catch (error) {
+        console.error('Error al cargar etiquetas dinámicas:', error);
     }
 }
 
@@ -100,141 +153,78 @@ function dibujarGridCatalogo(listaProductos) {
     if (!contenedor) return;
     
     contenedor.innerHTML = '';
-    if (listaProductos.length === 0) {
+    
+    // Failsafe: Proteccion por si la lista llega nula desde los servicios de filtrado
+    const listaSegura = listaProductos || [];
+    
+    if (listaSegura.length === 0) {
         contenedor.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">No se encontraron productos con esa búsqueda.</p>';
         return;
     }
 
-    listaProductos.forEach(producto => {
-        const tarjetaNodo = crearTarjetaHTML(producto);
-        contenedor.appendChild(tarjetaNodo);
-    });
-}
-
-/**
- * Busca entradas de texto o botones dentro del componente filtro.html
- */
-function configurarBuscadorFiltros() {
-    const contenedorFiltros = document.getElementById('component-filtros');
-    if (!contenedorFiltros) return;
-
-    // Si tienes un input (caja de texto) en tu filtro.html para buscar, atrapara cuando escribas
-    contenedorFiltros.addEventListener('input', (evento) => {
-        if (evento.target.id === 'input-busqueda-texto') {
-            aplicarFiltroInteligente(evento.target.value, 'general');
+    listaSegura.forEach(producto => {
+        // 2. Blindamos la creacion de cada tarjeta. Si una falla, no destruira el resto del catalogo
+        try {
+            const tarjetaNodo = crearTarjetaHTML(producto);
+            contenedor.appendChild(tarjetaNodo);
+        } catch (error) {
+            console.error('Error silencioso al intentar crear la tarjeta del producto:', producto, error);
         }
     });
-    
-    // Si tienes botones de filtro rapido (ej. <button class="btn-macro-filtro" data-filtro="reposteria">)
-    contenedorFiltros.addEventListener('click', (evento) => {
-        const btnFiltro = evento.target.closest('.btn-macro-filtro');
-        if (btnFiltro && btnFiltro.dataset.filtro) {
-            // Actualizamos la vista visual de los botones (marcamos cual esta activo)
-            document.querySelectorAll('.btn-macro-filtro').forEach(btn => btn.classList.remove('activo'));
-            btnFiltro.classList.add('activo');
-            
-            // Limpiamos los campos de precio para evitar choques visuales
-            document.getElementById('precio-min').value = '';
-            document.getElementById('precio-max').value = '';
-            precioMinActual = 0; precioMaxActual = Infinity;
-
-            // leemos el tipo de filtro y el termino desde el boton
-            const tipo = btnFiltro.dataset.tipo || 'general';
-            aplicarFiltroInteligente(btnFiltro.dataset.filtro, tipo);
-        }
-    });
-    
-    // Escuchar boton de "Filtrar" por rango de precios
-    const btnBuscarPrecio = document.querySelector('.btn-buscar-precio');
-    if (btnBuscarPrecio) {
-        btnBuscarPrecio.addEventListener('click', () => {
-            // Leemos las cajas de texto y si estan vacias asignamos 0 o Infinito
-            const inputMin = parseFloat(document.getElementById('precio-min').value) || 0;
-            const inputMax = parseFloat(document.getElementById('precio-max').value) || Infinity;
-            
-            precioMinActual = inputMin;
-            precioMaxActual = inputMax;
-            
-            // Re-filtramos usando el mismo termino que teniamos antes + los nuevos precios
-            aplicarFiltroInteligente(terminoBusquedaActual);
-        });
-    }
-
-    // Escuchar el cambio en la lista desplegable de "Ordenar por"
-    contenedorFiltros.addEventListener('change', (evento) => {
-        if (evento.target.id === 'select-ordenar') {
-            criterioOrdenActual = evento.target.value;
-            aplicarFiltroInteligente(terminoBusquedaActual); // Re-filtramos aplicando el nuevo orden
-        }
-    });
-
-    // Cargar los botones de etiquetas dinamicamente desde la base de datos
-    cargarBotonesFiltroDinamicos();
 }
 
 /**
  * El cerebro del sistema: Mapea palabras maestras a palabras reales de la BD y filtra.
  */
-export function aplicarFiltroInteligente(terminoBusqueda, tipoFiltro = 'general') {
-    // Guardamos el termino actual en memoria por si el usuario cambia el orden luego
-    terminoBusquedaActual = terminoBusqueda || '';
+export function aplicarFiltroInteligente(terminoBusqueda, tipoFiltro) {
+    // Guardamos el termino y el tipo en memoria
+    if (terminoBusqueda !== undefined) terminoBusquedaActual = terminoBusqueda;
+    if (tipoFiltro !== undefined) tipoFiltroActual = tipoFiltro;
 
-    let listaFiltrada;
+    // Aseguramos que siempre arranquemos con un arreglo valido
+    let listaFiltrada = todosLosProductos || [];
+    
+    // Proteccion: forzamos el termino a texto para evitar que .trim() lance error
+    const terminoTexto = (terminoBusquedaActual || '').toString().trim();
 
-    // 1. aplicamos el filtro de texto segun el tipo (categoria, etiqueta o general)
-    if (tipoFiltro === 'categoria') {
-        listaFiltrada = filtrarPorCategoriaExacta(todosLosProductos, terminoBusquedaActual);
-    } else if (tipoFiltro === 'etiqueta') {
-        listaFiltrada = filtrarPorEtiqueta(todosLosProductos, terminoBusquedaActual);
-    } else {
-        listaFiltrada = busquedaGeneral(todosLosProductos, terminoBusquedaActual);
+    // 1. Aplicamos el filtro principal (del Sidebar o clic en una categoria)
+    if (terminoTexto !== '') {
+        if (tipoFiltroActual === 'categoria') {
+            listaFiltrada = filtrarPorCategoriaExacta(listaFiltrada, terminoTexto) || [];
+        } else if (tipoFiltroActual === 'etiqueta') {
+            listaFiltrada = filtrarPorEtiqueta(listaFiltrada, terminoTexto) || [];
+        } else {
+            listaFiltrada = busquedaGeneral(listaFiltrada, terminoTexto) || [];
+        }
     }
     
-    // 2. sobre el resultado anterior, aplicamos el filtro de precio
-    const listaFiltradaPrecio = filtrarPorPrecio(listaFiltrada, precioMinActual, precioMaxActual);
-    
-    // 3. delegamos el ordenamiento a nuestro servicio
-    const listaOrdenada = ordenarProductos(listaFiltradaPrecio, criterioOrdenActual);
-    
-    // 3. Dibujamos en pantalla el resultado final
-    dibujarGridCatalogo(listaOrdenada);
-}
-
-/**
- * Llama al backend para obtener categorias y etiquetas y crear los botones visuales en sus secciones.
- */
-async function cargarBotonesFiltroDinamicos() {
-    // 1. Cargar las categorias maestras en el bloque 1
-    try {
-        const resCat = await fetch('categorias');
-        if (resCat.ok) {
-            const categoriasBD = await resCat.json();
-            const contenedorCat = document.getElementById('contenedor-categorias-filtro');
-            
-            if (contenedorCat) {
-                contenedorCat.innerHTML = '<button class="btn-filtro btn-macro-filtro activo" data-tipo="general" data-filtro="">Todas</button>';
-                categoriasBD.forEach(cat => {
-                    contenedorCat.innerHTML += `<button class="btn-filtro btn-macro-filtro" data-tipo="categoria" data-filtro="${cat.nombre}">${cat.nombre}</button>`;
-                });
-            }
-        }
-    } catch (error) { console.error('Error al cargar categorias en filtros:', error); }
-
-    // 2. Cargar las etiquetas secundarias en el bloque 2
-    try {
-        const resTag = await fetch('etiquetas');
-        if (resTag.ok) {
-            const etiquetasBD = await resTag.json();
-            const contenedorTag = document.getElementById('contenedor-etiquetas-filtro');
-            
-            if (contenedorTag) {
-                contenedorTag.innerHTML = ''; // borramos el texto de carga
-                etiquetasBD.forEach(tag => {
-                    contenedorTag.innerHTML += `<button class="btn-filtro btn-macro-filtro" data-tipo="etiqueta" data-filtro="${tag.nombre}">${tag.nombre}</button>`;
-                });
-            }
-        }
-    } catch (error) {
-        console.error('Error al cargar etiquetas en filtros:', error);
+    // 2. Filtro simple por texto libre
+    if (textoFiltroSimple.trim() !== '') {
+        listaFiltrada = busquedaGeneral(listaFiltrada, textoFiltroSimple) || [];
     }
+    
+    // 3. Filtro simple por etiqueta seleccionada
+    if (etiquetaFiltroSimple !== '') {
+        listaFiltrada = filtrarPorEtiqueta(listaFiltrada, etiquetaFiltroSimple) || [];
+    }
+    
+    // 4. Aplicamos el orden por precio (Mayor/Menor)
+    if (ordenFiltroSimple !== 'relevancia') {
+        listaFiltrada = ordenarProductos(listaFiltrada, ordenFiltroSimple) || listaFiltrada;
+    }
+    
+    // 2. Actualizar el titulo para dar feedback visual de que el filtro funciono
+    const tituloCatalogo = document.querySelector('.catalogo-header h1');
+    if (tituloCatalogo) {
+        if (terminoTexto === '') {
+            tituloCatalogo.textContent = 'Catálogo de Productos';
+        } else {
+            // Capitalizamos la primera letra (ej. floristeria -> Floristeria)
+            const terminoCapitalizado = terminoTexto.charAt(0).toUpperCase() + terminoTexto.slice(1);
+            tituloCatalogo.textContent = `Catálogo - ${terminoCapitalizado}`;
+        }
+    }
+
+    // Dibujamos en pantalla el resultado final limpio
+    dibujarGridCatalogo(listaFiltrada);
 }
