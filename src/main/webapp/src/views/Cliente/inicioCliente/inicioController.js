@@ -20,11 +20,11 @@ export async function cargarVistaInicio() {
 
 async function cargarProductosDesdeBD() {
     try {
-        // hacemos la peticion al servlet ProductoController en la ruta /listar
-        const respuesta = await fetch('listar');
+        // hacemos la peticion al servlet productocontroller pidiendo solo los productos activos
+        const respuesta = await fetch('listar?activos=true');
         
         if (respuesta.ok) {
-            // convertimos el json que nos mando java a un arreglo de javascript
+            // convertimos el json que nos mando java a un arreglo
             const productos = await respuesta.json();
             renderizarProductos(productos);
         } else {

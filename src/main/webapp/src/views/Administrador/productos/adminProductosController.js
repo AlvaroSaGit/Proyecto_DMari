@@ -1,7 +1,7 @@
 // Importamos la funcion para inyectar el HTML en la pantalla principal
 import { cargarComponente } from '../../../services/uiService.js';
 // Importamos nuestro servicio que hace el trabajo sucio de comunicarse con Java
-import { obtenerProductos, guardarProducto, eliminarProducto } from '../../../services/productoService.js';
+import { obtenerProductos, guardarProducto, eliminarProducto, cambiarEstadoProducto } from '../../../services/productoService.js';
 
 // Variable global en este archivo para saber el estado del formulario.
 // Si es 'null', significa que estamos creando un producto nuevo.
@@ -71,6 +71,9 @@ function prepararVistaAdminProductos() {
             parametros.append('precio', precio);
             parametros.append('stock', stock);
             parametros.append('id_categoria', idCategoria);
+            
+            // por defecto los nuevos entran activos
+            parametros.append('estado', 'true');
             
             // Si la variable no es nula, significa que el usuario abrio un producto para editarlo
             if (productoEditandoId) {
@@ -152,12 +155,14 @@ async function cargarListaProductos() {
             const nombreCategoria = prod.categoria || prod.nombreCategoria || 'Sin categoría';
             const catFk = prod.idCategoriaFk || '';
             
+            const estadoBadge = prod.estado ? '<span style="background: #d4edda; color: #155724; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 5px;">Activo</span>' : '<span style="background: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 5px;">Inactivo</span>';
+            
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>#00${idProd}</td>
                 <td><i class='bx bx-image' style='font-size: 2rem; color: #ccc;'></i></td>
                 <td>
-                    <div style="font-weight: bold;">${nombreProd}</div>
+                    <div style="font-weight: bold; display: flex; align-items: center;">${nombreProd} ${estadoBadge}</div>
                     <span style="font-size: 0.75rem; color: #666; background-color: #f0f0f0; padding: 2px 6px; border-radius: 10px;">${nombreCategoria}</span>
                 </td>
                 <td>$${prod.precio.toFixed(2)}</td>
@@ -166,9 +171,21 @@ async function cargarListaProductos() {
                     <!-- Guardamos la informacion del producto directamente en el boton usando "data-" -->
                     <!-- Asì, cuando hagan clic en Editar, sabemos exactamente que datos poner en el formulario -->
                     <button class="btn-editar" data-id="${idProd}" data-nombre="${nombreProd}" data-precio="${prod.precio}" data-stock="${prod.stock}" data-categoria="${catFk}"><i class='bx bx-edit'></i> Editar</button>
+                    <button class="btn-estado" data-id="${idProd}"><i class='bx bx-refresh'></i> ${prod.estado ? 'Pausar' : 'Activar'}</button>
                     <button class="btn-eliminar" data-id="${idProd}"><i class='bx bx-trash'></i> Borrar</button>
                 </td>
             `;
+            
+            // Le damos vida al boton de cambiar estado de forma independiente
+            tr.querySelector('.btn-estado').addEventListener('click', async () => {
+                try {
+                    await cambiarEstadoProducto(idProd, !prod.estado);
+                    cargarListaProductos(); // recargamos la tabla al terminar
+                } catch (error) {
+                    alert('Error al cambiar el estado del producto');
+                }
+            });
+            
             // Metemos la fila recien creada en el cuerpo de la tabla
             tbody.appendChild(tr);
         });
@@ -187,37 +204,4 @@ async function cargarListaProductos() {
             document.getElementById('prod-stock').value = btnClic.getAttribute('data-stock');
             
             // Si el producto ya tiene categoria asignada, pre-seleccionamos ese valor en el formulario
-            const catId = btnClic.getAttribute('data-categoria');
-            if (catId) document.getElementById('prod-categoria').value = catId;
-            
-            // Cambiamos el titulo de la ventana y la mostramos
-            document.getElementById('modal-titulo').innerText = 'Editar Producto';
-            if (modal) modal.classList.remove('oculto'); 
-        }));
-        
-        // Le damos vida a los botones "Borrar" de cada fila
-        tbody.querySelectorAll('.btn-eliminar').forEach(btn => btn.addEventListener('click', async (evento) => {
-            // confirm() muestra una alerta del navegador. Si el usuario da a Aceptar, devuelve true
-            if(confirm('¿Seguro que deseas eliminar este producto?')) {
-                // Extraemos el id del producto de este boton
-                const idEliminar = evento.currentTarget.getAttribute('data-id');
-                
-                try {
-                    // Delegamos la orden de eliminar a nuestro archivo de servicio
-                    await eliminarProducto(idEliminar);
-                    alert('Producto eliminado correctamente.');
-                    
-                    // Recargamos los productos para que la fila desaparezca visualmente
-                    cargarListaProductos(); 
-                } catch (error) {
-                    console.error('Fallo al borrar:', error);
-                    alert('No se pudo eliminar. Quizas tenga imagenes o dependencias asociadas.');
-                }
-            }
-        }));
-    } catch (error) {
-        // Si se cayo el internet, fallo Java o MySQL esta apagado, mostramos el error sin crashear todo
-        console.error('Error al cargar la tabla de productos:', error);
-        tbody.innerHTML = `<tr><td colspan="6">Error de conexión al cargar productos</td></tr>`;
-    }
-}
+            const catId = btnClic.getAttribute('data-catego

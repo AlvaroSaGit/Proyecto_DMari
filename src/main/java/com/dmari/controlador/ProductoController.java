@@ -1,6 +1,9 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
+    objetivo de este archivo:
+    este archivo es un controlador (servlet) que sirve como puente de comunicacion
+    entre el frontend (javascript) y la base de datos (dao) para la gestion de productos.
+    se encarga de recibir las peticiones web (crear, leer, actualizar, borrar y cambiar estado),
+    procesar los datos y devolver las respuestas correspondientes en formato json al navegador.
  */
 package com.dmari.controlador;
 
@@ -11,81 +14,70 @@ import java.util.ArrayList;
 
 import com.dmari.dao.productoDAO;
 import com.dmari.modelo.producto;
+import com.dmari.modelo.usuario;
+import com.dmari.helper.jsonHelper;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 
 /*
-    @WebServlet - Mapea este servlet a la direccion URL "/listar".
+    @webservlet - mapea este servlet a las direcciones de producto
 */
-@WebServlet(name = "ProductoController", urlPatterns = {"/listar","/insertar","/actualizar","/eliminar"})
+@WebServlet(name = "ProductoController", urlPatterns = {"/listar","/insertar","/actualizar","/eliminar","/cambiar-estado"})
 public class ProductoController extends HttpServlet {
     /*
-    doGet: Responde a peticiones de tipo lectura
-    Aqui es donde pedimos la lista a la base de datos para mostrarla
-    en el front
+    doget: responde a peticiones de tipo lectura.
+    aqui es donde pedimos la lista a la base de datos para mostrarla
+    en el frontend.
     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException
     {
         /*
-            Se define que la respuesta es un JSON,
-            application/json es el estandar para que
-            javascript entienda los datos
+            se define que la respuesta es un json,
+            el estandar para que javascript entienda los datos.
         */
         response.setContentType("application/json;charset=UTF-8");
         
-        /*Instanciar el DAO y ejecutar el metodo de listar productos*/
+        // leemos de la url si debemos filtrar solo los activos
+        String paramActivos = request.getParameter("activos");
+        boolean soloActivos = paramActivos != null && paramActivos.equals("true");
+        
+        // leemos si la peticion viene exclusivamente de un proveedor
+        String paramProveedor = request.getParameter("proveedor");
+        boolean esProveedor = paramProveedor != null && paramProveedor.equals("true");
+        
         productoDAO dao = new productoDAO();
-        ArrayList<producto> lista = dao.listarProductos();
+        ArrayList<producto> lista = new ArrayList<>();
+        
+        if (esProveedor) {
+            // obtenemos la sesion actual sin crear una nueva
+            HttpSession sesion = request.getSession(false);
+            if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
+                usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
+                lista = dao.listarProductosPorProveedor(user.getIdUsuario());
+            }
+        } else {
+            // si no es proveedor, aplicamos la logica del cliente (activos) o admin (todos)
+            lista = dao.listarProductos(soloActivos);
+        }
+        
         /*
-            Armar el JSON usando stringbuilder
+            armar el json usando stringbuilder
         */
         try(PrintWriter out = response.getWriter()){
-            StringBuilder json = new StringBuilder();
-            json.append("["); // Inicia la lista JSON
-
-            for (int i = 0; i < lista.size(); i++) {
-                producto p = lista.get(i);
-
-                json.append("{");
-                json.append("\"id\":").append(p.getIdProductoPk()).append(",");
-                json.append("\"nombre\":\"").append(p.getNombreProducto()).append("\",");
-                json.append("\"precio\":").append(p.getPrecio()).append(",");
-                json.append("\"stock\":").append(p.getStock()).append(",");
-                json.append("\"categoria\":\"").append(p.getCategoria() != null ? p.getCategoria() : "Sin categoria").append("\",");
-                
-                // Agregamos las etiquetas como un arreglo (array) de JSON ["Vela", "Aromatica"]
-                json.append("\"etiquetas\":[");
-                ArrayList<String> tags = p.getEtiquetas();
-                for(int j = 0; j < tags.size(); j++){
-                    json.append("\"").append(tags.get(j)).append("\"");
-                    if(j < tags.size() - 1) json.append(",");
-                }
-                json.append("],");
-                
-                /* * Agregamos la ruta de la imagen que traemos desde la tabla 'imagenes'
-                 * Asegurate de que en tu clase producto.java el metodo se llame getUrlRuta()
-                 */
-                json.append("\"imagen\":\"").append(p.getUrlRuta()).append("\"");
-                
-                json.append("}");
-
-                /* Si no es el ultimo elemento, agregamos una coma para separar los objetos */
-                if (i < lista.size() - 1) {
-                    json.append(",");
-                }
-            }
-
-            json.append("]"); // Cierra la lista JSON
             
-            /* Enviamos el texto final al cliente (navegador/frontend) */
-            out.print(json.toString());
+            // instanciamos nuestro nuevo helper para construir la respuesta limpia
+            jsonHelper helper = new jsonHelper();
+            String jsonString = helper.productosAJson(lista);
+            
+            out.print(jsonString);
         }
     }
 
@@ -120,12 +112,28 @@ public class ProductoController extends HttpServlet {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             }
 
+        } else if ("/cambiar-estado".equals(ruta)) {
+            int id = Integer.parseInt(request.getParameter("id"));
+            boolean estado = Boolean.parseBoolean(request.getParameter("estado"));
+            
+            if (dao.actualizarEstado(id, estado)) {
+                response.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            }
+
         } else if ("/actualizar".equals(ruta)) {
             producto prod = new producto();
             prod.setIdProductoPk(Integer.parseInt(request.getParameter("id")));
             prod.setNombreProducto(request.getParameter("nombre"));
             prod.setPrecio(Double.parseDouble(request.getParameter("precio")));
             prod.setStock(Integer.parseInt(request.getParameter("stock")));
+            
+            String catParam = request.getParameter("id_categoria");
+            if (catParam != null && !catParam.isEmpty()) {
+                prod.setIdCategoriaFk(Integer.parseInt(catParam));
+            }
+            prod.setEstado(Boolean.parseBoolean(request.getParameter("estado")));
 
             if (dao.actualizarProducto(prod)) {
                 // SC_OK (200): El producto se actualizo correctamente en la base de datos
@@ -136,10 +144,14 @@ public class ProductoController extends HttpServlet {
             }
 
         } else if ("/eliminar".equals(ruta)) {
+            // capturamos el id del producto que se desea eliminar
             int id = Integer.parseInt(request.getParameter("id"));
-            // el DAO devuelve un boolean que usamos para el status HTTP. 
-            // Usamos un operador ternario: Si devuelve true -> SC_OK (200), si devuelve false -> SC_BAD_REQUEST (400)
-            response.setStatus(dao.eliminarProducto(id) ? HttpServletResponse.SC_OK : HttpServletResponse.SC_BAD_REQUEST);
+            
+            if (dao.eliminarProducto(id)) {
+                response.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            }
         }
     }
 }

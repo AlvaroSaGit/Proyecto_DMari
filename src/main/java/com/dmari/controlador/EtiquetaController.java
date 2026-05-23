@@ -1,3 +1,8 @@
+/*
+    objetivo de este archivo:
+    el etiqueta controller, su trabajo es traerse las etiquetas de la base de datos
+    y traducirlas (usando jsonhelper) para que el frontend pueda mostrarlas.
+*/
 package com.dmari.controlador;
 
 import java.io.IOException;
@@ -6,6 +11,7 @@ import java.util.ArrayList;
 
 import com.dmari.dao.etiquetaDAO;
 import com.dmari.modelo.etiqueta;
+import com.dmari.helper.jsonHelper;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -26,23 +32,9 @@ public class EtiquetaController extends HttpServlet {
         ArrayList<etiqueta> lista = dao.listarEtiquetas();
         
         try (PrintWriter out = response.getWriter()) {
-            StringBuilder json = new StringBuilder();
-            json.append("[");
-            
-            for (int i = 0; i < lista.size(); i++) {
-                etiqueta e = lista.get(i);
-                
-                json.append("{");
-                json.append("\"id\":").append(e.getIdEtiquetaPk()).append(",");
-                json.append("\"nombre\":\"").append(e.getNombreEtiqueta()).append("\"");
-                json.append("}");
-                
-                if (i < lista.size() - 1) {
-                    json.append(",");
-                }
-            }
-            json.append("]");
-            out.print(json.toString());
+            jsonHelper helper = new jsonHelper();
+            String jsonString = helper.etiquetasAJson(lista);
+            out.print(jsonString);
         }
     }
 }

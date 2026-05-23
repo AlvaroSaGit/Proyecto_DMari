@@ -21,13 +21,14 @@ public class productoDAO {
     databaseHelper db = new databaseHelper();
     
     /*
-        Metodo para traer los productos de la base de datos
+        metodo para traer los productos de la base de datos.
+        recibe un booleano para filtrar solo los activos y con stock.
     */
-    public ArrayList<producto> listarProductos(){
-    /*Se crea una nueva lista*/
+    public ArrayList<producto> listarProductos(boolean soloActivos){
+        /*se crea una nueva lista*/
         ArrayList<producto> lista = new ArrayList<>();
         /*
-            La sentencia sql que se ejecutara en el motor de mysql
+            la sentencia sql base que se ejecutara en el motor de mysql
         */
         String sql = "SELECT " +
              "p.id_producto_pk, " +
@@ -39,47 +40,51 @@ public class productoDAO {
              "i.url_ruta, " +
              "c.nombre AS nombre_categoria " +
              "FROM producto p " +
-              // Busqueda en la tabla imagenes sobre la id si coinciden, tambien si es la imagne principal
+              // busqueda en la tabla imagenes sobre la id si coinciden y si es la principal
              "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk " +
              "AND i.imagen_principal = 1 " +
-              // Busqueda de categorias y la id si coinciden
+              // busqueda de categorias y la id si coinciden
              "LEFT JOIN categoria c ON p.id_categoria_fk = c.id_categoria_pk";
         
+        // si el parametro es verdadero, concatenamos la condicion a la consulta
+        if (soloActivos) {
+            sql += " WHERE p.estado = 1 AND p.stock > 0";
+        }
+
         /*
-            Usar el try como try-with-resources,
-            esto hace se cierra automaticamente al llegar
+            usar el try como try-with-resources,
+            esto hace que se cierre automaticamente al llegar
             a la llave de cierre como metodo de seguridad
         */
         try(
             /*
-                Aqui se llama el metodo conectar() de la clase databasehelper
-                Se abre el flujo de datos hacia mysql
+                aqui se llama el metodo conectar() de la clase databasehelper.
+                se abre el flujo de datos hacia mysql.
             */
             Connection con = db.conectar();
             /*
-                Se usa la conexion abierta 'con' para preparar el comando sql
-                PreparedStatement es mas seguro porque evita ataques de
+                se usa la conexion abierta para preparar el comando sql.
+                preparedstatement es mas seguro porque evita ataques de
                 inyeccion sql
             */
             PreparedStatement ps = con.prepareStatement(sql);
             /*
-                Manda la orden a mysql
+                manda la orden a mysql
             */
             ResultSet rs = ps.executeQuery()){
             
             /*
-                Mientras el resultset tenga filas por leer...
+                mientras el resultset tenga filas por leer...
             */
             while(rs.next()){
                 /*
-                Se crea un objeto producto que viene del archivo
-                producto de com.dmari.modelo
+                se crea un objeto producto que viene del archivo
+                producto de com.dmari.modelo.
                 */
                 producto prod = new producto();
                 /*
-                    Sacamos los datos de las columnas mysql
-                    y se lo colocamos en los atributos del objeto
-                    usando setters
+                    sacamos los datos de las columnas mysql
+                    y se lo colocamos en los atributos del objeto.
                 */
                 prod.setIdProductoPk(rs.getInt("id_producto_pk"));
                 prod.setNombreProducto(rs.getString("nombre_producto"));
@@ -92,16 +97,69 @@ public class productoDAO {
                 prod.setIdCategoriaFk(rs.getInt("id_categoria_fk"));
                 prod.setCategoria(rs.getString("nombre_categoria"));
                 
-                /*Metemos el producto ya lleno en la lista general*/
+                /*metemos el producto ya lleno en la lista general*/
                 lista.add(prod);
             }
         }catch(SQLException error){
-            System.out.println("Problema en el DAO: "+error.getMessage());
+            System.out.println("problema en el dao al listar productos: "+error.getMessage());
         }
         
         return lista;
     }
     
+    /*
+        metodo para listar los productos que le pertenecen a un proveedor especifico.
+        no filtra por activos o inactivos, ya que el proveedor debe ver todos sus productos.
+    */
+    public ArrayList<producto> listarProductosPorProveedor(int idUsuarioProveedor) {
+        ArrayList<producto> lista = new ArrayList<>();
+        
+        String sql = "SELECT " +
+             "p.id_producto_pk, " +
+             "p.nombre_producto, " +
+             "p.precio, " +
+             "p.stock, " +
+             "p.estado, " +
+             "p.id_categoria_fk, " +
+             "i.url_ruta, " +
+             "c.nombre AS nombre_categoria " +
+             "FROM producto p " +
+             "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk AND i.imagen_principal = 1 " +
+             "LEFT JOIN categoria c ON p.id_categoria_fk = c.id_categoria_pk " +
+             // cruzamos con la tabla puente y luego con la del proveedor para validar pertenencia
+             "INNER JOIN proveedor_producto pp ON p.id_producto_pk = pp.id_producto_fk " +
+             "INNER JOIN proveedor pr ON pp.id_proveedor_fk = pr.id_proveedor_pk " +
+             "WHERE pr.id_datos_proveedor_fk = ?";
+             
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+             
+             // inyectamos el id del usuario que esta en sesion actualmente
+             ps.setInt(1, idUsuarioProveedor);
+             
+             try (ResultSet rs = ps.executeQuery()) {
+                 while(rs.next()){
+                     producto prod = new producto();
+                     prod.setIdProductoPk(rs.getInt("id_producto_pk"));
+                     prod.setNombreProducto(rs.getString("nombre_producto"));
+                     prod.setPrecio(rs.getDouble("precio"));
+                     prod.setStock(rs.getInt("stock"));
+                     prod.setEstado(rs.getBoolean("estado"));
+                     prod.setUrlRuta(rs.getString("url_ruta"));
+                     
+                     prod.setIdCategoriaFk(rs.getInt("id_categoria_fk"));
+                     prod.setCategoria(rs.getString("nombre_categoria"));
+                     
+                     lista.add(prod);
+                 }
+             }
+        } catch(SQLException error) {
+            System.out.println("problema en el dao al listar productos de proveedor: " + error.getMessage());
+        }
+        
+        return lista;
+    }
+
     public int insertarProducto(producto nuevoProducto){
         // aca solo dejamos la consulta del producto solo
         String sql = "insert into producto (nombre_producto, precio, stock, id_categoria_fk, estado) values (?, ?, ?, ?, ?)";
@@ -195,5 +253,25 @@ public class productoDAO {
             System.out.println("no se pudo borrar.. puede que tenga fotos asociadas: " + e.getMessage());
             return false;
         }
+    }
+
+    // metodo especifico para cambiar solo el estado de un producto (activo/inactivo)
+    public boolean actualizarEstado(int id, boolean nuevoEstado) {
+        String sql = "update producto set estado = ? where id_producto_pk = ?";
+        
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+             
+            ps.setBoolean(1, nuevoEstado);
+            ps.setInt(2, id);
+            
+            int filasAfectadas = ps.executeUpdate();
+            return filasAfectadas > 0;
+            
+        } catch (SQLException e) {
+            System.out.println("error al cambiar el estado del producto: " + e.getMessage());
+        }
+        
+        return false;
     }
 }

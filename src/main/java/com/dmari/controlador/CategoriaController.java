@@ -2,6 +2,8 @@ package com.dmari.controlador;
 
 import com.dmari.dao.categoriaDAO;
 import com.dmari.modelo.categoria;
+import com.dmari.helper.jsonHelper;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -24,23 +26,9 @@ public class CategoriaController extends HttpServlet {
         ArrayList<categoria> lista = dao.listarCategoriasActivas();
         
         try (PrintWriter out = response.getWriter()) {
-            StringBuilder json = new StringBuilder();
-            json.append("[");
-            
-            for (int i = 0; i < lista.size(); i++) {
-                categoria c = lista.get(i);
-                
-                json.append("{");
-                json.append("\"id\":").append(c.getIdCategoriaPk()).append(",");
-                json.append("\"nombre\":\"").append(c.getNombre()).append("\"");
-                json.append("}");
-                
-                if (i < lista.size() - 1) {
-                    json.append(",");
-                }
-            }
-            json.append("]");
-            out.print(json.toString());
+            jsonHelper helper = new jsonHelper();
+            String jsonString = helper.categoriasAJson(lista);
+            out.print(jsonString);
         }
     }
 }

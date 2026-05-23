@@ -4,6 +4,9 @@ import { cargarVistaConfiguracion } from '../views/Cliente/configuracion/configu
 import { cargarVistaLogin } from '../views/Auth/login/loginController.js';
 import { cargarVistaRegistro } from '../views/Auth/registro/registroController.js';
 import { cargarVistaHistorialPedidos } from '../views/Cliente/historialPedidos/historialPedidosController.js';
+import { cargarVistaCatalogo } from '../views/Cliente/catalogo/productosController.js';
+import { cargarVistaAdminProductos } from '../views/Administrador/productos/adminProductosController.js';
+import { cargarVistaProveedorProductos } from '../views/Proveedor/productos/proveedorProductosController.js';
 
 // Funcion para cambiar la URL, lo que disparara el evento de hashchange
 export function navegarA(vista) {
@@ -26,6 +29,12 @@ function manejarRuta() {
         cargarVistaRegistro();
     } else if (vista === 'historial') {
         cargarVistaHistorialPedidos();
+    } else if (vista === 'catalogo') {
+        cargarVistaCatalogo();
+    } else if (vista === 'admin-productos') {
+        cargarVistaAdminProductos();
+    } else if (vista === 'proveedor-productos') {
+        cargarVistaProveedorProductos();
     } else {
         cargarVistaInicio(); // Por defecto carga el inicio
     }

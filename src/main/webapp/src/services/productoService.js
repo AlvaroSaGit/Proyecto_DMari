@@ -2,12 +2,13 @@
 
 /**
  * se conecta al backend, obtiene los productos y maneja errores de red
+ * @param {string} parametros extra opcionales para filtrar la ruta
  * @returns {Promise<Array|null>} retorna un arreglo de productos o null si falla
  */
-export async function obtenerProductos() {
+export async function obtenerProductos(parametros = '') {
     try {
-        // Usamos ruta relativa para que funcione en tu localhost y cuando subas el proyecto a internet
-        const respuesta = await fetch('listar'); 
+        // le agregamos los parametros a la ruta (ejemplo: listar?proveedor=true)
+        const respuesta = await fetch('listar' + parametros); 
         
         if (!respuesta.ok) {
             throw new Error(`error http: ${respuesta.status}`);
@@ -33,5 +34,15 @@ export async function eliminarProducto(id) {
     
     const respuesta = await fetch('eliminar', { method: 'POST', body: parametros });
     if (!respuesta.ok) throw new Error('Error al eliminar producto');
+    return true;
+}
+
+export async function cambiarEstadoProducto(id, nuevoEstado) {
+    const parametros = new URLSearchParams();
+    parametros.append('id', id);
+    parametros.append('estado', nuevoEstado);
+    
+    const respuesta = await fetch('cambiar-estado', { method: 'POST', body: parametros });
+    if (!respuesta.ok) throw new Error('Error al cambiar el estado');
     return true;
 }

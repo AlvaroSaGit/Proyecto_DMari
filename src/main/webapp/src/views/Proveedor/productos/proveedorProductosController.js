@@ -1,4 +1,5 @@
 import { cargarComponente } from '../../../services/uiService.js';
+import { obtenerProductos, cambiarEstadoProducto } from '../../../services/productoService.js';
 
 // Carga la vista principal del proveedor
 export async function cargarVistaProveedorProductos() {
@@ -44,26 +45,45 @@ async function cargarMisProductos() {
     if (!tbody) return;
 
     try {
-        const misProductosMock = [
-            { id: 101, nombre: 'Esencia de Vainilla 100ml', precio: 5.50, stock: 100 },
-            { id: 102, nombre: 'Cera de Soya 1kg', precio: 12.00, stock: 50 }
-        ];
+        // pedimos especificamente los productos del proveedor en sesion
+        const misProductos = await obtenerProductos('?proveedor=true');
+        
+        if (!misProductos) throw new Error('No se pudieron obtener los productos');
         
         tbody.innerHTML = '';
 
-        misProductosMock.forEach(prod => {
+        misProductos.forEach(prod => {
+            // Adaptamos las variables a como llegan desde el backend (JSON)
+            const idProd = prod.idProductoPk || prod.id;
+            const nombreProd = prod.nombreProducto || prod.nombre || 'Producto';
+            const estadoBadge = prod.estado ? '<span style="background: #d4edda; color: #155724; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 5px;">Activo</span>' : '<span style="background: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 5px;">Inactivo</span>';
+            
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>#00${prod.id}</td>
+                <td>#00${idProd}</td>
                 <td><i class='bx bx-image' style='font-size: 2rem; color: #ccc;'></i></td>
-                <td>${prod.nombre}</td>
+                <td>
+                    <div style="font-weight: bold; display: flex; align-items: center;">${nombreProd} ${estadoBadge}</div>
+                </td>
                 <td>$${prod.precio.toFixed(2)}</td>
                 <td>${prod.stock} uds</td>
                 <td>
-                    <button class="btn-editar"><i class='bx bx-edit'></i> Solicitar Edición</button>
-                    <button class="btn-eliminar"><i class='bx bx-trash'></i> Solicitar Borrado</button>
+                    <button class="btn-editar" data-id="${idProd}"><i class='bx bx-edit'></i> Editar Info</button>
+                    <button class="btn-estado" data-id="${idProd}"><i class='bx bx-refresh'></i> ${prod.estado ? 'Pausar' : 'Activar'}</button>
+                    <button class="btn-eliminar" data-id="${idProd}"><i class='bx bx-trash'></i> Solicitar Borrado</button>
                 </td>
             `;
+            
+            // evento dinamico para cambiar el estado (activo/inactivo) al instante
+            tr.querySelector('.btn-estado').addEventListener('click', async () => {
+                try {
+                    await cambiarEstadoProducto(idProd, !prod.estado);
+                    cargarMisProductos(); // recargamos para ver el cambio
+                } catch (error) {
+                    alert('Error al cambiar el estado del producto');
+                }
+            });
+
             tbody.appendChild(tr);
         });
 
