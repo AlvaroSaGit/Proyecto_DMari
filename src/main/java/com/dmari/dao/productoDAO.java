@@ -33,6 +33,7 @@ public class productoDAO {
         String sql = "SELECT " +
              "p.id_producto_pk, " +
              "p.nombre_producto, " +
+             "p.descripcion, " +
              "p.precio, " +
              "p.stock, " +
              "p.estado, " +
@@ -90,6 +91,7 @@ public class productoDAO {
                 */
                 prod.setIdProductoPk(rs.getInt("id_producto_pk"));
                 prod.setNombreProducto(rs.getString("nombre_producto"));
+                prod.setDescripcion(rs.getString("descripcion"));
                 prod.setPrecio(rs.getDouble("precio"));
                 prod.setStock(rs.getInt("stock"));
                 prod.setEstado(rs.getBoolean("estado"));
@@ -130,6 +132,7 @@ public class productoDAO {
         String sql = "SELECT " +
              "p.id_producto_pk, " +
              "p.nombre_producto, " +
+             "p.descripcion, " +
              "p.precio, " +
              "p.stock, " +
              "p.estado, " +
@@ -157,6 +160,7 @@ public class productoDAO {
                      producto prod = new producto();
                      prod.setIdProductoPk(rs.getInt("id_producto_pk"));
                      prod.setNombreProducto(rs.getString("nombre_producto"));
+                     prod.setDescripcion(rs.getString("descripcion"));
                      prod.setPrecio(rs.getDouble("precio"));
                      prod.setStock(rs.getInt("stock"));
                      prod.setEstado(rs.getBoolean("estado"));
@@ -187,7 +191,7 @@ public class productoDAO {
 
     public int insertarProducto(producto nuevoProducto){
         // aca solo dejamos la consulta del producto solo
-        String sql = "insert into producto (nombre_producto, precio, stock, id_categoria_fk, estado) values (?, ?, ?, ?, ?)";
+        String sql = "insert into producto (nombre_producto, descripcion, precio, stock, id_categoria_fk, estado) values (?, ?, ?, ?, ?, ?)";
         int idGenerado = 0;
 
         try (Connection con = db.conectar();
@@ -199,10 +203,11 @@ public class productoDAO {
 
             // pasamos los datos basicos del producto
             ps.setString(1, nuevoProducto.getNombreProducto());
-            ps.setDouble(2, nuevoProducto.getPrecio());
-            ps.setInt(3, nuevoProducto.getStock());
-            ps.setInt(4, nuevoProducto.getIdCategoriaFk());
-            ps.setBoolean(5, nuevoProducto.isEstado());
+            ps.setString(2, nuevoProducto.getDescripcion());
+            ps.setDouble(3, nuevoProducto.getPrecio());
+            ps.setInt(4, nuevoProducto.getStock());
+            ps.setInt(5, nuevoProducto.getIdCategoriaFk());
+            ps.setBoolean(6, nuevoProducto.isEstado());
 
             // ejecutamos el insert
             if (ps.executeUpdate() > 0) {
@@ -224,7 +229,7 @@ public class productoDAO {
     
     public boolean actualizarProducto(producto prod) {
     // la instruccion sql.. el where es la parte mas importante de todo el codigo
-    String sql = "update producto set nombre_producto = ?, precio = ?, stock = ?, id_categoria_fk = ?, estado = ? where id_producto_pk = ?";
+    String sql = "update producto set nombre_producto = ?, descripcion = ?, precio = ?, stock = ?, id_categoria_fk = ?, estado = ? where id_producto_pk = ?";
 
     // abrimos conexion y preparamos la consulta de una vez
     try (Connection con = db.conectar();
@@ -232,13 +237,14 @@ public class productoDAO {
 
         // reemplazamos los signos de interrogacion con los datos nuevos
         ps.setString(1, prod.getNombreProducto());
-        ps.setDouble(2, prod.getPrecio());
-        ps.setInt(3, prod.getStock());
-        ps.setInt(4, prod.getIdCategoriaFk());
-        ps.setBoolean(5, prod.isEstado());
+        ps.setString(2, prod.getDescripcion());
+        ps.setDouble(3, prod.getPrecio());
+        ps.setInt(4, prod.getStock());
+        ps.setInt(5, prod.getIdCategoriaFk());
+        ps.setBoolean(6, prod.isEstado());
         
         // el quinto parametro es el id, para decirle a mysql cual producto exacto debe cambiar
-        ps.setInt(6, prod.getIdProductoPk());
+        ps.setInt(7, prod.getIdProductoPk());
 
         // ejecutamos la orden y guardamos cuantas filas se modificaron
         int filasAfectadas = ps.executeUpdate();

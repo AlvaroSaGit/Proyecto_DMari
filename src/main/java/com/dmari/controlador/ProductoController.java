@@ -94,12 +94,14 @@ public class ProductoController extends HttpServlet {
         if ("/insertar".equals(ruta)) {
             // capturamos parametros
             String nombre = request.getParameter("nombre");
+            String descripcion = request.getParameter("descripcion");
             double precio = Double.parseDouble(request.getParameter("precio"));
             int stock = Integer.parseInt(request.getParameter("stock"));
 
             // armamos producto
             producto nuevoProd = new producto();
             nuevoProd.setNombreProducto(nombre);
+            nuevoProd.setDescripcion(descripcion);
             nuevoProd.setPrecio(precio);
             nuevoProd.setStock(stock);
 
@@ -126,6 +128,7 @@ public class ProductoController extends HttpServlet {
             producto prod = new producto();
             prod.setIdProductoPk(Integer.parseInt(request.getParameter("id")));
             prod.setNombreProducto(request.getParameter("nombre"));
+            prod.setDescripcion(request.getParameter("descripcion"));
             prod.setPrecio(Double.parseDouble(request.getParameter("precio")));
             prod.setStock(Integer.parseInt(request.getParameter("stock")));
             

@@ -8,6 +8,7 @@
 export function crearFilaProducto(prod) {
     const idProd = prod.idProductoPk || prod.id;
     const nombreProd = prod.nombreProducto || prod.nombre || 'Producto';
+    const descProd = prod.descripcion || '';
     const nombreCategoria = prod.categoria || prod.nombreCategoria || 'Sin categoria';
     const catFk = prod.idCategoriaFk || '';
     
@@ -26,7 +27,7 @@ export function crearFilaProducto(prod) {
         <td>$${prod.precio.toFixed(2)}</td>
         <td>${prod.stock} uds</td>
         <td>
-            <button class="btn-editar" data-id="${idProd}" data-nombre="${nombreProd}" data-precio="${prod.precio}" data-stock="${prod.stock}" data-categoria="${catFk}"><i class='bx bx-edit'></i> Editar</button>
+            <button class="btn-editar" data-id="${idProd}" data-nombre="${nombreProd}" data-descripcion="${descProd}" data-precio="${prod.precio}" data-stock="${prod.stock}" data-categoria="${catFk}"><i class='bx bx-edit'></i> Editar</button>
             <button class="btn-estado" data-id="${idProd}" data-estado="${prod.estado}"><i class='bx bx-refresh'></i> ${prod.estado ? 'Pausar' : 'Activar'}</button>
             <button class="btn-eliminar" data-id="${idProd}"><i class='bx bx-trash'></i> Borrar</button>
         </td>

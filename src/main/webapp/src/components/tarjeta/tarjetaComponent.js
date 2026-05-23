@@ -1,3 +1,5 @@
+import { abrirModalDetalle } from './detalleProductoModal.js';
+
 /**
  * genera el elemento html de una tarjeta de producto de forma segura
  * @param {Object} producto - datos del producto desde la bd
@@ -15,11 +17,12 @@ export function crearTarjetaHTML(producto) {
     // formateamos el precio a moneda local
     const precioFormateado = producto.precio.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
 
-    // contenedor principal
+    // contenedor principal de la tarjeta (se usa la etiqueta article por buena semantica web)
     const article = document.createElement('article');
     article.classList.add('tarjeta');
+    article.style.height = '100%'; // permite que todas las tarjetas midan lo mismo
 
-    // contenedor de imagen
+    // contenedor superior exclusivo para la imagen del producto
     const divImg = document.createElement('div');
     divImg.classList.add('tarjeta-img');
     const img = document.createElement('img');
@@ -31,6 +34,9 @@ export function crearTarjetaHTML(producto) {
     // contenedor del cuerpo
     const divCuerpo = document.createElement('div');
     divCuerpo.classList.add('tarjeta-cuerpo');
+    divCuerpo.style.display = 'flex';
+    divCuerpo.style.flexDirection = 'column';
+    divCuerpo.style.height = 'calc(100% - 200px)'; // resta el tamano de la imagen para ocupar el resto
 
     // tags (si tiene categoria)
     const divTags = document.createElement('div');
@@ -46,15 +52,8 @@ export function crearTarjetaHTML(producto) {
         spanCat.textContent = catProd;
         divTags.appendChild(spanCat);
     }
-    // Dibujamos las etiquetas reales traidas de la tabla producto_etiqueta
-    etiquetas.forEach(tag => {
-        const spanTag = document.createElement('span');
-        spanTag.classList.add('etiqueta');
-        spanTag.style.cursor = 'pointer';
-        spanTag.dataset.filtro = tag;
-        spanTag.textContent = tag;
-        divTags.appendChild(spanTag);
-    });
+    // las etiquetas secundarias se removieron de la vista principal para mantener un diseno limpio.
+    // ahora se mostraran exclusivamente en el modal de detalles.
     divCuerpo.appendChild(divTags);
 
     // titulo
@@ -65,18 +64,46 @@ export function crearTarjetaHTML(producto) {
     // descripcion (o stock si esta vacia)
     const pDesc = document.createElement('p');
     pDesc.classList.add('descripcion');
+    // truncamos visualmente a 2 lineas por si la descripcion es muy larga
+    pDesc.style.display = '-webkit-box';
+    pDesc.style.webkitLineClamp = '2';
+    pDesc.style.webkitBoxOrient = 'vertical';
+    pDesc.style.overflow = 'hidden';
     pDesc.textContent = producto.descripcion || `Stock disponible: ${producto.stock || 0} uds.`;
     divCuerpo.appendChild(pDesc);
 
     // footer de la tarjeta
+    // usamos flexbox para separar el precio a la izquierda y agrupar los botones a la derecha,
+    // garantizando que todo quede en la misma linea horizontal (align-items: center).
     const divFooter = document.createElement('div');
     divFooter.classList.add('tarjeta-footer');
+    divFooter.style.display = 'flex';
+    divFooter.style.justifyContent = 'space-between';
+    divFooter.style.alignItems = 'center';
+    divFooter.style.marginTop = 'auto'; // empuja el footer siempre hacia abajo (alinea botones iguales en todas las tarjetas)
+    divFooter.style.paddingTop = '15px';
 
     // precio
+    // se inyecta el texto del precio. se fuerza el margen a cero para evitar que el css
+    // global empuje el texto hacia arriba y desalinee la vista respecto a los botones.
     const pPrecio = document.createElement('p');
     pPrecio.classList.add('precio');
+    pPrecio.style.margin = '0';
+    pPrecio.style.fontSize = '1.15rem';
     pPrecio.textContent = precioFormateado;
     divFooter.appendChild(pPrecio);
+    
+    // sub-contenedor exclusivo para que los dos botones esten pegados uno al lado del otro
+    const divBotones = document.createElement('div');
+    divBotones.style.display = 'flex';
+    divBotones.style.gap = '5px';
+
+    // boton para abrir detalles
+    const btnDetalles = document.createElement('button');
+    btnDetalles.classList.add('btn-ver-detalles');
+    btnDetalles.textContent = 'Detalles';
+    btnDetalles.style.cssText = 'background: #f0f0f0; color: #333; border: 1px solid #ddd; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;';
+    btnDetalles.addEventListener('click', () => abrirModalDetalle(producto));
 
     // boton agregar
     const btnAgregar = document.createElement('button');
@@ -93,7 +120,10 @@ export function crearTarjetaHTML(producto) {
     spanIcono.textContent = 'add';
     btnAgregar.appendChild(spanIcono);
 
-    divFooter.appendChild(btnAgregar);
+    divBotones.appendChild(btnDetalles);
+    divBotones.appendChild(btnAgregar);
+
+    divFooter.appendChild(divBotones);
     divCuerpo.appendChild(divFooter);
     article.appendChild(divCuerpo);
 

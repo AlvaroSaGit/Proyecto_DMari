@@ -56,6 +56,8 @@ function prepararVistaAdminProductos() {
             
             // 1. Extraemos lo que el usuario escribio en las cajitas de texto
             const nombre = document.getElementById('prod-nombre').value;
+            // extraemos la descripcion si la caja de texto existe en tu formulario
+            const descripcion = document.getElementById('prod-descripcion') ? document.getElementById('prod-descripcion').value : '';
             const precio = document.getElementById('prod-precio').value;
             const stock = document.getElementById('prod-stock').value;
             // Extraemos el ID de la categoria elegida por el administrador
@@ -70,6 +72,7 @@ function prepararVistaAdminProductos() {
              */
             const parametros = new URLSearchParams();
             parametros.append('nombre', nombre);
+            parametros.append('descripcion', descripcion);
             parametros.append('precio', precio);
             parametros.append('stock', stock);
             parametros.append('id_categoria', idCategoria);
@@ -112,6 +115,10 @@ function prepararVistaAdminProductos() {
             if (btnClic.classList.contains('btn-editar')) {
                 productoEditandoId = id;
                 document.getElementById('prod-nombre').value = btnClic.getAttribute('data-nombre');
+                // rellenamos la caja de descripcion si existe
+                if (document.getElementById('prod-descripcion')) {
+                    document.getElementById('prod-descripcion').value = btnClic.getAttribute('data-descripcion') || '';
+                }
                 document.getElementById('prod-precio').value = btnClic.getAttribute('data-precio');
                 document.getElementById('prod-stock').value = btnClic.getAttribute('data-stock');
                 

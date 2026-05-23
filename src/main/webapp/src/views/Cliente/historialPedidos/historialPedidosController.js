@@ -7,7 +7,7 @@
 
 import { cargarComponente } from '../../../services/uiService.js';
 import { obtenerHistorialPedidos } from '../../../components/pedido/pedidoService.js';
-import { crearBloquePedido } from '../../../components/historialPedidos/historialPedidoComponent.js';
+import { crearBloquePedido } from '../../../components/pedido/historialPedidoComponent.js';
 
 /*
     funcion de arranque de la vista.

@@ -16,6 +16,18 @@ import com.dmari.modelo.detallePedido;
 public class jsonHelper {
     
     /*
+        metodo interno para limpiar textos y evitar que comillas o saltos de linea 
+        rompan la estructura del json cuando el usuario escriba descripciones largas.
+    */
+    private String escaparTexto(String texto) {
+        if (texto == null) return "";
+        return texto.replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\n")
+                    .replace("\r", "\\r");
+    }
+
+    /*
         metodo para convertir una lista de productos a formato json.
         se centraliza aqui para que cualquier controlador pueda usarlo
         sin repetir codigo.
@@ -29,7 +41,8 @@ public class jsonHelper {
 
             json.append("{");
             json.append("\"id\":").append(p.getIdProductoPk()).append(",");
-            json.append("\"nombre\":\"").append(p.getNombreProducto()).append("\",");
+            json.append("\"nombre\":\"").append(escaparTexto(p.getNombreProducto())).append("\",");
+            json.append("\"descripcion\":\"").append(escaparTexto(p.getDescripcion())).append("\",");
             json.append("\"precio\":").append(p.getPrecio()).append(",");
             json.append("\"stock\":").append(p.getStock()).append(",");
             json.append("\"estado\":").append(p.isEstado()).append(",");
