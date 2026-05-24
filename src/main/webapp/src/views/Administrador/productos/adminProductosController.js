@@ -1,18 +1,18 @@
+// importamos los servicios necesarios para pintar la interfaz y comunicarnos con la base de datos
 import { cargarComponente } from '../../../services/uiService.js';
 import { obtenerProductos, guardarProducto, eliminarProducto, cambiarEstadoProducto } from '../../../services/productoService.js';
-import { crearFilaProducto } from '../../../components/tablas/filaProductoComponent.js';
 
 /** 
- * VARIABLE DE ESTADO GLOBAL:
- * Controla el comportamiento del formulario Modal.
- * - Si es `null`: El formulario se comportará como un creador de nuevos productos.
- * - Si contiene un `ID` (ej: 15): El formulario se comportará como un actualizador para el producto 15.
+ * variable de estado global:
+ * controla el comportamiento del formulario modal.
+ * - si es null: el formulario se comportara como un creador de nuevos productos.
+ * - si contiene un id (ej: 15): el formulario se comportara como un actualizador para el producto 15.
  */
 let productoEditandoId = null;
 
 /**
- * Función de Arranque (Entry Point) exclusiva para la vista del Administrador.
- * Inyecta el HTML base del panel y manda a inicializar todos sus comportamientos.
+ * funcion de arranque (entry point) exclusiva para la vista del administrador.
+ * inyecta el html base del panel y manda a inicializar todos sus comportamientos.
  */
 export async function cargarVistaAdminProductos() {
     await cargarComponente('component-main', './src/views/Administrador/productos/adminProductos.html');
@@ -21,80 +21,82 @@ export async function cargarVistaAdminProductos() {
 }
 
 /**
- * Mapea los elementos clave del DOM del Administrador y les asigna "Escuchadores de Eventos" (Listeners).
- * Aquí se controla cuándo abrir/cerrar modales, crear productos y gestionar la tabla principal.
+ * mapea los elementos clave del dom del administrador y les asigna escuchadores de eventos.
+ * aqui se controla cuando abrir o cerrar modales, crear productos y gestionar la tabla principal.
  */
 function prepararVistaAdminProductos() {
-    // Extracción de Referencias al DOM (Caché local para rendimiento)
+    // extraccion de referencias al dom (cache local para mejorar el rendimiento)
     const btnAgregar = document.getElementById('btn-nuevo-producto');
     const modal = document.getElementById('modal-producto');
     const btnCerrar = document.getElementById('btn-cerrar-modal');
     const btnCancelar = document.getElementById('btn-cancelar-modal');
     const form = document.getElementById('form-producto');
     
-    // Elementos para la previsualizacion de imagen
+    // elementos visuales para la previsualizacion de la imagen
     const inputImagen = document.getElementById('prod-imagen');
     const previewContenedor = document.getElementById('contenedor-preview');
     const previewImg = document.getElementById('prod-imagen-preview');
 
-    // EVENTO: Mostrar la foto cuando el usuario selecciona un archivo de su PC
+    // evento: mostrar la foto temporalmente cuando el usuario selecciona un archivo de su pc
     if (inputImagen) {
         inputImagen.addEventListener('change', function() {
             const archivo = this.files[0];
             if (archivo) {
-                const lector = new FileReader(); // API nativa para leer archivos locales
+                const lector = new FileReader(); // api nativa de javascript para leer archivos locales
                 lector.onload = function(e) {
                     previewImg.src = e.target.result;
-                    previewContenedor.style.display = 'block'; // Mostramos el recuadro
+                    previewContenedor.style.display = 'block'; // mostramos el recuadro
                 }
                 lector.readAsDataURL(archivo);
             } else {
                 previewImg.src = '';
-                previewContenedor.style.display = 'none'; // Lo volvemos a esconder si cancela
+                previewContenedor.style.display = 'none'; // lo volvemos a esconder si el usuario cancela
             }
         });
     }
 
-    // CREAR NUEVO PRODUCTO: Preparar y abrir la ventana flotante (Modal) limpia
+    // crear nuevo producto: preparar y abrir la ventana flotante (modal) totalmente limpia
     if (btnAgregar) {
         btnAgregar.addEventListener('click', () => {
-            productoEditandoId = null; // Reseteamos la variable de estado
+            productoEditandoId = null; // reseteamos la variable de estado
             document.getElementById('modal-titulo').innerText = 'Nuevo Producto';
-            if (form) form.reset(); // Vaciamos las cajas de texto
+            if (form) form.reset(); // vaciamos todas las cajas de texto
             
-            // Escondemos la previsualizacion porque es un producto nuevo
+            // escondemos la previsualizacion porque es un producto nuevo
             if (previewContenedor) previewContenedor.style.display = 'none';
             if (previewImg) previewImg.src = '';
-            if (inputImagen) { inputImagen.value = ''; inputImagen.setAttribute('required', 'required'); } // La imagen es obligatoria
+            if (inputImagen) { inputImagen.value = ''; inputImagen.setAttribute('required', 'required'); } // la imagen es obligatoria al crear
             
             if (modal) modal.classList.remove('oculto'); 
         });
     }
     
-    // Función auxiliar anónima para esconder el Modal inyectando la clase CSS `oculto`
+    // funcion auxiliar anonima para esconder el modal inyectandole la clase css 'oculto'
     const cerrarModal = () => { if (modal) modal.classList.add('oculto'); };
     
     if (btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
     if (btnCancelar) btnCancelar.addEventListener('click', cerrarModal);
     
-    // Evento principal: Cuando el usuario da clic en "Guardar Producto" en el formulario
+    // evento principal: cuando el usuario da clic en "guardar producto" en el formulario
     if (form) {
         form.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Detenemos el submit tradicional (recarga de página)
+            e.preventDefault(); // detenemos el submit tradicional que recargaria la pagina entera
             
-            // 1. LECTURA DEL FORMULARIO
+            // 1. lectura de todas las cajas del formulario
             const nombre = document.getElementById('prod-nombre').value;
             const descripcion = document.getElementById('prod-descripcion') ? document.getElementById('prod-descripcion').value : '';
             const precio = document.getElementById('prod-precio').value;
             const stock = document.getElementById('prod-stock').value;
             const idCategoria = document.getElementById('prod-categoria').value;
-            // Capturamos el texto de las etiquetas
+            // capturamos el proveedor seleccionado por el administrador
+            const idProveedor = document.getElementById('prod-proveedor') ? document.getElementById('prod-proveedor').value : '';
+            // capturamos el texto de las etiquetas separadas por coma
             const etiquetas = document.getElementById('prod-etiquetas') ? document.getElementById('prod-etiquetas').value : '';
             
             /*
-             * TECNICA DE ENVIO CON FormData:
-             * FormData permite enviar archivos fisicos combinados con texto.
-             * Es el estandar de HTML5 para subir imagenes al servidor.
+             * tecnica de envio con formdata:
+             * formdata permite enviar archivos fisicos combinados con texto normal.
+             * es el estandar absoluto de html5 para subir imagenes al servidor de java.
              */
             const formData = new FormData();
             formData.append('nombre', nombre);
@@ -103,53 +105,55 @@ function prepararVistaAdminProductos() {
             formData.append('stock', stock);
             formData.append('id_categoria', idCategoria);
             formData.append('etiquetas', etiquetas);
+            // si eligio un proveedor, lo empacamos en la maleta para mandarlo a java
+            if (idProveedor) formData.append('id_proveedor', idProveedor);
             
-            // REGLA DE NEGOCIO: Los productos nacen activos en la tienda por defecto.
+            // regla de negocio: todos los productos nacen activos en la tienda por defecto
             formData.append('estado', 'true');
             
-            // ¿CREAR O EDITAR? Modificación dinámica de la carga útil
+            // decidir si es crear o editar: modificacion dinamica de la carga util
             if (productoEditandoId) {
-                formData.append('id', productoEditandoId); // Avisamos a Java que esto es un UPDATE, no un INSERT
+                formData.append('id', productoEditandoId); // avisamos a java que esto es un update, no un insert
             }
 
-            // Atrapamos el archivo fisico de la imagen si el usuario selecciono una
+            // atrapamos el archivo fisico de la imagen si el administrador selecciono una
             const inputImagenFile = document.getElementById('prod-imagen');
             if (inputImagenFile && inputImagenFile.files.length > 0) {
                 formData.append('imagen', inputImagenFile.files[0]);
             }
             
             try {
-                // 2. TRANSMISIÓN AL SERVICIO
-                // El booleano `productoEditandoId !== null` dirige la ruta interna hacia el Servlet apropiado
+                // 2. transmision al servicio de backend
+                // el booleano 'productoeditandoid !== null' dirige la ruta interna hacia el servlet apropiado (insertar o actualizar)
                 await guardarProducto(formData, productoEditandoId !== null);
                 
-                // 3. POST-PROCESAMIENTO: Refresco gráfico sin recargar la web
-                alert('¡Producto guardado correctamente!');
+                // 3. post-procesamiento: refresco grafico sin recargar la web
+                alert('¡producto guardado correctamente!');
                 cerrarModal();
                 cargarListaProductos(); 
             } catch (error) {
-                console.error('Error de conexion:', error);
-                alert('Hubo un error al guardar el producto.');
+                console.error('error de conexion con el servidor:', error);
+                alert('hubo un error al guardar el producto.');
             }
         });
     }
 
     /*
-     * PATRÓN DE DISEÑO: Delegación de Eventos (Event Delegation).
-     * En lugar de asignarle un 'EventListener' a cada botón "Editar" y "Eliminar" (lo cual saturaría la RAM 
-     * y fallaría si llegan productos nuevos), le asignamos un único escuchador padre a la tabla entera (tbody).
+     * patron de diseno: delegacion de eventos (event delegation).
+     * en lugar de asignarle un 'eventlistener' a cada boton de "editar" y "eliminar" (lo cual saturaria la ram 
+     * y fallaria si llegan productos nuevos despues), le asignamos un unico escuchador padre a la tabla entera (tbody).
      */
     const tbody = document.getElementById('tabla-productos-body');
     if (tbody) {
         tbody.addEventListener('click', async (evento) => {
-            const btnClic = evento.target.closest('button'); // Verificamos si lo que se clicó fue realmente un botón
+            const btnClic = evento.target.closest('button'); // verificamos si lo que se presiono fue realmente un boton
             if (!btnClic) return; 
 
             const id = btnClic.getAttribute('data-id');
 
             if (btnClic.classList.contains('btn-editar')) {
-                // MODO EDICIÓN: Extraemos los datos "quemados" en el HTML del botón (`data-nombre`, `data-precio`, etc)
-                // y los inyectamos directamente en el formulario Modal
+                // modo edicion: extraemos los datos que escondimos en el html del boton (data-nombre, data-precio, etc)
+                // y los inyectamos directamente en las cajas del formulario modal
                 productoEditandoId = id;
                 document.getElementById('prod-nombre').value = btnClic.getAttribute('data-nombre');
                 if (document.getElementById('prod-descripcion')) {
@@ -165,16 +169,16 @@ function prepararVistaAdminProductos() {
                     document.getElementById('prod-etiquetas').value = btnClic.getAttribute('data-etiquetas') || '';
                 }
                 
-                // MODO EDICION - IMAGEN: Mostramos la imagen actual si el producto ya tiene una
+                // modo edicion - imagen: mostramos la imagen actual si el producto ya tiene una guardada
                 const urlImagen = btnClic.getAttribute('data-imagen');
                 
-                // Limpiamos el input file por si quedo basura de una edicion anterior
+                // limpiamos el input file por si quedo basura de una edicion anterior
                 if (inputImagen) inputImagen.value = '';
                 
                 if (urlImagen && urlImagen !== 'null' && urlImagen !== 'undefined' && urlImagen.trim() !== '') {
                     if (previewImg) previewImg.src = urlImagen;
                     if (previewContenedor) previewContenedor.style.display = 'block';
-                    // Si ya tiene foto, removemos el atributo para NO obligar a subir una nueva
+                    // si el producto ya tiene foto en la base de datos, quitamos el 'required' para no obligar a subir una nueva
                     if (inputImagen) inputImagen.removeAttribute('required'); 
                 } else {
                     if (previewContenedor) previewContenedor.style.display = 'none';
@@ -185,34 +189,37 @@ function prepararVistaAdminProductos() {
                 if (modal) modal.classList.remove('oculto');
                 
             } else if (btnClic.classList.contains('btn-estado')) {
-                // CAMBIO RÁPIDO DE ESTADO (Activar / Pausar Producto)
+                // cambio rapido de estado (activar / pausar producto directamente desde la tabla)
                 const estadoActual = btnClic.getAttribute('data-estado') === 'true';
                 try {
                     await cambiarEstadoProducto(id, !estadoActual);
-                    cargarListaProductos(); // Refrescamos la tabla tras el cambio
+                    cargarListaProductos(); // refrescamos la tabla tras el cambio de estado
                 } catch (error) { alert('error al cambiar el estado del producto'); }
                 
             } else if (btnClic.classList.contains('btn-eliminar')) {
-                // ELIMINACIÓN DE PRODUCTO (Requiere confirmación de seguridad)
+                // eliminacion de producto (siempre requiere confirmacion de seguridad)
                 if (confirm('¿seguro que deseas eliminar este producto de forma permanente?')) {
                     try {
                         await eliminarProducto(id);
                         cargarListaProductos();
-                    } catch (err) { alert('error al intentar borrar el producto'); }
+                    } catch (err) { 
+                        alert('no se pudo borrar.\n\nes probable que un cliente ya haya comprado este producto y se encuentre registrado en un pedido historico.\n\nsi ya no deseas venderlo, te sugerimos usar el boton de "pausar/activar".'); 
+                    }
                 }
             }
         });
     }
 
-    // Al entrar por primera vez a la pantalla, pedimos los productos a la base de datos
+    // al entrar por primera vez a la pantalla, pedimos los productos a la base de datos
     cargarListaProductos();
     
-    // Llenamos las opciones dinámicas del formulario para que el Admin no tenga que escribirlas
+    // llenamos las opciones dinamicas del formulario para que el administrador no tenga que escribirlas a mano
     cargarCategoriasFormulario();
+    cargarProveedoresFormulario();
 }
 
 /**
- * Llama al backend para obtener las categorias y llenar el <select> del modal.
+ * llama al backend para obtener las categorias maestras y llenar el <select> del modal.
  */
 async function cargarCategoriasFormulario() {
     try {
@@ -222,41 +229,100 @@ async function cargarCategoriasFormulario() {
             const select = document.getElementById('prod-categoria');
             if (!select) return;
             
-            // Vaciamos el select y dejamos una opcion inicial deshabilitada
-            select.innerHTML = '<option value="" disabled selected>Seleccione una categoría</option>';
+            // vaciamos el select y dejamos una opcion inicial deshabilitada como guia
+            select.innerHTML = '<option value="" disabled selected>seleccione una categoria</option>';
             
-            // Iteramos sobre las categorias activas extraidas de la Base de Datos
+            // iteramos sobre las categorias activas extraidas de la base de datos de java
             categorias.forEach(cat => {
                 select.innerHTML += `<option value="${cat.id}">${cat.nombre}</option>`;
             });
         }
     } catch (error) {
-        console.error('Error al cargar categorias en el formulario:', error);
+        console.error('error al cargar categorias en el formulario:', error);
     }
 }
 
 /**
- * Se comunica con la base de datos para traer los productos
- * y construye una por una las filas visuales de la tabla.
+ * llama al backend para obtener la lista de proveedores registrados y llenar el <select> correspondiente.
+ */
+async function cargarProveedoresFormulario() {
+    try {
+        const respuesta = await fetch('proveedores');
+        if (respuesta.ok) {
+            const proveedores = await respuesta.json();
+            const select = document.getElementById('prod-proveedor');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">sin proveedor (producto propio de dmari)</option>';
+            proveedores.forEach(prov => {
+                select.innerHTML += `<option value="${prov.id_usuario_pk}">${prov.nombre}</option>`;
+            });
+        } 
+    } catch (error) { console.error('error al cargar proveedores:', error); }
+}
+
+/**
+ * se comunica con el servicio web para traer todos los productos de la tienda
+ * y construye dinamicamente una por una las filas visuales de la tabla del administrador.
  */
 async function cargarListaProductos() {
     const tbody = document.getElementById('tabla-productos-body');
-    if (!tbody) return; // Proteccion: si no existe la tabla en el HTML, no hacemos nada
+    if (!tbody) return; // proteccion: si no existe la tabla en el html, abortamos para no causar errores
 
     try {
-        // Pedimos la lista al backend usando el servicio
+        // pedimos la lista al backend usando el servicio dedicado
         const productosBD = await obtenerProductos();
         
-        // Si el servicio nos devuelve null, disparamos un error intencional para caer en el catch
-        if (!productosBD) throw new Error('No se pudieron obtener los productos');
+        // si el servicio nos devuelve null (por fallo de red), disparamos un error intencional para caer en el catch
+        if (!productosBD) throw new Error('no se pudieron obtener los productos desde java');
         
-        // Vaciamos el texto de "Cargando..."
+        // vaciamos el texto temporal de "cargando..."
         tbody.innerHTML = '';
  
-        // Recorremos el arreglo de productos que llego de MySQL
+        // recorremos el arreglo de productos que llego de mysql y armamos la interfaz
         productosBD.forEach(prod => {
-            // usamos el componente modularizado para fabricar la fila e inyectarla
-            tbody.appendChild(crearFilaProducto(prod));
+            const tr = document.createElement('tr');
+            
+            // extraemos propiedades asegurando compatibilidad con los nombres exactos que escupe el json (gson)
+            const id = prod.idProductoPk || prod.id_producto_pk;
+            const nombre = prod.nombreProducto || prod.nombre_producto;
+            const rutaImg = prod.urlRuta || prod.url_ruta || 'src/img/productos/default/gato_programador.jpg';
+            const catId = prod.idCategoriaFk || prod.id_categoria_fk;
+            
+            // verificamos si las etiquetas vienen como array o como texto simple
+            let etiquetasTxt = '';
+            if (Array.isArray(prod.etiquetas)) etiquetasTxt = prod.etiquetas.join(', ');
+            else if (prod.etiquetas) etiquetasTxt = prod.etiquetas;
+            
+            tr.innerHTML = `
+                <td>#00${id}</td>
+                <td>
+                    <img src="${rutaImg}" alt="${nombre}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd;">
+                </td>
+                <td><strong>${nombre}</strong></td>
+                <td>$${prod.precio}</td>
+                <td><span class="badge-estado ${prod.estado !== false ? 'badge-activo' : 'badge-inactivo'}">${prod.estado !== false ? 'ACTIVO' : 'PAUSADO'}</span></td>
+                <td>
+                    <button class="btn-editar" 
+                        data-id="${id}" 
+                        data-nombre="${nombre}" 
+                        data-descripcion="${prod.descripcion || ''}"
+                        data-precio="${prod.precio}"
+                        data-stock="${prod.stock}"
+                        data-categoria="${catId}"
+                        data-etiquetas="${etiquetasTxt}"
+                        data-imagen="${rutaImg}">
+                        <i class='bx bx-edit'></i> Editar
+                    </button>
+                    <button class="btn-estado" data-id="${id}" data-estado="${prod.estado !== false}">
+                        <i class='bx bx-refresh'></i> ${prod.estado !== false ? 'Pausar' : 'Activar'}
+                    </button>
+                    <button class="btn-eliminar" data-id="${id}">
+                        <i class='bx bx-trash'></i> Borrar
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
 
     } catch (error) {

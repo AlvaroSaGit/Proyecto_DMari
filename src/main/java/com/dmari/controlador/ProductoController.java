@@ -104,9 +104,28 @@ public class ProductoController extends HttpServlet {
             nuevoProd.setDescripcion(descripcion);
             nuevoProd.setPrecio(precio);
             nuevoProd.setStock(stock);
+            String idProveedorParam = request.getParameter("id_proveedor");
 
             // guardamos y validamos
-            if (dao.insertarProducto(nuevoProd) > 0) {
+            int idGenerado = dao.insertarProducto(nuevoProd);
+            if (idGenerado > 0) {
+                // Si se creo el producto, atrapamos la foto y la guardamos
+                guardarImagenFisica(request, idGenerado);
+                
+                // NUEVO: Verificamos si quien esta creando el producto es un proveedor.
+                // Si es asi, lo enlazamos en la tabla puente para que sea el dueno absoluto y pueda verlo.
+                HttpSession sesion = request.getSession(false);
+                if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
+                    usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
+                    // 4 es el ID del rol proveedor en tu base de datos
+                    if (user.getIdRol() == 4) {
+                        dao.asignarProductoAProveedor(idGenerado, user.getIdUsuario());
+                    } else if (user.getIdRol() == 1 && idProveedorParam != null && !idProveedorParam.isEmpty()) {
+                        // si es el administrador y eligio un proveedor del selector
+                        dao.asignarProductoAProveedor(idGenerado, Integer.parseInt(idProveedorParam));
+                    }
+                }
+
                 // SC_OK equivale al codigo HTTP 200 (OK). Indica a Javascript que todo salio perfecto.
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
@@ -137,8 +156,21 @@ public class ProductoController extends HttpServlet {
                 prod.setIdCategoriaFk(Integer.parseInt(catParam));
             }
             prod.setEstado(Boolean.parseBoolean(request.getParameter("estado")));
+            String idProveedorParam = request.getParameter("id_proveedor");
 
             if (dao.actualizarProducto(prod)) {
+                // Si se actualizo el producto, verificamos si el Admin subio una foto nueva para reemplazarla
+                guardarImagenFisica(request, prod.getIdProductoPk());
+                
+                // actualizamos la tabla puente proveedor_producto si el admin lo cambio
+                HttpSession sesion = request.getSession(false);
+                if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
+                    usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
+                    if (user.getIdRol() == 1) {
+                        int idProv = (idProveedorParam != null && !idProveedorParam.isEmpty()) ? Integer.parseInt(idProveedorParam) : 0;
+                        dao.actualizarProveedorDeProducto(prod.getIdProductoPk(), idProv);
+                    }
+                }
                 // SC_OK (200): El producto se actualizo correctamente en la base de datos
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
@@ -155,6 +187,35 @@ public class ProductoController extends HttpServlet {
             } else {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             }
+        }
+    }
+
+    // Metodo auxiliar para procesar el archivo fisico, guardarlo en el servidor y en la BD
+    private void guardarImagenFisica(HttpServletRequest request, int idProducto) {
+        try {
+            Part filePart = request.getPart("imagen"); // "imagen" es el nombre que le diste en JS: formData.append('imagen', ...)
+            if (filePart != null && filePart.getSize() > 0) {
+                // Extraemos el nombre original de la foto (ej: dona_chocolate.jpg)
+                String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+                
+                // Buscamos la ruta absoluta de tu servidor Tomcat para guardar el archivo fisico
+                String uploadPath = getServletContext().getRealPath("") + File.separator + "src" + File.separator + "img" + File.separator + "productos";
+                File uploadDir = new File(uploadPath);
+                if (!uploadDir.exists()) uploadDir.mkdirs(); // Si la carpeta no existe, la crea
+                
+                // Guardamos el archivo. Le pegamos el ID al principio para evitar que dos fotos se llamen igual
+                filePart.write(uploadPath + File.separator + idProducto + "_" + fileName);
+                
+                // Creamos la ruta relativa en formato Web (con diagonales normales) que usara el HTML para pintar el <img>
+                String rutaRelativa = "src/img/productos/" + idProducto + "_" + fileName;
+                
+                // Finalmente usamos el DAO que creaste para enlazar la foto al producto en MySQL
+                imagenesDAO imgDao = new imagenesDAO();
+                imgDao.borrarImagenesDeProducto(idProducto); // Borramos las fotos viejas si es una actualizacion
+                imgDao.insertarImagen(idProducto, rutaRelativa, 1);
+            }
+        } catch (Exception e) {
+            System.out.println("error al subir la foto del producto: " + e.getMessage());
         }
     }
 }

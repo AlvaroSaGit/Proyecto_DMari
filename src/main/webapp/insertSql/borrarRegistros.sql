@@ -14,8 +14,6 @@ SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE pago;
 TRUNCATE TABLE detalle_pedido;
 TRUNCATE TABLE pedido;
-TRUNCATE TABLE detalle_carrito;
-TRUNCATE TABLE carrito;
 
 -- 2. vaciamos las tablas puente y satelites de los productos
 TRUNCATE TABLE proveedor_producto;

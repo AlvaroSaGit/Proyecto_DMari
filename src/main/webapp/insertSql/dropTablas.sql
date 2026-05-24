@@ -13,8 +13,6 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS pago;
 DROP TABLE IF EXISTS detalle_pedido;
 DROP TABLE IF EXISTS pedido;
-DROP TABLE IF EXISTS detalle_carrito;
-DROP TABLE IF EXISTS carrito;
 DROP TABLE IF EXISTS proveedor_producto;
 DROP TABLE IF EXISTS producto_etiqueta;
 DROP TABLE IF EXISTS imagenes;

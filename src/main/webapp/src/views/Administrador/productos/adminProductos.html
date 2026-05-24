@@ -19,7 +19,7 @@
                     <th>imagen</th>
                     <th>nombre</th>
                     <th>precio</th>
-                    <th>novedad</th>
+                    <th>estado</th>
                     <th>acciones</th>
                 </tr>
             </thead>
@@ -87,6 +87,13 @@
                       Java se encargara de leer este texto, cortarlo y guardarlo en la base de datos.
                     -->
                     <input class="admin-form__input" type="text" id="prod-etiquetas" name="etiquetas" placeholder="Ej: Aromaterapia, Dulce, Dia de la Madre">
+                </div>
+                <div class="admin-form__group">
+                    <label class="admin-form__label" for="prod-proveedor">Proveedor (Opcional)</label>
+                    <!-- Este select se llenara magicamente con Javascript consultando la base de datos -->
+                    <select class="admin-form__input" id="prod-proveedor" name="id_proveedor">
+                        <option value="">Sin proveedor (Producto propio de DMari)</option>
+                    </select>
                 </div>
                 <div class="admin-form__group">
                     <label class="admin-form__label" for="prod-imagen">Imagen del producto</label>

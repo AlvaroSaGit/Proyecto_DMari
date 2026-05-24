@@ -30,8 +30,8 @@ async function cargarListaCategorias() {
     if (!tbody) return;
 
     try {
-        // Hacemos una peticion GET al servidor
-        const respuesta = await fetch('categorias');
+        // Hacemos una peticion GET al servidor pidiendo TODAS las categorias (incluso pausadas)
+        const respuesta = await fetch('categorias?todas=true');
         const categorias = await respuesta.json();
         
         // Vaciamos el mensaje temporal de "cargando..."

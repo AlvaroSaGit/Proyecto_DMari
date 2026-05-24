@@ -19,7 +19,9 @@ public class pedidoDAO {
         y luego guarda todos los productos en 'detalle_pedido'.
     */
     public boolean registrarPedido(int idCliente, double totalPagar, ArrayList<detallePedido> carrito) {
+        // preparamos la instruccion sql para insertar la cabecera del pedido (el recibo principal)
         String sqlPedido = "INSERT INTO pedido (id_cliente_fk, total_pagar, estado_pedido) VALUES (?, ?, 'Pendiente')";
+        // preparamos la instruccion sql para insertar cada producto comprado en el detalle del pedido
         String sqlDetalle = "INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)";
         
         Connection con = null;
@@ -84,15 +86,25 @@ public class pedidoDAO {
     public ArrayList<detallePedido> listarPedidosPorProveedor(int idUsuarioProveedor) {
         ArrayList<detallePedido> lista = new ArrayList<>();
         
-        // unimos las 5 tablas necesarias para revelar el camino de datos
+        // preparamos la consulta uniendo 6 tablas para revelar el camino de datos desde el pedido hasta el proveedor
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, u.nombre AS nombre_cliente, " +
-                     "prod.nombre_producto, dp.cantidad, dp.subtotal " +
+                     // traemos la direccion y telefono del cliente para que el proveedor sepa a donde enviar
+                     "c.direccion_envio, c.telefono_secundario, prod.nombre_producto, dp.cantidad, dp.subtotal " +
+                     // tabla principal de la consulta: el pedido maestro
                      "FROM pedido p " +
+                     // join 1: cruzamos con usuario para saber el nombre de quien compro
                      "INNER JOIN usuario u ON p.id_cliente_fk = u.id_usuario_pk " +
+                     // join 2: cruzamos con cliente (left join por si algun usuario aun no llena su perfil) para traer su direccion
+                     "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
+                     // join 3: cruzamos con el detalle del pedido para ver que productos exactos compro en esa orden
                      "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
+                     // join 4: cruzamos con producto para obtener el nombre del postre o arreglo floral
                      "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
+                     // join 5: cruzamos con la tabla puente para saber a que proveedor le pertenece este producto
                      "INNER JOIN proveedor_producto pp ON prod.id_producto_pk = pp.id_producto_fk " +
+                     // join 6: finalmente cruzamos con la tabla proveedor para validar la identidad
                      "INNER JOIN proveedor pr ON pp.id_proveedor_fk = pr.id_proveedor_pk " +
+                     // filtramos para que solo salgan los productos del proveedor logueado, ordenados del mas reciente al mas antiguo
                      "WHERE pr.id_datos_proveedor_fk = ? ORDER BY p.fecha DESC";
                      
         try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -104,6 +116,11 @@ public class pedidoDAO {
                      dp.setFechaPedido(rs.getString("fecha"));
                      dp.setEstadoPedido(rs.getString("estado_pedido"));
                      dp.setNombreCliente(rs.getString("nombre_cliente"));
+                     
+                     // IMPORTANTE: Recuerda crear estos dos atributos en tu modelo `detallePedido.java`
+                     // dp.setDireccionEnvio(rs.getString("direccion_envio"));
+                     // dp.setTelefonoSecundario(rs.getString("telefono_secundario"));
+                     
                      dp.setNombreProducto(rs.getString("nombre_producto"));
                      dp.setCantidad(rs.getInt("cantidad"));
                      dp.setSubtotal(rs.getDouble("subtotal"));
@@ -119,11 +136,17 @@ public class pedidoDAO {
     */
     public ArrayList<detallePedido> listarPedidosPorCliente(int idCliente) {
         ArrayList<detallePedido> lista = new ArrayList<>();
+        // preparamos la consulta sql para traer el historial completo de un cliente
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, " +
+                     // traemos el nombre del producto y sus datos monetarios
                      "prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal " +
+                     // comenzamos desde la tabla maestra de pedidos
                      "FROM pedido p " +
+                     // join 1: cruzamos con el detalle para sacar los productos de cada factura
                      "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
+                     // join 2: cruzamos con producto para saber el nombre de lo que compro
                      "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
+                     // filtramos para traer solo los pedidos del cliente que esta consultando, del mas nuevo al mas viejo
                      "WHERE p.id_cliente_fk = ? ORDER BY p.fecha DESC";
                      
         try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
