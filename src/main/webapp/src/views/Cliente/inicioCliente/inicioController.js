@@ -79,6 +79,12 @@ function asignarEventosCarrito() {
     const contenedorPrincipal = document.getElementById('component-main');
     if (!contenedorPrincipal) return;
 
+    // solucion al "clic multiple":
+    // verificamos si ya le asignamos este escuchador al contenedor principal en el pasado.
+    // si ya lo tiene, cortamos la funcion aqui para no duplicarlo.
+    if (contenedorPrincipal.dataset.eventosCarritoAsignados === 'true') return;
+    contenedorPrincipal.dataset.eventosCarritoAsignados = 'true';
+
     // Escuchamos los clics en todo el contenedor principal
     contenedorPrincipal.addEventListener('click', (evento) => {
         // Buscamos si el clic provino de un boton de agregar al carrito (o su icono interno)

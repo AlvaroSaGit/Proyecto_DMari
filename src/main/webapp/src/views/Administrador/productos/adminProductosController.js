@@ -11,6 +11,12 @@ import { obtenerProductos, guardarProducto, eliminarProducto, cambiarEstadoProdu
 let productoEditandoId = null;
 
 /**
+ * bandera de seguridad (candado logico):
+ * evita que envios simultaneos en microsegundos manden peticiones dobles al servidor java.
+ */
+let guardandoProducto = false;
+
+/**
  * funcion de arranque (entry point) exclusiva para la vista del administrador.
  * inyecta el html base del panel y manda a inicializar todos sus comportamientos.
  */
@@ -39,7 +45,7 @@ function prepararVistaAdminProductos() {
 
     // evento: mostrar la foto temporalmente cuando el usuario selecciona un archivo de su pc
     if (inputImagen) {
-        inputImagen.addEventListener('change', function() {
+        inputImagen.onchange = function() {
             const archivo = this.files[0];
             if (archivo) {
                 const lector = new FileReader(); // api nativa de javascript para leer archivos locales
@@ -52,12 +58,12 @@ function prepararVistaAdminProductos() {
                 previewImg.src = '';
                 previewContenedor.style.display = 'none'; // lo volvemos a esconder si el usuario cancela
             }
-        });
+        };
     }
 
     // crear nuevo producto: preparar y abrir la ventana flotante (modal) totalmente limpia
     if (btnAgregar) {
-        btnAgregar.addEventListener('click', () => {
+        btnAgregar.onclick = () => {
             productoEditandoId = null; // reseteamos la variable de estado
             document.getElementById('modal-titulo').innerText = 'Nuevo Producto';
             if (form) form.reset(); // vaciamos todas las cajas de texto
@@ -68,19 +74,24 @@ function prepararVistaAdminProductos() {
             if (inputImagen) { inputImagen.value = ''; inputImagen.setAttribute('required', 'required'); } // la imagen es obligatoria al crear
             
             if (modal) modal.classList.remove('oculto'); 
-        });
+        };
     }
     
     // funcion auxiliar anonima para esconder el modal inyectandole la clase css 'oculto'
     const cerrarModal = () => { if (modal) modal.classList.add('oculto'); };
     
-    if (btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
-    if (btnCancelar) btnCancelar.addEventListener('click', cerrarModal);
+    if (btnCerrar) btnCerrar.onclick = cerrarModal;
+    if (btnCancelar) btnCancelar.onclick = cerrarModal;
     
     // evento principal: cuando el usuario da clic en "guardar producto" en el formulario
     if (form) {
-        form.addEventListener('submit', async (e) => {
+        form.onsubmit = async (e) => {
             e.preventDefault(); // detenemos el submit tradicional que recargaria la pagina entera
+            
+            // candado de seguridad: si ya se esta guardando un producto, ignoramos cualquier intento adicional de inmediato
+            if (guardandoProducto) return;
+            
+            guardandoProducto = true; // cerramos el candado
             
             // 1. lectura de todas las cajas del formulario
             const nombre = document.getElementById('prod-nombre').value;
@@ -122,6 +133,13 @@ function prepararVistaAdminProductos() {
                 formData.append('imagen', inputImagenFile.files[0]);
             }
             
+            // Bloqueamos el boton para evitar que el usuario de multiples clics por accidente
+            const btnSubmit = form.querySelector('button[type="submit"]');
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.innerText = 'Guardando...';
+            }
+
             try {
                 // 2. transmision al servicio de backend
                 // el booleano 'productoeditandoid !== null' dirige la ruta interna hacia el servlet apropiado (insertar o actualizar)
@@ -134,8 +152,17 @@ function prepararVistaAdminProductos() {
             } catch (error) {
                 console.error('error de conexion con el servidor:', error);
                 alert('hubo un error al guardar el producto.');
+            } finally {
+                // abrimos el candado logico nuevamente, pase lo que pase (exito o error)
+                guardandoProducto = false;
+                
+                // Desbloqueamos el boton cuando termine el proceso, pase lo que pase
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerText = 'Guardar Producto';
+                }
             }
-        });
+        };
     }
 
     /*
@@ -145,7 +172,7 @@ function prepararVistaAdminProductos() {
      */
     const tbody = document.getElementById('tabla-productos-body');
     if (tbody) {
-        tbody.addEventListener('click', async (evento) => {
+        tbody.onclick = async (evento) => {
             const btnClic = evento.target.closest('button'); // verificamos si lo que se presiono fue realmente un boton
             if (!btnClic) return; 
 
@@ -209,7 +236,7 @@ function prepararVistaAdminProductos() {
                     }
                 }
             }
-        });
+        };
     }
 
     // al entrar por primera vez a la pantalla, pedimos los productos a la base de datos

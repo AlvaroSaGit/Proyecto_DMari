@@ -11,6 +11,7 @@ import { inicializarAdmin } from '../views/Administrador/sidebar/adminSideBarCon
 import { cargarVistaAdminCategorias } from '../views/Administrador/categorias/adminCategoriasController.js';
 import { inicializarProveedor } from '../views/Proveedor/sidebar/proveedorSideBarController.js';
 import { cargarVistaAdminUsuarios } from '../views/Administrador/usuarios/adminusuariosController.js';
+import { cargarVistaAdminPedidos } from '../views/Administrador/adminPedido/adminPedidosController.js';
 
 // Importamos el servicio de interfaz para poder inyectar la sidebar
 import { cargarComponente } from '../services/uiService.js';
@@ -73,9 +74,7 @@ async function manejarRuta() {
     } else if (vista === 'admin-usuarios') {
         cargarVistaAdminUsuarios();
     } else if (vista === 'admin-pedidos') {
-        // Vista temporal para Pedidos hasta que crees su Controller
-        const main = document.getElementById('component-main');
-        if (main) main.innerHTML = '<section class="admin-vista-productos"><div class="admin-header-seccion"><h2>Gestion de Pedidos</h2></div><div class="admin-tabla-contenedor" style="padding:20px;">Modulo de despacho de pedidos pendiente de construccion...</div></section>';
+        cargarVistaAdminPedidos();
     } else if (vista === 'admin-solicitudes') {
         // Vista temporal para Solicitudes hasta que crees su Controller
         const main = document.getElementById('component-main');
@@ -83,9 +82,7 @@ async function manejarRuta() {
     } else if (vista === 'proveedor-productos') {
         cargarVistaProveedorProductos();
     } else if (vista === 'proveedor-pedidos') {
-        // Vista temporal para Pedidos del Proveedor
-        const main = document.getElementById('component-main');
-        if (main) main.innerHTML = '<section class="admin-vista-productos"><div class="admin-header-seccion"><h2>Mis Pedidos</h2></div><div class="admin-tabla-contenedor" style="padding:20px;">Modulo de pedidos del proveedor en construccion...</div></section>';
+        cargarVistaAdminPedidos(); // Reutilizamos la misma vista porque la base de datos se encarga de filtrar
     } else {
         cargarVistaInicio(); // Por defecto carga el inicio
     }

@@ -18,8 +18,9 @@ export async function cargarVistaConfiguracion() {
         return;
     }
 
-    // inyectamos la estructura html de la configuracion en el main
-    await cargarComponente('component-main', './src/views/Cliente/configuracion/configuracion.html');
+    // inyectamos la estructura html de la configuracion en el main.
+    // agregamos '?t=' + timestamp para destruir la cache del navegador y obligarlo a mostrar los campos nuevos.
+    await cargarComponente('component-main', './src/views/Cliente/configuracion/configuracion.html?t=' + new Date().getTime());
     
     // capturamos el nuevo boton para ir al historial
     const btnIrHistorial = document.getElementById('btn-ir-historial');

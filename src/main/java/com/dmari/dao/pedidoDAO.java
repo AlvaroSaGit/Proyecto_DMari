@@ -166,4 +166,54 @@ public class pedidoDAO {
         } catch (SQLException e) { System.out.println("error al listar pedidos del cliente: " + e.getMessage()); }
         return lista;
     }
+
+    /*
+        metodo para obtener el historial completo de la tienda (para el administrador).
+    */
+    public ArrayList<detallePedido> listarTodosLosPedidos() {
+        ArrayList<detallePedido> lista = new ArrayList<>();
+        String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, u.nombre AS nombre_cliente, " +
+                     "c.direccion_envio, c.telefono_secundario, prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal " +
+                     "FROM pedido p " +
+                     "INNER JOIN usuario u ON p.id_cliente_fk = u.id_usuario_pk " +
+                     "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
+                     "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
+                     "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
+                     "ORDER BY p.id_pedido_pk DESC";
+                     
+        try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+             while(rs.next()) {
+                 detallePedido dp = new detallePedido();
+                 dp.setIdPedidoFk(rs.getInt("id_pedido_pk"));
+                 dp.setFechaPedido(rs.getString("fecha"));
+                 dp.setEstadoPedido(rs.getString("estado_pedido"));
+                 dp.setNombreCliente(rs.getString("nombre_cliente"));
+                 dp.setNombreProducto(rs.getString("nombre_producto"));
+                 dp.setCantidad(rs.getInt("cantidad"));
+                 dp.setPrecioUnitario(rs.getDouble("precio_unitario"));
+                 dp.setSubtotal(rs.getDouble("subtotal"));
+                 
+                 // usamos setDireccionEnvio si lo agregaste a tu modelo, sino lo mandamos temporalmente en otro campo o lo imprimimos directamente en el json
+                 // aqui asumimos que la direccion puede concatenarse temporalmente para el administrador
+                 String detallesContacto = (rs.getString("direccion_envio") != null) ? rs.getString("direccion_envio") + " | Tel: " + rs.getString("telefono_secundario") : "sin direccion guardada";
+                 // usamos nombrecliente como portador de los datos si no has modificado la clase modelo aun
+                 dp.setNombreCliente(rs.getString("nombre_cliente") + " - " + detallesContacto);
+                 
+                 lista.add(dp);
+             }
+        } catch (SQLException e) { System.out.println("error al listar todos los pedidos: " + e.getMessage()); }
+        return lista;
+    }
+
+    /*
+        metodo para que el administrador o proveedor cambien el estado del paquete (ej: 'preparando', 'entregado')
+    */
+    public boolean actualizarEstadoPedido(int idPedido, String nuevoEstado) {
+        String sql = "UPDATE pedido SET estado_pedido = ? WHERE id_pedido_pk = ?";
+        try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nuevoEstado);
+            ps.setInt(2, idPedido);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { return false; }
+    }
 }

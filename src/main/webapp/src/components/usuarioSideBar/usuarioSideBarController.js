@@ -39,6 +39,24 @@ export async function inicializarUsuario() {
             if (btnLogin) btnLogin.style.display = 'none';
             if (btnRegistro) btnRegistro.style.display = 'none';
 
+            // 1.5 Creamos dinamicamente el boton de Historial de Pedidos
+            let btnPedidos = document.getElementById('btn-nav-historial');
+            if (!btnPedidos) {
+                btnPedidos = document.createElement('button');
+                btnPedidos.className = 'btn-usuario-item'; 
+                btnPedidos.id = 'btn-nav-historial';
+                // Icono de bolsa de compras para diferenciarlo de la tuerca de configuracion
+                btnPedidos.innerHTML = "<i class='bx bx-shopping-bag'></i> Mis Pedidos";
+                
+                // Lo insertamos en el menu, justo ANTES de Configuracion
+                if (btnConfiguracion && btnConfiguracion.parentNode) {
+                    btnConfiguracion.parentNode.insertBefore(btnPedidos, btnConfiguracion);
+                }
+                
+                // Le damos la orden para navegar al historial al hacer clic
+                btnPedidos.addEventListener('click', () => { cerrarUsuario(); navegarA('historial'); });
+            }
+
             // 2. Creamos y agregamos dinamicamente el boton de Cerrar Sesion
             // Asi no tienes que modificar el HTML manualmente
             let btnSalir = document.getElementById('btn-nav-salir');

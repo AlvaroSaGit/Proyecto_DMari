@@ -8,6 +8,7 @@
 import { cargarComponente } from '../../../services/uiService.js';
 import { obtenerHistorialPedidos } from '../../../components/pedido/pedidoService.js';
 import { crearBloquePedido } from '../../../components/pedido/historialPedidoComponent.js';
+import { navegarA } from '../../../router/router.js';
 
 /*
     funcion de arranque de la vista.
@@ -16,6 +17,29 @@ import { crearBloquePedido } from '../../../components/pedido/historialPedidoCom
 */
 export async function cargarVistaHistorialPedidos() {
     await cargarComponente('component-main', './src/views/Cliente/historialPedidos/historialPedidos.html');
+    
+    // Creamos un boton de "Volver" pequeno e incrustado en el recuadro
+    const contenedorLista = document.getElementById('contenedor-lista-historial');
+    if (contenedorLista && contenedorLista.parentNode) {
+        const contenedorBtn = document.createElement('div');
+        // Lo alineamos a la izquierda con un margen inferior pequeno para que no estorbe
+        contenedorBtn.style.cssText = "margin-bottom: 15px; display: flex;";
+        contenedorBtn.innerHTML = `
+            <button id="btn-volver-config" style="padding: 6px 14px; border: none; background: #212529; color: white; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.85rem; transition: background 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <i class='bx bx-arrow-back'></i> Volver
+            </button>
+        `;
+        
+        // Le damos interactividad y la orden de regresar al perfil
+        const btnVolver = contenedorBtn.querySelector('button');
+        btnVolver.onmouseover = () => btnVolver.style.background = '#495057';
+        btnVolver.onmouseout = () => btnVolver.style.background = '#212529';
+        btnVolver.onclick = () => navegarA('configuracion');
+        
+        // Lo incrustamos justo antes de que empiece la lista de pedidos, adentro de la caja
+        contenedorLista.parentNode.insertBefore(contenedorBtn, contenedorLista);
+    }
+
     prepararVistaHistorial();
 }
 

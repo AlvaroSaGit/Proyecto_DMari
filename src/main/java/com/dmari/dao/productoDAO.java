@@ -39,7 +39,7 @@ public class productoDAO {
              "p.stock, " +
              "p.estado, " +
              "p.id_categoria_fk, " +
-             // traemos la url de la imagen desde la tabla unida
+             // ruta principal de la foto desde la tabla unida
              "i.url_ruta, " +
              // extraemos el texto de la categoria para que el usuario no vea solo un numero
              "c.nombre AS nombre_categoria, " +
@@ -48,8 +48,7 @@ public class productoDAO {
              "(SELECT GROUP_CONCAT(e.nombre_etiqueta SEPARATOR ',') FROM producto_etiqueta pe INNER JOIN etiqueta e ON pe.id_etiqueta = e.id_etiqueta_pk WHERE pe.id_producto = p.id_producto_pk) AS etiquetas_str " +
              // tabla principal desde donde partimos
              "FROM producto p " +
-             // uso de left join (cruce flexible): queremos traer el producto SIEMPRE, incluso si el administrador olvido subirle una foto.
-             // si usaramos inner join aqui, los productos sin foto desaparecerian de la tienda!
+             // uso de left join: traemos el producto incluso si no tiene imagen asignada
              "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk AND i.imagen_principal = 1 " +
              // uso de left join: traemos el nombre de la categoria. si el producto quedo sin categoria por algun error, no se ocultara.
              "LEFT JOIN categoria c ON p.id_categoria_fk = c.id_categoria_pk";
@@ -58,6 +57,9 @@ public class productoDAO {
         if (soloActivos) {
             sql += " WHERE p.estado = 1 AND p.stock > 0";
         }
+        
+        // AGRUPACION ESTRICTA: Fuerza a MySQL a aplastar filas duplicadas generadas por cruces multiples (JOINs)
+        sql += " GROUP BY p.id_producto_pk";
 
         /*
             usar el try como try-with-resources,
@@ -151,7 +153,6 @@ public class productoDAO {
              "(SELECT GROUP_CONCAT(e.nombre_etiqueta SEPARATOR ',') FROM producto_etiqueta pe INNER JOIN etiqueta e ON pe.id_etiqueta = e.id_etiqueta_pk WHERE pe.id_producto = p.id_producto_pk) AS etiquetas_str " +
              // arrancamos en producto
              "FROM producto p " +
-             // left join: mantenemos la flexibilidad para las fotos y las categorias
              "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk AND i.imagen_principal = 1 " +
              "LEFT JOIN categoria c ON p.id_categoria_fk = c.id_categoria_pk " +
              // USO DE INNER JOIN (cruce estricto): ¡aqui esta la magia de tu sistema!
@@ -160,7 +161,8 @@ public class productoDAO {
              // asi garantizamos que el proveedor jamas vea un producto que no le pertenezca.
              "INNER JOIN proveedor_producto pp ON p.id_producto_pk = pp.id_producto_fk " +
              "INNER JOIN proveedor pr ON pp.id_proveedor_fk = pr.id_proveedor_pk " +
-             "WHERE pr.id_datos_proveedor_fk = ?";
+             "WHERE pr.id_datos_proveedor_fk = ? " +
+             "GROUP BY p.id_producto_pk";
              
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -240,43 +242,73 @@ public class productoDAO {
 
     }
 
-    // metodo para enlazar un producto nuevo con el proveedor que lo acaba de crear
+    // metodo para enlazar un producto nuevo con el proveedor que lo acaba de crear en el sistema.
+    // este metodo es vital porque los productos no pueden quedar huerfanos si los crea un proveedor.
     public boolean asignarProductoAProveedor(int idProducto, int idUsuarioProveedor) {
-        // hacemos un insert buscando primero cual es el id interno del proveedor en la tabla 'proveedor'
-        String sql = "INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) " +
-                     "SELECT id_proveedor_pk, ? FROM proveedor WHERE id_datos_proveedor_fk = ?";
-                     
-        try (Connection con = db.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-             
-            ps.setInt(1, idProducto);
-            ps.setInt(2, idUsuarioProveedor);
+        try (Connection con = db.conectar()) {
+            int idProveedorPk = 0;
             
-            return ps.executeUpdate() > 0;
+            // paso 1: buscamos cual es el id interno del proveedor en su tabla principal.
+            // esto se hace porque la tabla puente requiere el id de 'proveedor', no el id general de 'usuario'.
+            String sqlBuscar = "SELECT id_proveedor_pk FROM proveedor WHERE id_datos_proveedor_fk = ?";
+            try (PreparedStatement psBuscar = con.prepareStatement(sqlBuscar)) {
+                psBuscar.setInt(1, idUsuarioProveedor);
+                try (ResultSet rs = psBuscar.executeQuery()) {
+                    if (rs.next()) idProveedorPk = rs.getInt("id_proveedor_pk");
+                }
+            }
+            
+            // paso 2: finalmente, hacemos el enlace directo y exacto a la tabla puente.
+            // unimos el id del producto con el id interno del proveedor validado.
+            if (idProveedorPk > 0) {
+                String sqlInsert = "INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) VALUES (?, ?)";
+                try (PreparedStatement psInsert = con.prepareStatement(sqlInsert)) {
+                    psInsert.setInt(1, idProveedorPk);
+                    psInsert.setInt(2, idProducto);
+                    int filas = psInsert.executeUpdate();
+                    System.out.println("enlace creado exitosamente: producto " + idProducto + " -> proveedor " + idProveedorPk);
+                    return filas > 0;
+                }
+            }
         } catch (SQLException e) {
-            System.out.println("error al asignar el producto al proveedor: " + e.getMessage());
-            return false;
+            System.out.println("error critico al asignar el proveedor: " + e.getMessage());
         }
+        return false;
     }
     
-    // metodo para actualizar o quitar al proveedor de un producto existente (exclusivo del administrador)
+    // metodo para actualizar o quitar al proveedor de un producto existente (exclusivo del administrador).
     public boolean actualizarProveedorDeProducto(int idProducto, int idUsuarioProveedor) {
-        // primero borramos cualquier conexion previa para que no queden duplicados (huerfanos)
+        // preparamos la orden para destruir cualquier conexion vieja.
         String sqlDelete = "DELETE FROM proveedor_producto WHERE id_producto_fk = ?";
-        // insertamos el nuevo (buscando su id interno en la tabla proveedor)
-        String sqlInsert = "INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) SELECT id_proveedor_pk, ? FROM proveedor WHERE id_datos_proveedor_fk = ?";
         
         try (Connection con = db.conectar()) {
+            // primero borramos cualquier conexion previa para que no queden duplicados (huerfanos) en la tabla puente.
             try (PreparedStatement psDel = con.prepareStatement(sqlDelete)) {
                 psDel.setInt(1, idProducto);
                 psDel.executeUpdate();
             }
-            // si selecciono "sin proveedor" mandara un 0, por lo que no hace el insert
+            
+            // si el admin selecciono a un proveedor real del menu (id > 0), creamos el nuevo enlace.
+            // si selecciono "sin proveedor", el id llega como 0, se salta este bloque y el producto queda libre.
             if (idUsuarioProveedor > 0) {
-                try (PreparedStatement psIns = con.prepareStatement(sqlInsert)) {
-                    psIns.setInt(1, idProducto);
-                    psIns.setInt(2, idUsuarioProveedor);
-                    psIns.executeUpdate();
+                int idProveedorPk = 0;
+                // buscamos su id interno en la tabla
+                String sqlBuscar = "SELECT id_proveedor_pk FROM proveedor WHERE id_datos_proveedor_fk = ?";
+                try (PreparedStatement psBuscar = con.prepareStatement(sqlBuscar)) {
+                    psBuscar.setInt(1, idUsuarioProveedor);
+                    try (ResultSet rs = psBuscar.executeQuery()) {
+                        if (rs.next()) idProveedorPk = rs.getInt("id_proveedor_pk");
+                    }
+                }
+                
+                // creamos el nuevo puente en la base de datos
+                if (idProveedorPk > 0) {
+                    String sqlInsert = "INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) VALUES (?, ?)";
+                    try (PreparedStatement psInsert = con.prepareStatement(sqlInsert)) {
+                        psInsert.setInt(1, idProveedorPk);
+                        psInsert.setInt(2, idProducto);
+                        psInsert.executeUpdate();
+                    }
                 }
             }
             return true;

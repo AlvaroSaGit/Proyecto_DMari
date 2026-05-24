@@ -7,8 +7,13 @@
  */
 export async function obtenerProductos(parametros = '') {
     try {
-        // le agregamos los parametros a la ruta (ejemplo: listar?proveedor=true)
-        const respuesta = await fetch('listar' + parametros); 
+        // creamos un destructor de cache (timestamp unico).
+        // verificamos si la ruta ya tiene un '?' para concatenar correctamente con '&'
+        const separador = parametros.includes('?') ? '&' : '?';
+        const cacheBuster = separador + 't=' + new Date().getTime();
+        
+        // le agregamos los parametros a la ruta y burlamos la memoria del navegador
+        const respuesta = await fetch('listar' + parametros + cacheBuster); 
         
         if (!respuesta.ok) {
             throw new Error(`error http: ${respuesta.status}`);

@@ -157,12 +157,45 @@ public class usuarioDAO {
     // metodo transaccional para cambiar el rol y el estado de la cuenta de un usuario
     public boolean actualizarPermisos(int idUsuario, int idRol, boolean estadoCuenta) {
         String sql = "UPDATE usuario SET id_rol_fk = ?, estado_cuenta = ? WHERE id_usuario_pk = ?";
-        try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idRol);
-            ps.setBoolean(2, estadoCuenta);
-            ps.setInt(3, idUsuario);
+        Connection con = null;
+        try {
+            con = db.conectar();
+            // apagamos el autocommit para proteger toda la transaccion
+            con.setAutoCommit(false); 
             
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) { return false; }
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setInt(1, idRol);
+                ps.setBoolean(2, estadoCuenta);
+                ps.setInt(3, idUsuario);
+                ps.executeUpdate();
+            }
+            
+            // ARREGLO: Si el usuario es ascendido a Proveedor (rol 4), inicializamos su perfil comercial
+            // Esto garantiza que proveedor_producto funcione perfectamente cuando intente crear un producto.
+            if (idRol == 4) {
+                String sqlDatos = "INSERT IGNORE INTO datos_proveedor (id_datos_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta) VALUES (?, '000000000', 'Mi Tienda', '0000', 'Banco', 'Ahorros')";
+                try (PreparedStatement psDatos = con.prepareStatement(sqlDatos)) {
+                    psDatos.setInt(1, idUsuario);
+                    psDatos.executeUpdate();
+                }
+                
+                // Insertamos en proveedor garantizando que no se duplique si ya existia
+                String sqlProv = "INSERT INTO proveedor (id_datos_proveedor_fk) SELECT ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM proveedor WHERE id_datos_proveedor_fk = ?)";
+                try (PreparedStatement psProv = con.prepareStatement(sqlProv)) {
+                    psProv.setInt(1, idUsuario);
+                    psProv.setInt(2, idUsuario);
+                    psProv.executeUpdate();
+                }
+            }
+            
+            con.commit();
+            return true;
+        } catch (SQLException e) {
+            try { if (con != null) con.rollback(); } catch (SQLException ex) {}
+            System.out.println("Error al actualizar permisos: " + e.getMessage());
+            return false;
+        } finally {
+            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
+        }
     }
 }
