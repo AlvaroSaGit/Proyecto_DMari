@@ -20,9 +20,16 @@ public class etiquetaDAO {
     databaseHelper db = new databaseHelper();
 
     // Metodo para listar TODAS las etiquetas (Para mostrarlas en los botones de filtro)
+    // Metodo para listar SOLO las etiquetas que estan en uso por productos visibles
     public ArrayList<etiqueta> listarEtiquetas() {
         ArrayList<etiqueta> lista = new ArrayList<>();
-        String sql = "SELECT id_etiqueta_pk, nombre_etiqueta FROM etiqueta";
+        // Filtramos para que no salgan etiquetas "huerfanas" (sin productos) 
+        // ni etiquetas de productos que esten pausados o sin stock.
+        String sql = "SELECT DISTINCT e.id_etiqueta_pk, e.nombre_etiqueta " +
+                     "FROM etiqueta e " +
+                     "INNER JOIN producto_etiqueta pe ON e.id_etiqueta_pk = pe.id_etiqueta " +
+                     "INNER JOIN producto p ON pe.id_producto = p.id_producto_pk " +
+                     "WHERE p.estado = 1 AND p.stock > 0";
         
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql);

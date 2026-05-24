@@ -91,6 +91,8 @@ function agruparPorPedido(listaPlana) {
                 id: item.idPedido,
                 fecha: item.fecha,
                 estado: item.estado,
+                // capturamos la info de entrega si el servidor la envio (solo para admin/proveedor)
+                cliente: item.nombreCliente || null,
                 total: 0,
                 productos: []
             };

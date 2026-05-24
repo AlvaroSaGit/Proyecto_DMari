@@ -21,7 +21,12 @@ export async function cargarVistaInicio() {
 async function cargarProductosDesdeBD() {
     try {
         // hacemos la peticion al servlet productocontroller pidiendo solo los productos activos
-        const respuesta = await fetch('listar?activos=true');
+        /* 
+           Técnica de Cache-Busting: Agregamos una marca de tiempo exacta (timestamp) a la URL.
+           Esto garantiza que el navegador siempre descargue el inventario y stock real desde el servidor, 
+           evitando que le muestre al cliente productos agotados que se hayan quedado atrapados en la memoria caché.
+        */
+        const respuesta = await fetch('listar?activos=true&t=' + Date.now());
         
         if (respuesta.ok) {
             // convertimos el json que nos mando java a un arreglo

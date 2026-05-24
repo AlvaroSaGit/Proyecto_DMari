@@ -45,7 +45,8 @@ export async function enviarPedido(carrito) {
  */
 export async function obtenerHistorialPedidos() {
     try {
-        const respuesta = await fetch('pedido');
+        // Agregamos Cache-Busting para evitar que el navegador muestre pedidos viejos o incompletos
+        const respuesta = await fetch('pedido?t=' + Date.now());
         if (!respuesta.ok) throw new Error('error al obtener historial');
         return await respuesta.json();
     } catch (error) {

@@ -1,3 +1,11 @@
+/*
+    objetivo de este archivo:
+    dao enfocado a la gestion de la tabla satelite 'cliente'.
+    almacena y recupera los datos sensibles de envio como la direccion, 
+    telefono y las referencias del domicilio. 
+    usa la magia de 'on duplicate key update' para que un mismo metodo 
+    sirva tanto para crear el perfil por primera vez como para editarlo.
+*/
 package com.dmari.dao;
 
 import java.sql.Connection;

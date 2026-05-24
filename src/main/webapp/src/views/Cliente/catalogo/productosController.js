@@ -1,3 +1,11 @@
+/**
+ * Objetivo de este archivo:
+ * Controlador principal de la vista del Catálogo de Productos para el Cliente.
+ * Se encarga de solicitar los productos al servidor, manejar los filtros de 
+ * búsqueda cruzada en memoria (texto, categorías, etiquetas y precios), y controlar 
+ * las interacciones del usuario como agregar al carrito o seleccionar filtros dinámicos.
+ */
+
 import { cargarComponente } from '../../../services/uiService.js';
 import { agregarAlCarrito } from '../../../components/carritoSideBar/carritoController.js';
 // importamos nuestro nuevo componente ui de tarjeta
@@ -17,8 +25,11 @@ let etiquetaFiltroSimple = '';
 let ordenFiltroSimple = 'relevancia';
 
 /**
- * funcion principal para cargar la vista del catalogo.
- * inyecta el html base y luego renderiza los productos.
+ * Función principal (Entry Point) para inicializar la vista del catálogo.
+ * 1. Inyecta el esqueleto HTML de la página.
+ * 2. Desencadena la carga de productos desde la base de datos.
+ * 3. Llena dinámicamente el filtro de etiquetas.
+ * 4. Expone la función de filtrado al entorno global para que el menú lateral pueda interactuar con ella.
  */
 export async function cargarVistaCatalogo() {
     // 1. inyectamos el contenedor principal para el catalogo (Se añade ./ a la ruta)
@@ -36,7 +47,10 @@ export async function cargarVistaCatalogo() {
 }
 
 /**
- * obtiene los productos del backend y los muestra en el dom.
+ * Se comunica con el backend para extraer el catálogo completo de productos activos.
+ * Aplica técnicas de "Cache-Busting" para evitar mostrar datos viejos atrapados en el navegador.
+ * Ademas, utiliza el patrón de "Delegación de Eventos" para manejar todos los clics de compras 
+ * desde un solo escuchador padre, ahorrando memoria RAM de forma masiva.
  */
 async function renderizarProductosCatalogo() {
     const contenedor = document.getElementById('catalogo-productos-grid');
@@ -125,8 +139,9 @@ async function renderizarProductosCatalogo() {
 }
 
 /**
- * Llama al backend para obtener todas las etiquetas registradas
- * y llena automaticamente el menu desplegable de los filtros.
+ * Llama al backend (EtiquetaController) para obtener todas las etiquetas registradas en el sistema.
+ * Construye dinámicamente las opciones (<option>) del menú desplegable de filtros,
+ * usando extracción segura para evitar fallos visuales de tipo "undefined".
  */
 async function cargarEtiquetasFiltro() {
     try {
@@ -137,7 +152,12 @@ async function cargarEtiquetasFiltro() {
             if (!selectEtiqueta) return;
             
             etiquetas.forEach(tag => {
-                selectEtiqueta.innerHTML += `<option value="${tag.nombreEtiqueta}">${tag.nombreEtiqueta}</option>`;
+                // Extraccion segura: buscamos todas las posibles formas en las que Java pudo haber enviado el nombre
+                const nombreTag = tag.nombreEtiqueta || tag.nombre_etiqueta || tag.nombre || 'Desconocido';
+                
+                if (nombreTag !== 'Desconocido') {
+                    selectEtiqueta.innerHTML += `<option value="${nombreTag}">${nombreTag}</option>`;
+                }
             });
         }
     } catch (error) {
@@ -146,7 +166,10 @@ async function cargarEtiquetasFiltro() {
 }
 
 /**
- * Dibuja las tarjetas en pantalla basandose en el arreglo que le pasen (todos o filtrados)
+ * Recibe un arreglo de productos (completo o previamente filtrado) y se encarga de pintarlo en la pantalla.
+ * Incluye protección (Fail-safe) para que, si la creación de una tarjeta específica falla, 
+ * no se rompa la vista entera del resto del catálogo.
+ * @param {Array} listaProductos - Arreglo de objetos producto a iterar y dibujar.
  */
 function dibujarGridCatalogo(listaProductos) {
     const contenedor = document.getElementById('catalogo-productos-grid');
@@ -174,7 +197,15 @@ function dibujarGridCatalogo(listaProductos) {
 }
 
 /**
- * El cerebro del sistema: Mapea palabras maestras a palabras reales de la BD y filtra.
+ * El "Cerebro" del sistema de búsqueda y filtrado en la memoria del navegador.
+ * Combina múltiples criterios de forma escalonada (Cascada) sin volver a consultar a la base de datos:
+ * 1. Filtro base (proveniente del menú lateral o clic directo en las etiquetas de las tarjetas).
+ * 2. Filtro de texto libre (barra de búsqueda).
+ * 3. Filtro por etiqueta seleccionada en el 'select'.
+ * 4. Ordenamiento matemático o alfabético (Ascendente/Descendente).
+ * Finalmente envía la lista resultante al motor de dibujado.
+ * @param {string} terminoBusqueda - Palabra clave principal o término de filtro de origen.
+ * @param {string} tipoFiltro - Categoría lógica del filtro a aplicar ('categoria', 'etiqueta', o 'general').
  */
 export function aplicarFiltroInteligente(terminoBusqueda, tipoFiltro) {
     // Guardamos el termino y el tipo en memoria

@@ -19,10 +19,11 @@ export function crearBloquePedido(pedido) {
     
     // se itera sobre el sub-arreglo de productos que pertenecen exclusivamente a este pedido
     pedido.productos.forEach(prod => {
+        const productoSeguro = prod.nombreProducto || prod.nombre_producto || prod.producto || 'Producto sin nombre';
         // se concatena una fila limpia con la cantidad, el nombre y el subtotal formateado a 2 decimales
         htmlProductos += `
             <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:5px 0; font-size:0.9rem;">
-                <span>${prod.cantidad}x ${prod.producto}</span>
+                <span>${prod.cantidad}x ${productoSeguro}</span>
                 <span style="color:#666;">$${prod.subtotal.toFixed(2)}</span>
             </div>
         `;

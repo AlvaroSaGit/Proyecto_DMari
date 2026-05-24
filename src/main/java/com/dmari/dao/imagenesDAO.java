@@ -13,7 +13,12 @@ import com.dmari.helper.databaseHelper;
 
 public class imagenesDAO {
     databaseHelper db = new databaseHelper();
-// guarda la foto usando el id que nos da el producto
+
+    /*
+        guarda la ruta relativa de la foto en la base de datos, 
+        vinculandola con el id del producto recien creado o actualizado.
+        'imagen_principal' permite a futuro tener galerias de varias fotos por producto.
+    */
     public boolean insertarImagen(int idProducto, String ruta, int principal) {
         String sql = "insert into imagenes (id_producto_fk, url_ruta, imagen_principal) values (?, ?, ?)";
 
@@ -34,7 +39,10 @@ public class imagenesDAO {
         }
     }
 
-    // borra las fotos amarradas a un id para cuando se quiera eliminar un producto del catalogo
+    /*
+        borra todas las fotos amarradas a un id de producto especifico.
+        es util cuando el administrador sube una foto nueva para reemplazar la vieja, o cuando borra el producto.
+    */
     public boolean borrarImagenesDeProducto(int idProducto) {
         String sql = "delete from imagenes where id_producto_fk = ?";
 

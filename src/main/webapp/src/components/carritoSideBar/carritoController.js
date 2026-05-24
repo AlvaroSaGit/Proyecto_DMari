@@ -130,11 +130,13 @@ export function agregarAlCarrito(id, nombre, precio, stock = null) {
             productoExistente.stock = stock;
         }
 
-            // incrementamos la cantidad, pero la topamos al maximo del stock disponible silenciosamente
+        // topamos al maximo del stock disponible y alertamos al usuario
+        if (productoExistente.stock != null && productoExistente.cantidad >= productoExistente.stock) {
+            alert(`¡Lo sentimos! Solo nos quedan ${productoExistente.stock} unidades de este producto.`);
+            productoExistente.cantidad = productoExistente.stock;
+        } else {
             productoExistente.cantidad++;
-            if (productoExistente.stock != null && productoExistente.cantidad > productoExistente.stock) {
-                productoExistente.cantidad = productoExistente.stock;
-            }
+        }
     } else {
         // validamos que si es un producto nuevo, tenga al menos 1 unidad de stock
         if (stock != null && stock <= 0) {
@@ -164,6 +166,7 @@ export function actualizarCantidad(id, nuevaCantidad) {
     if (productoExistente && nuevaCantidad > 0) {
         // si existe un limite de stock y lo superamos, lo topamos al maximo disponible
         if (productoExistente.stock != null && nuevaCantidad > productoExistente.stock) {
+            alert(`¡Lo sentimos! Solo nos quedan ${productoExistente.stock} unidades disponibles.`);
             productoExistente.cantidad = productoExistente.stock;
         } else {
             productoExistente.cantidad = nuevaCantidad;

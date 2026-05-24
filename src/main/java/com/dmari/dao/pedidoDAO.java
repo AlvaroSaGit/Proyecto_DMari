@@ -24,7 +24,8 @@ public class pedidoDAO {
         // preparamos la instruccion sql para insertar cada producto comprado en el detalle del pedido
         String sqlDetalle = "INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)";
         // instruccion para restar permanentemente el stock del producto de inmediato al comprar
-        String sqlDescontarStock = "UPDATE producto SET stock = stock - ? WHERE id_producto_pk = ?";
+        // el tercer parametro asegura que mysql jamas permita que el inventario quede en negativo
+        String sqlDescontarStock = "UPDATE producto SET stock = stock - ? WHERE id_producto_pk = ? AND stock >= ?";
         
         Connection con = null;
         try {
@@ -62,10 +63,21 @@ public class pedidoDAO {
                         // configuramos la orden para descontar la cantidad comprada del inventario del producto
                         psStock.setInt(1, item.getCantidad());
                         psStock.setInt(2, item.getIdProductoFk());
+                        psStock.setInt(3, item.getCantidad()); // parametro de seguridad: stock >= cantidad
                         psStock.addBatch();
                     }
                     psDetalle.executeBatch(); // disparamos todas las inserciones del carrito
-                    psStock.executeBatch();   // disparamos todas las restas de inventario
+                    
+                    // ejecutamos los descuentos de inventario de forma segura
+                    int[] resultadosStock = psStock.executeBatch();
+                    for (int res : resultadosStock) {
+                        if (res == 0) {
+                            // si el resultado es 0, significa que no habia stock suficiente en la bd.
+                            // mysql bloqueo la venta para evitar numeros negativos. abortamos la compra.
+                            con.rollback();
+                            return false; 
+                        }
+                    }
                 }
                 
                 // paso 3: todo salio bien, confirmamos la transaccion

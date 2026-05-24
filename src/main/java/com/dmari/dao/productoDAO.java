@@ -363,6 +363,9 @@ public class productoDAO {
         // 4. despues de vaciar a los hijos, finalmente borramos al padre (el producto)
         String sqlProducto = "DELETE FROM producto WHERE id_producto_pk = ?";
         
+        // 5. recolector de basura: eliminamos etiquetas huerfanas tras el borrado
+        String sqlLimpiarEtiquetas = "DELETE FROM etiqueta WHERE id_etiqueta_pk NOT IN (SELECT DISTINCT id_etiqueta FROM producto_etiqueta)";
+        
         Connection con = null;
         try {
             con = db.conectar();
@@ -392,6 +395,11 @@ public class productoDAO {
             try (PreparedStatement psProd = con.prepareStatement(sqlProducto)) {
                 psProd.setInt(1, id);
                 filasAfectadas = psProd.executeUpdate();
+            }
+            
+            // 5. limpiar etiquetas huerfanas generadas por esta eliminacion
+            try (PreparedStatement psLimpiar = con.prepareStatement(sqlLimpiarEtiquetas)) {
+                psLimpiar.executeUpdate();
             }
 
             // si todo salio bien, confirmamos los cambios en mysql

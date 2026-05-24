@@ -39,7 +39,15 @@ function agruparPorPedido(listaPlana) {
     const agrupado = {};
     listaPlana.forEach(item => {
         if (!agrupado[item.idPedido]) {
-            agrupado[item.idPedido] = { id: item.idPedido, fecha: item.fecha, estado: item.estado, cliente: item.cliente, total: 0, productos: [] };
+            const clienteSeguro = item.nombreCliente || item.nombre_cliente || item.cliente || 'Sin información de entrega';
+            agrupado[item.idPedido] = { 
+                id: item.idPedido, 
+                fecha: item.fecha, 
+                estado: item.estado, 
+                cliente: clienteSeguro,
+                total: 0, 
+                productos: [] 
+            };
         }
         agrupado[item.idPedido].productos.push(item);
         agrupado[item.idPedido].total += item.subtotal;
@@ -51,7 +59,8 @@ function agruparPorPedido(listaPlana) {
 function crearBloquePedidoAdmin(pedido) {
     let htmlProductos = '';
     pedido.productos.forEach(prod => {
-        htmlProductos += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:5px 0;"><span>${prod.cantidad}x ${prod.producto}</span><span>$${prod.subtotal.toFixed(2)}</span></div>`;
+        const productoSeguro = prod.nombreProducto || prod.nombre_producto || prod.producto || 'Producto desconocido';
+        htmlProductos += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:5px 0;"><span>${prod.cantidad}x ${productoSeguro}</span><span>$${prod.subtotal.toFixed(2)}</span></div>`;
     });
 
     const div = document.createElement('div');

@@ -12,16 +12,26 @@ import jakarta.servlet.http.HttpSession;
 
 import com.dmari.dao.pedidoDAO;
 import com.dmari.modelo.detallePedido;
+import com.dmari.helper.jsonHelper;
 import com.dmari.modelo.usuario;
 
-/**
- * Controlador encargado de recibir las compras del carrito y transformarlas 
- * en pedidos reales en la base de datos, ademas de devolver el historial de facturas.
- */
+/*
+    objetivo de este archivo:
+    controlador encargado de recibir las compras del carrito y transformarlas 
+    en pedidos reales en la base de datos, ademas de devolver el historial de facturas.
+    tambien gestiona los cambios de estado (preparando, enviado, etc.) solicitados 
+    por administradores o proveedores.
+*/
 @WebServlet(name = "PedidoController", urlPatterns = {"/pedido"})
 public class PedidoController extends HttpServlet {
 
-    // POST: Recibe el carrito desde JavaScript y lo guarda en la base de datos
+    /*
+        dopost: procesa las peticiones de modificacion de datos.
+        tiene dos funciones principales dependientes de lo que envia el frontend:
+        1. cambiar el estado de un pedido (exclusivo para admins/proveedores).
+        2. registrar una nueva compra desde el carrito (para los clientes), 
+           desempacando los arreglos de productos y calculando totales.
+    */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -35,6 +45,31 @@ public class PedidoController extends HttpServlet {
         
         usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
         
+        // Identificar si la peticion es para cambiar el estado de un pedido existente
+        String accion = request.getParameter("accion");
+        if ("cambiar_estado".equals(accion)) {
+            
+            // Medida de seguridad: Solo Administradores (1) y Proveedores (4) pueden hacer esto
+            if (user.getIdRol() != 1 && user.getIdRol() != 4) {
+                // sc_forbidden (403): detiene a cualquier intruso o cliente sin permisos
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+            
+            int idPedido = Integer.parseInt(request.getParameter("id_pedido"));
+            String nuevoEstado = request.getParameter("estado");
+            
+            pedidoDAO dao = new pedidoDAO();
+            boolean exito = dao.actualizarEstadoPedido(idPedido, nuevoEstado);
+            
+            if (exito) {
+                response.setStatus(HttpServletResponse.SC_OK); // 200: estado actualizado con exito
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500: fallo interno
+            }
+            return; // Cortamos la ejecucion aqui para que no intente guardar un carrito
+        }
+        
         // 2. Atrapamos los arreglos de datos que envio el pedidoService.js
         // getParameterValues atrapa multiples datos con el mismo nombre (porque es un carrito con varios items)
         String[] idsProductos = request.getParameterValues("id_producto");
@@ -43,6 +78,7 @@ public class PedidoController extends HttpServlet {
         
         // Si el carrito llego vacio o corrupto, rechazamos la peticion
         if (idsProductos == null || idsProductos.length == 0) {
+            // sc_bad_request (400): el servidor rechaza la peticion porque faltan datos clave del carrito
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
@@ -71,13 +107,22 @@ public class PedidoController extends HttpServlet {
         
         // Respondemos a JavaScript segun el resultado
         if (exito) {
+            // sc_ok (200): todo salio perfecto, el pedido se registro en mysql
             response.setStatus(HttpServletResponse.SC_OK);
         } else {
+            // sc_internal_server_error (500): fallo critico (ej. no habia stock o error sql)
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
-    // GET: Devuelve el historial de pedidos dependiendo de quien pregunte
+    /*
+        doget: atiende las peticiones de lectura del historial de compras.
+        aplica un filtro de seguridad y privacidad basado en el rol del usuario:
+        - rol 1 (administrador): extrae absolutamente todos los pedidos del sistema.
+        - rol 4 (proveedor): extrae unicamente los pedidos que incluyen sus productos.
+        - rol 2 (cliente): extrae exclusivamente su historial de compras personal.
+        finalmente empaca todo en un arreglo json y lo envia al navegador.
+    */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -92,28 +137,21 @@ public class PedidoController extends HttpServlet {
         pedidoDAO dao = new pedidoDAO();
         ArrayList<detallePedido> lista;
         
-        // El DAO filtra inteligentemente dependiendo del rol
-        lista = dao.listarPedidosPorCliente(user.getIdUsuario());
-        
-        // Construimos el JSON a mano para asegurar compatibilidad exacta con el frontend
-        StringBuilder json = new StringBuilder("[");
-        for (int i = 0; i < lista.size(); i++) {
-            detallePedido dp = lista.get(i);
-            json.append("{")
-                .append("\"idPedido\": ").append(dp.getIdPedidoFk()).append(",")
-                .append("\"fecha\": \"").append(dp.getFechaPedido()).append("\",")
-                .append("\"estado\": \"").append(dp.getEstadoPedido()).append("\",")
-                .append("\"nombreProducto\": \"").append(dp.getNombreProducto()).append("\",")
-                .append("\"cantidad\": ").append(dp.getCantidad()).append(",")
-                .append("\"precioUnitario\": ").append(dp.getPrecioUnitario()).append(",")
-                .append("\"subtotal\": ").append(dp.getSubtotal())
-                .append("}");
-            if (i < lista.size() - 1) json.append(",");
+        // Filtramos de forma inteligente dependiendo del rol del usuario
+        if (user.getIdRol() == 1) { // 1 = Administrador (ve toda la tienda)
+            lista = dao.listarTodosLosPedidos();
+        } else if (user.getIdRol() == 4) { // 4 = Proveedor (ve solo sus ventas)
+            lista = dao.listarPedidosPorProveedor(user.getIdUsuario());
+        } else { // 2 = Cliente
+            lista = dao.listarPedidosPorCliente(user.getIdUsuario());
         }
-        json.append("]");
+        
+        // Utilizamos el helper para convertir la lista a JSON de forma segura y limpia
+        jsonHelper helper = new jsonHelper();
+        String jsonString = helper.pedidosAJson(lista);
         
         response.setContentType("application/json;charset=UTF-8");
         response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().print(json.toString());
+        response.getWriter().print(jsonString);
     }
 }
