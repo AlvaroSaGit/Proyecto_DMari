@@ -13,20 +13,48 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import com.dmari.dao.productoDAO;
+import com.dmari.dao.imagenesDAO;
+import com.dmari.dao.etiquetaDAO;
 import com.dmari.modelo.producto;
 import com.dmari.modelo.usuario;
 import com.dmari.helper.jsonHelper;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
+import java.io.File;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 
 /*
-    @webservlet - mapea este servlet a las direcciones de producto
+    @multipartconfig: 
+    esta etiqueta es un "permiso especial" que le damos al servlet.
+    sin ella, java no sabria como leer archivos fisicos (como fotos) enviados desde html.
+    le indica a tomcat que este controlador recibira paquetes de tipo "multipart/form-data".
+*/
+@MultipartConfig(
+    // filesizethreshold: el limite de memoria ram que usara tomcat antes de guardar el archivo temporalmente en el disco duro.
+    // 1024 bytes * 1024 bytes = 1 mb. si la foto pesa menos de 1mb, se procesa super rapido en la memoria ram.
+    // si pesa mas, la guarda en un archivo temporal para no quemar la memoria del servidor.
+    fileSizeThreshold = 1024 * 1024,
+    
+    // maxfilesize: el peso maximo que puede tener una sola foto.
+    // 1 mb * 10 = 10 mb. si un usuario intenta subir una imagen gigante de 12mb, el servidor bloquea la subida por seguridad.
+    maxFileSize = 1024 * 1024 * 10,
+    
+    // maxrequestsize: el peso maximo de toda la peticion completa (todas las fotos a la vez + todos los textos del formulario).
+    // 1 mb * 50 = 50 mb en total permitidos por cada clic en "guardar".
+    maxRequestSize = 1024 * 1024 * 50
+)
+/*
+    @webservlet - mapea este servlet a las direcciones (url) relacionadas con productos.
 */
 @WebServlet(name = "ProductoController", urlPatterns = {"/listar","/insertar","/actualizar","/eliminar","/cambiar-estado"})
 public class ProductoController extends HttpServlet {
@@ -104,13 +132,28 @@ public class ProductoController extends HttpServlet {
             nuevoProd.setDescripcion(descripcion);
             nuevoProd.setPrecio(precio);
             nuevoProd.setStock(stock);
+            
+            // capturamos la categoria y el estado que faltaban
+            String catParam = request.getParameter("id_categoria");
+            if (catParam != null && !catParam.isEmpty()) {
+                nuevoProd.setIdCategoriaFk(Integer.parseInt(catParam));
+            }
+            nuevoProd.setEstado(Boolean.parseBoolean(request.getParameter("estado")));
+            
             String idProveedorParam = request.getParameter("id_proveedor");
+            String etiquetasParam = request.getParameter("etiquetas");
 
             // guardamos y validamos
             int idGenerado = dao.insertarProducto(nuevoProd);
             if (idGenerado > 0) {
                 // Si se creo el producto, atrapamos la foto y la guardamos
                 guardarImagenFisica(request, idGenerado);
+                
+                // NUEVO: Procesamos y guardamos las etiquetas
+                if (etiquetasParam != null) {
+                    etiquetaDAO etiqDao = new etiquetaDAO();
+                    etiqDao.actualizarEtiquetasDeProducto(idGenerado, etiquetasParam);
+                }
                 
                 // NUEVO: Verificamos si quien esta creando el producto es un proveedor.
                 // Si es asi, lo enlazamos en la tabla puente para que sea el dueno absoluto y pueda verlo.
@@ -120,9 +163,13 @@ public class ProductoController extends HttpServlet {
                     // 4 es el ID del rol proveedor en tu base de datos
                     if (user.getIdRol() == 4) {
                         dao.asignarProductoAProveedor(idGenerado, user.getIdUsuario());
-                    } else if (user.getIdRol() == 1 && idProveedorParam != null && !idProveedorParam.isEmpty()) {
-                        // si es el administrador y eligio un proveedor del selector
-                        dao.asignarProductoAProveedor(idGenerado, Integer.parseInt(idProveedorParam));
+                    } else if (user.getIdRol() == 1) {
+                        // si el admin eligio un proveedor de la lista, usamos ese ID
+                        if (idProveedorParam != null && !idProveedorParam.isEmpty()) {
+                            dao.asignarProductoAProveedor(idGenerado, Integer.parseInt(idProveedorParam));
+                        }
+                        // IMPORTANTE: Si no eligio a nadie, simplemente no lo enlazamos.
+                        // Al no estar en 'proveedor_producto', el sistema asume que es un producto oficial de DMari.
                     }
                 }
 
@@ -157,17 +204,26 @@ public class ProductoController extends HttpServlet {
             }
             prod.setEstado(Boolean.parseBoolean(request.getParameter("estado")));
             String idProveedorParam = request.getParameter("id_proveedor");
+            String etiquetasParam = request.getParameter("etiquetas");
 
             if (dao.actualizarProducto(prod)) {
                 // Si se actualizo el producto, verificamos si el Admin subio una foto nueva para reemplazarla
                 guardarImagenFisica(request, prod.getIdProductoPk());
+                
+                // Procesamos y guardamos las etiquetas modificadas
+                if (etiquetasParam != null) {
+                    etiquetaDAO etiqDao = new etiquetaDAO();
+                    etiqDao.actualizarEtiquetasDeProducto(prod.getIdProductoPk(), etiquetasParam);
+                }
                 
                 // actualizamos la tabla puente proveedor_producto si el admin lo cambio
                 HttpSession sesion = request.getSession(false);
                 if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
                     usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
                     if (user.getIdRol() == 1) {
+                        // Si eligio a alguien, lo pasamos. Si eligio "Sin proveedor", pasamos 0.
                         int idProv = (idProveedorParam != null && !idProveedorParam.isEmpty()) ? Integer.parseInt(idProveedorParam) : 0;
+                        // El DAO borrara el enlace viejo y, como le mandamos 0, no creara uno nuevo (volviendolo de DMari)
                         dao.actualizarProveedorDeProducto(prod.getIdProductoPk(), idProv);
                     }
                 }
@@ -193,29 +249,48 @@ public class ProductoController extends HttpServlet {
     // Metodo auxiliar para procesar el archivo fisico, guardarlo en el servidor y en la BD
     private void guardarImagenFisica(HttpServletRequest request, int idProducto) {
         try {
-            Part filePart = request.getPart("imagen"); // "imagen" es el nombre que le diste en JS: formData.append('imagen', ...)
+            Part filePart = request.getPart("imagen");
             if (filePart != null && filePart.getSize() > 0) {
-                // Extraemos el nombre original de la foto (ej: dona_chocolate.jpg)
                 String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+                // IMPORTANTE: Quitamos los espacios en el nombre de la foto porque rompen la URL en HTML
+                fileName = fileName.replaceAll("\\s+", "_");
                 
-                // Buscamos la ruta absoluta de tu servidor Tomcat para guardar el archivo fisico
-                String uploadPath = getServletContext().getRealPath("") + File.separator + "src" + File.separator + "img" + File.separator + "productos";
-                File uploadDir = new File(uploadPath);
-                if (!uploadDir.exists()) uploadDir.mkdirs(); // Si la carpeta no existe, la crea
+                // Obtenemos la raiz del proyecto donde Tomcat esta ejecutandose
+                String appPath = request.getServletContext().getRealPath("");
                 
-                // Guardamos el archivo. Le pegamos el ID al principio para evitar que dos fotos se llamen igual
-                filePart.write(uploadPath + File.separator + idProducto + "_" + fileName);
+                // 1. Guardamos en el servidor temporal (Tomcat) para que cargue inmediatamente en la pagina
+                File targetDir = new File(appPath, "src" + File.separator + "img" + File.separator + "productos");
+                if (!targetDir.exists()) {
+                    targetDir.mkdirs();
+                }
                 
-                // Creamos la ruta relativa en formato Web (con diagonales normales) que usara el HTML para pintar el <img>
+                // Guardamos el archivo fisico temporal
+                File targetFile = new File(targetDir, idProducto + "_" + fileName);
+                filePart.write(targetFile.getAbsolutePath());
+                
+                // 2. MAGIA LOCAL: Copiamos la foto a tu carpeta fuente de NetBeans para que NO se borre al reiniciar
+                // (Esta ruta es la de tu computadora personal donde tienes el proyecto)
+                String rutaProyecto = "C:\\Users\\salaz\\OneDrive\\Documentos\\NetBeansProjects\\DMari\\src\\main\\webapp\\src\\img\\productos";
+                File sourceDir = new File(rutaProyecto);
+                if (!sourceDir.exists()) sourceDir.mkdirs();
+                
+                File sourceFile = new File(sourceDir, idProducto + "_" + fileName);
+                Files.copy(targetFile.toPath(), sourceFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                
+                // Imprimimos en la consola de NetBeans para que verifiques que si se guardo en ambas partes
+                System.out.println("FOTO TEMPORAL (TOMCAT): " + targetFile.getAbsolutePath());
+                System.out.println("FOTO PERMANENTE (NETBEANS): " + sourceFile.getAbsolutePath());
+                
+                // Ruta que va a la base de datos (SIEMPRE con diagonales normales '/' para la web)
                 String rutaRelativa = "src/img/productos/" + idProducto + "_" + fileName;
                 
-                // Finalmente usamos el DAO que creaste para enlazar la foto al producto en MySQL
                 imagenesDAO imgDao = new imagenesDAO();
                 imgDao.borrarImagenesDeProducto(idProducto); // Borramos las fotos viejas si es una actualizacion
                 imgDao.insertarImagen(idProducto, rutaRelativa, 1);
             }
         } catch (Exception e) {
-            System.out.println("error al subir la foto del producto: " + e.getMessage());
+            System.out.println("ERROR CRITICO AL SUBIR LA FOTO: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

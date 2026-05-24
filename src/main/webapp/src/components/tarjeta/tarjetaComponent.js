@@ -6,13 +6,17 @@ import { abrirModalDetalle } from './detalleProductoModal.js';
  * @returns {HTMLElement} nodo dom estructurado de la tarjeta
  */
 export function crearTarjetaHTML(producto) {
-    // Adaptamos las variables a como Java (Jackson/Gson) las envia en el JSON
-    const idProd = producto.idProductoPk || producto.id;
-    const nombreProd = producto.nombreProducto || producto.nombre || 'Producto';
-    const catProd = producto.categoria || producto.nombreCategoria || '';
+    // adaptamos las variables a como java las envia en el json usando extraccion segura
+    const idProd = producto.idProductoPk || producto.id_producto_pk || producto.id;
+    const nombreProd = producto.nombreProducto || producto.nombre_producto || producto.nombre || 'producto sin nombre';
+    const catProd = producto.categoria || producto.nombre_categoria || producto.nombreCategoria || '';
     const etiquetas = producto.etiquetas || [];
-    const rutaImg = producto.urlRuta || producto.imagen;
-    const imagenUrl = (rutaImg && rutaImg !== 'null') ? rutaImg : './src/assets/img/default.jpg';
+    
+    // validacion a prueba de fallos para la ruta de la imagen
+    let rutaImg = producto.urlRuta || producto.url_ruta || producto.imagen;
+    if (!rutaImg || rutaImg === 'null' || rutaImg === 'undefined') {
+        rutaImg = 'src/img/productos/default/gato_programador.jpg';
+    }
 
     // formateamos el precio a moneda local
     const precioFormateado = producto.precio.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
@@ -26,8 +30,15 @@ export function crearTarjetaHTML(producto) {
     const divImg = document.createElement('div');
     divImg.classList.add('tarjeta-img');
     const img = document.createElement('img');
-    img.src = imagenUrl;
+    img.src = rutaImg;
     img.alt = nombreProd;
+    
+    // MAGIA DE JAVASCRIPT: Si el archivo fisico se borro por culpa del Clean and Build de NetBeans,
+    // el navegador disparara un error 404. Este 'onerror' lo atrapa y pone la foto del gato.
+    img.onerror = function() {
+        this.onerror = null; // evita bucles infinitos si el gato tampoco existe
+        this.src = 'src/img/productos/default/gato_programador.jpg';
+    };
     divImg.appendChild(img);
     article.appendChild(divImg);
 

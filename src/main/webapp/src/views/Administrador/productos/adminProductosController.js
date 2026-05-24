@@ -163,7 +163,9 @@ function prepararVistaAdminProductos() {
                 document.getElementById('prod-stock').value = btnClic.getAttribute('data-stock');
                 
                 const catId = btnClic.getAttribute('data-categoria');
-                if (catId) document.getElementById('prod-categoria').value = catId;
+                const selectCat = document.getElementById('prod-categoria');
+                // Validamos estrictamente que el ID exista para que no seleccione 'undefined'
+                if (catId && catId !== 'undefined' && catId !== 'null' && selectCat) selectCat.value = catId;
 
                 if (document.getElementById('prod-etiquetas')) {
                     document.getElementById('prod-etiquetas').value = btnClic.getAttribute('data-etiquetas') || '';
@@ -232,9 +234,12 @@ async function cargarCategoriasFormulario() {
             // vaciamos el select y dejamos una opcion inicial deshabilitada como guia
             select.innerHTML = '<option value="" disabled selected>seleccione una categoria</option>';
             
-            // iteramos sobre las categorias activas extraidas de la base de datos de java
+            // iteramos (recorremos) una por una las categorias que llegaron de la base de datos.
+            // el foreach es como un ciclo que dice: "por cada categoria que exista, haz lo siguiente:"
             categorias.forEach(cat => {
-                select.innerHTML += `<option value="${cat.id}">${cat.nombre}</option>`;
+                // innerhtml += significa "manten lo que ya tenias y agregale esto nuevo al final".
+                // aqui estamos fabricando visualmente las etiquetas <option> para que el administrador pueda seleccionarlas en el formulario.
+                select.innerHTML += `<option value="${cat.id_categoria_pk || cat.id}">${cat.nombre}</option>`;
             });
         }
     } catch (error) {
@@ -254,7 +259,11 @@ async function cargarProveedoresFormulario() {
             if (!select) return;
             
             select.innerHTML = '<option value="">sin proveedor (producto propio de dmari)</option>';
+            
+            // recorremos el arreglo de proveedores que nos entrego java.
             proveedores.forEach(prov => {
+                // por cada proveedor, agregamos una opcion al menu desplegable del formulario modal.
+                // el 'value' oculto es el id numerico, y el texto visible es el nombre del proveedor.
                 select.innerHTML += `<option value="${prov.id_usuario_pk}">${prov.nombre}</option>`;
             });
         } 
@@ -279,27 +288,43 @@ async function cargarListaProductos() {
         // vaciamos el texto temporal de "cargando..."
         tbody.innerHTML = '';
  
-        // recorremos el arreglo de productos que llego de mysql y armamos la interfaz
+        // recorremos el arreglo de productos que llego de mysql y armamos la interfaz.
+        // el foreach iterara y ejecutara este bloque de codigo la misma cantidad de veces que productos existan.
         productosBD.forEach(prod => {
+            // document.createelement('tr') fabrica una fila de tabla en blanco directamente en la memoria de javascript.
             const tr = document.createElement('tr');
             
-            // extraemos propiedades asegurando compatibilidad con los nombres exactos que escupe el json (gson)
-            const id = prod.idProductoPk || prod.id_producto_pk;
-            const nombre = prod.nombreProducto || prod.nombre_producto;
-            const rutaImg = prod.urlRuta || prod.url_ruta || 'src/img/productos/default/gato_programador.jpg';
-            const catId = prod.idCategoriaFk || prod.id_categoria_fk;
+            /* 
+             * extraccion segura de variables usando el operador logico || (o)
+             * ¿por que hay varios nombres para una misma cosa como urlruta o url_ruta?
+             * porque dependiendo de como java convierta el objeto a json (con la libreria gson o con tu jsonhelper manual), 
+             * la variable puede llegar escrita en formato camelcase (urlRuta), en formato base de datos (url_ruta) o muy corta (imagen).
+             * javascript evaluara una por una: si la primera no existe, lee la segunda, luego la tercera...
+             * si la base de datos no arroja ninguna, colocara la ruta del gato por defecto.
+             */
+            const id = prod.idProductoPk || prod.id_producto_pk || prod.id;
+            const nombre = prod.nombreProducto || prod.nombre_producto || prod.nombre || 'Producto sin nombre';
+            const rutaImg = prod.urlRuta || prod.url_ruta || prod.imagen || 'src/img/productos/default/gato_programador.jpg';
+            // Agregamos todas las combinaciones posibles de JSON para atrapar el ID de la categoria si o si
+            const catId = prod.idCategoriaFk || prod.id_categoria_fk || prod.id_categoria || prod.idCategoria || prod.categoriaId || '';
+            const nombreCategoria = prod.categoria || prod.nombre_categoria || prod.nombreCategoria || 'Sin categoria';
             
             // verificamos si las etiquetas vienen como array o como texto simple
             let etiquetasTxt = '';
             if (Array.isArray(prod.etiquetas)) etiquetasTxt = prod.etiquetas.join(', ');
             else if (prod.etiquetas) etiquetasTxt = prod.etiquetas;
             
+            // inyectamos el codigo html (las columnas td) adentro de la fila vacia que creamos arriba.
+            // las comillas invertidas ` ` nos permiten mezclar texto html con variables dinamicas ${}.
             tr.innerHTML = `
                 <td>#00${id}</td>
                 <td>
                     <img src="${rutaImg}" alt="${nombre}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd;">
                 </td>
-                <td><strong>${nombre}</strong></td>
+                <td>
+                    <div style="font-weight: bold; margin-bottom: 4px;">${nombre}</div>
+                    <span style="font-size: 0.75rem; color: #666; background-color: #f0f0f0; padding: 2px 6px; border-radius: 10px;">${nombreCategoria}</span>
+                </td>
                 <td>$${prod.precio}</td>
                 <td><span class="badge-estado ${prod.estado !== false ? 'badge-activo' : 'badge-inactivo'}">${prod.estado !== false ? 'ACTIVO' : 'PAUSADO'}</span></td>
                 <td>
@@ -322,6 +347,8 @@ async function cargarListaProductos() {
                     </button>
                 </td>
             `;
+            // appendchild es la instruccion final: toma esa fila ya armada en memoria y la incrusta
+            // fisicamente en la tabla (tbody) de la pagina web para que el ojo humano la pueda ver.
             tbody.appendChild(tr);
         });
 

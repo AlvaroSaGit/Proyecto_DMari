@@ -98,6 +98,13 @@ public class AuthController extends HttpServlet {
             usuario usuarioLogueado = dao.verificarLogin(correo, password);
 
             if (usuarioLogueado != null) {
+                // verificamos si el administrador lo bloqueo
+                if (!usuarioLogueado.isEstadoCuenta()) {
+                    // sc_forbidden (403) le indica al frontend que la accion esta prohibida
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    return;
+                }
+
                 // getsession(true) fuerza la creacion de un espacio en memoria para guardar quien es el usuario.
                 request.getSession(true).setAttribute("usuarioLogueado", usuarioLogueado);
                 

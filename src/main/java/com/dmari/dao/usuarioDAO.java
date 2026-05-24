@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import com.dmari.helper.databaseHelper;
 import com.dmari.modelo.usuario;
@@ -92,7 +93,8 @@ public class usuarioDAO {
     public usuario verificarLogin(String correo, String password) {
         
         // aes_decrypt hace el proceso inverso: usa la llave secreta para destrabar el blob y lo compara con el texto digitado.
-        String sql = "SELECT u.id_usuario_pk, u.nombre, u.id_rol_fk, c.correo " +
+        // traemos tambien el estado_cuenta para validarlo desde java y poder darle un mensaje especifico al usuario
+        String sql = "SELECT u.id_usuario_pk, u.nombre, u.id_rol_fk, c.correo, u.estado_cuenta " +
                      "FROM usuario u " +
                      "INNER JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk " +
                      "INNER JOIN credenciales cr ON u.id_usuario_pk = cr.id_usuario " +
@@ -115,6 +117,7 @@ public class usuarioDAO {
                     usuarioLogueado.setNombre(rs.getString("nombre"));
                     usuarioLogueado.setCorreo(rs.getString("correo"));
                     usuarioLogueado.setIdRol(rs.getInt("id_rol_fk"));
+                    usuarioLogueado.setEstadoCuenta(rs.getBoolean("estado_cuenta"));
                 }
             }
             
@@ -123,5 +126,43 @@ public class usuarioDAO {
         }
         
         return usuarioLogueado;
+    }
+
+    // metodo para listar a todos los usuarios del sistema (para el panel del administrador)
+    public ArrayList<usuario> listarUsuarios() {
+        ArrayList<usuario> lista = new ArrayList<>();
+        // cruzamos la tabla usuario con el correo usando left join (por si algun usuario no tiene correo registrado)
+        String sql = "SELECT u.id_usuario_pk, u.nombre, u.apellido, u.id_rol_fk, u.estado_cuenta, c.correo " +
+                     "FROM usuario u " +
+                     "LEFT JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk";
+                     
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+             
+            while(rs.next()) {
+                usuario u = new usuario();
+                u.setIdUsuario(rs.getInt("id_usuario_pk"));
+                u.setNombre(rs.getString("nombre"));
+                u.setApellido(rs.getString("apellido")); 
+                u.setIdRol(rs.getInt("id_rol_fk"));
+                u.setCorreo(rs.getString("correo"));
+                u.setEstadoCuenta(rs.getBoolean("estado_cuenta"));
+                lista.add(u);
+            }
+        } catch (SQLException e) { System.out.println("error al listar usuarios: " + e.getMessage()); }
+        return lista;
+    }
+
+    // metodo transaccional para cambiar el rol y el estado de la cuenta de un usuario
+    public boolean actualizarPermisos(int idUsuario, int idRol, boolean estadoCuenta) {
+        String sql = "UPDATE usuario SET id_rol_fk = ?, estado_cuenta = ? WHERE id_usuario_pk = ?";
+        try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idRol);
+            ps.setBoolean(2, estadoCuenta);
+            ps.setInt(3, idUsuario);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { return false; }
     }
 }

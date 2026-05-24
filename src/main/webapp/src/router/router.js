@@ -10,6 +10,7 @@ import { cargarVistaProveedorProductos } from '../views/Proveedor/productos/prov
 import { inicializarAdmin } from '../views/Administrador/sidebar/adminSideBarController.js';
 import { cargarVistaAdminCategorias } from '../views/Administrador/categorias/adminCategoriasController.js';
 import { inicializarProveedor } from '../views/Proveedor/sidebar/proveedorSideBarController.js';
+import { cargarVistaAdminUsuarios } from '../views/Administrador/usuarios/adminusuariosController.js';
 
 // Importamos el servicio de interfaz para poder inyectar la sidebar
 import { cargarComponente } from '../services/uiService.js';
@@ -69,6 +70,8 @@ async function manejarRuta() {
         cargarVistaAdminProductos();
     } else if (vista === 'admin-categorias') {
         cargarVistaAdminCategorias();
+    } else if (vista === 'admin-usuarios') {
+        cargarVistaAdminUsuarios();
     } else if (vista === 'admin-pedidos') {
         // Vista temporal para Pedidos hasta que crees su Controller
         const main = document.getElementById('component-main');

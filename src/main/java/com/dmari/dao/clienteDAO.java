@@ -2,6 +2,7 @@ package com.dmari.dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import com.dmari.helper.databaseHelper;
 
@@ -41,4 +42,26 @@ public class clienteDAO {
         }
     }
     
+    // metodo para leer los datos de envio del cliente
+    public String[] obtenerPerfil(int idUsuario) {
+        String sql = "SELECT direccion_envio, telefono_secundario, referencia_ubicacion FROM cliente WHERE id_cliente_pk = ?";
+        
+        try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idUsuario);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    // retornamos un arreglo de textos con los 3 datos principales
+                    return new String[]{
+                        rs.getString("direccion_envio"),
+                        rs.getString("telefono_secundario"),
+                        rs.getString("referencia_ubicacion")
+                    };
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("error al leer el perfil del cliente: " + e.getMessage());
+        }
+        return null; // retornamos nulo si el cliente es nuevo y aun no tiene perfil
+    }
 }

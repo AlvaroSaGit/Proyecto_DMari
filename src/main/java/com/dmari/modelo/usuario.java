@@ -13,6 +13,9 @@ public class usuario {
     // Atributo que corresponde a la tabla 'credenciales' en MySQL (BLOB en BD, String en Java)
     private String password;
 
+    // Atributo para saber si la cuenta esta activa o bloqueada
+    private boolean estadoCuenta;
+
     // Constructor vacio obligatorio para Java Web / Servlets
     public usuario() {
     }
@@ -67,5 +70,13 @@ public class usuario {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public boolean isEstadoCuenta() {
+        return estadoCuenta;
+    }
+
+    public void setEstadoCuenta(boolean estadoCuenta) {
+        this.estadoCuenta = estadoCuenta;
     }
 }

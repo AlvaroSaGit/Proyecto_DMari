@@ -1,0 +1,67 @@
+<!-- 
+  vista principal para la gestion de usuarios del administrador.
+  aqui podra ver todos los clientes, proveedores y repartidores, 
+  y modificar sus niveles de acceso.
+-->
+<section class="admin-vista-productos">
+    <div class="admin-header-seccion">
+        <h2>gestion de usuarios y permisos</h2>
+    </div>
+    
+    <div class="admin-tabla-contenedor">
+        <table class="tabla-admin">
+            <thead>
+                <tr>
+                    <th>id</th>
+                    <th>nombre completo</th>
+                    <th>correo electronico</th>
+                    <th>rol del sistema</th>
+                    <th>estado de cuenta</th>
+                    <th>acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-usuarios-body">
+                <tr><td colspan="6" style="text-align:center;">cargando usuarios desde la base de datos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- modal (ventana emergente) para cambiar el rol y el estado de la cuenta -->
+<div id="modal-usuario" class="modal-admin oculto">
+    <div class="modal-contenido" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3 id="modal-titulo-usuario">editar permisos de usuario</h3>
+            <button id="btn-cerrar-modal-usr" class="btn-cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-usuario" class="admin-form">
+                <div class="admin-form__group">
+                    <label class="admin-form__label" for="usr-nombre">usuario seleccionado</label>
+                    <!-- este campo esta deshabilitado (disabled) porque el admin no deberia cambiarle el nombre a la gente -->
+                    <input class="admin-form__input" type="text" id="usr-nombre" disabled style="background-color: #e9ecef; cursor: not-allowed;">
+                </div>
+                <div class="admin-form__group">
+                    <label class="admin-form__label" for="usr-rol">asignar nuevo rol</label>
+                    <select class="admin-form__input" id="usr-rol" name="id_rol" required>
+                        <option value="1">Administrador (Acceso total)</option>
+                        <option value="2">Cliente (Solo compras)</option>
+                        <option value="3">Repartidor (Gestion de envios)</option>
+                        <option value="4">Proveedor (Gestion de productos propios)</option>
+                    </select>
+                </div>
+                <div class="admin-form__group">
+                    <label class="admin-form__label" for="usr-estado">estado del acceso</label>
+                    <select class="admin-form__input" id="usr-estado" name="estado" required>
+                        <option value="true">Activo (Permitir ingreso a la plataforma)</option>
+                        <option value="false">Bloqueado (Denegar ingreso a la plataforma)</option>
+                    </select>
+                </div>
+                <div class="admin-form__actions">
+                    <button type="button" id="btn-cancelar-modal-usr" class="admin-form__btn admin-form__btn--secondary">cancelar</button>
+                    <button type="submit" class="admin-form__btn admin-form__btn--primary">guardar permisos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -92,17 +92,16 @@ public class pedidoDAO {
                      "c.direccion_envio, c.telefono_secundario, prod.nombre_producto, dp.cantidad, dp.subtotal " +
                      // tabla principal de la consulta: el pedido maestro
                      "FROM pedido p " +
-                     // join 1: cruzamos con usuario para saber el nombre de quien compro
+                     // inner join: el pedido debe tener un usuario real asociado si o si
                      "INNER JOIN usuario u ON p.id_cliente_fk = u.id_usuario_pk " +
-                     // join 2: cruzamos con cliente (left join por si algun usuario aun no llena su perfil) para traer su direccion
+                     // left join: cruzamos con el perfil del cliente para traer su direccion fisica.
+                     // usamos left join porque si un usuario se acaba de registrar y compra, pero su perfil esta incompleto, queremos que el pedido siga saliendo en pantalla (con direccion en null) para no perder la venta.
                      "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
-                     // join 3: cruzamos con el detalle del pedido para ver que productos exactos compro en esa orden
+                     // inner join: estricto para ver que productos exactos compro en esa orden
                      "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
-                     // join 4: cruzamos con producto para obtener el nombre del postre o arreglo floral
                      "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
-                     // join 5: cruzamos con la tabla puente para saber a que proveedor le pertenece este producto
+                     // inner join: estrictos para enlazar el producto con su dueño
                      "INNER JOIN proveedor_producto pp ON prod.id_producto_pk = pp.id_producto_fk " +
-                     // join 6: finalmente cruzamos con la tabla proveedor para validar la identidad
                      "INNER JOIN proveedor pr ON pp.id_proveedor_fk = pr.id_proveedor_pk " +
                      // filtramos para que solo salgan los productos del proveedor logueado, ordenados del mas reciente al mas antiguo
                      "WHERE pr.id_datos_proveedor_fk = ? ORDER BY p.fecha DESC";

@@ -84,6 +84,8 @@ function prepararFormularioLogin() {
                 }
                 
                 window.location.reload();
+            } else if (respuesta.status === 403) {
+                alert('tu cuenta ha sido bloqueada por un administrador. por favor contacta a soporte.');
             } else {
                 alert('correo o contrasena incorrectos');
             }

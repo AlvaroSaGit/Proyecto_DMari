@@ -8,14 +8,14 @@
 import { agregarAlCarrito } from '../carritoSideBar/carritoController.js';
 
 export function abrirModalDetalle(producto) {
-    // se adaptan las variables del producto para asegurar que no haya valores nulos
-    const idProd = producto.idProductoPk || producto.id;
-    const nombreProd = producto.nombreProducto || producto.nombre || 'Producto';
-    const catProd = producto.categoria || producto.nombreCategoria || 'Sin categoria';
+    // adaptamos las variables del producto usando la extraccion segura por si java cambia los nombres
+    const idProd = producto.idProductoPk || producto.id_producto_pk || producto.id;
+    const nombreProd = producto.nombreProducto || producto.nombre_producto || producto.nombre || 'producto sin nombre';
+    const catProd = producto.categoria || producto.nombre_categoria || producto.nombreCategoria || 'sin categoria';
     const descripcion = (producto.descripcion && producto.descripcion.trim() !== '') ? producto.descripcion : 'no hay descripcion detallada para este producto.';
     const etiquetas = producto.etiquetas || [];
-    const rutaImg = producto.urlRuta || producto.imagen;
-    const imagenUrl = (rutaImg && rutaImg !== 'null') ? rutaImg : './src/assets/img/default.jpg';
+    
+    const rutaImg = producto.urlRuta || producto.url_ruta || producto.imagen || '';
     const precioFormateado = producto.precio.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
     const stock = producto.stock || 0;
 
@@ -42,7 +42,7 @@ export function abrirModalDetalle(producto) {
         <button id="btn-cerrar-detalle" style="position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 2rem; cursor: pointer; color: #888; line-height: 1;">&times;</button>
         
         <div style="flex: 1 1 300px; background: #f9f9f9; display: flex; align-items: center; justify-content: center; padding: 20px;">
-            <img src="${imagenUrl}" alt="${nombreProd}" style="max-width: 100%; max-height: 300px; object-fit: contain; border-radius: 8px;">
+            <img src="${rutaImg}" alt="${nombreProd}" style="max-width: 100%; max-height: 300px; object-fit: contain; border-radius: 8px;">
         </div>
         
         <div style="flex: 1 1 300px; padding: 30px 25px; display: flex; flex-direction: column;">

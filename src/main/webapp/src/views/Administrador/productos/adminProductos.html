@@ -104,7 +104,7 @@
                       2. El admin le da clic a "Editar" un producto que ya tiene una imagen guardada en la BD.
                     -->
                     <div id="contenedor-preview" style="display: none; margin-bottom: 10px; text-align: center; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ccc;">
-                        <img id="prod-imagen-preview" src="" alt="Previsualizacion" style="max-width: 100%; max-height: 150px; border-radius: 6px; object-fit: contain;">
+                        <img id="prod-imagen-preview" src="" alt="Previsualizacion" onerror="this.onerror=null; this.src='src/img/productos/default/gato_programador.jpg';" style="max-width: 100%; max-height: 150px; border-radius: 6px; object-fit: contain;">
                     </div>
                     <input class="admin-form__input" type="file" id="prod-imagen" name="imagen" accept="image/png, image/jpeg, image/webp" required>
                 </div>

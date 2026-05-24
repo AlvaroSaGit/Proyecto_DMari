@@ -48,9 +48,10 @@ public class productoDAO {
              "(SELECT GROUP_CONCAT(e.nombre_etiqueta SEPARATOR ',') FROM producto_etiqueta pe INNER JOIN etiqueta e ON pe.id_etiqueta = e.id_etiqueta_pk WHERE pe.id_producto = p.id_producto_pk) AS etiquetas_str " +
              // tabla principal desde donde partimos
              "FROM producto p " +
-             // left join: pegamos imagenes al producto incluso si no tiene fotos. ademas forzamos a que solo traiga la foto marcada como principal (1)
+             // uso de left join (cruce flexible): queremos traer el producto SIEMPRE, incluso si el administrador olvido subirle una foto.
+             // si usaramos inner join aqui, los productos sin foto desaparecerian de la tienda!
              "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk AND i.imagen_principal = 1 " +
-             // left join: pegamos la categoria por su llave foranea para extraer su nombre textual
+             // uso de left join: traemos el nombre de la categoria. si el producto quedo sin categoria por algun error, no se ocultara.
              "LEFT JOIN categoria c ON p.id_categoria_fk = c.id_categoria_pk";
         
         // si el parametro es verdadero, concatenamos la condicion a la consulta
@@ -150,11 +151,13 @@ public class productoDAO {
              "(SELECT GROUP_CONCAT(e.nombre_etiqueta SEPARATOR ',') FROM producto_etiqueta pe INNER JOIN etiqueta e ON pe.id_etiqueta = e.id_etiqueta_pk WHERE pe.id_producto = p.id_producto_pk) AS etiquetas_str " +
              // arrancamos en producto
              "FROM producto p " +
-             // unimos las imagenes filtrando por la foto primaria
+             // left join: mantenemos la flexibilidad para las fotos y las categorias
              "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk AND i.imagen_principal = 1 " +
-             // unimos la informacion de la categoria
              "LEFT JOIN categoria c ON p.id_categoria_fk = c.id_categoria_pk " +
-             // cruzamos con la tabla puente y luego con la del proveedor para validar pertenencia
+             // USO DE INNER JOIN (cruce estricto): ¡aqui esta la magia de tu sistema!
+             // inner join exige que el producto exista obligatoriamente en la tabla 'proveedor_producto'.
+             // como los productos oficiales de dmari no estan en esa tabla puente, el inner join los descarta y los oculta.
+             // asi garantizamos que el proveedor jamas vea un producto que no le pertenezca.
              "INNER JOIN proveedor_producto pp ON p.id_producto_pk = pp.id_producto_fk " +
              "INNER JOIN proveedor pr ON pp.id_proveedor_fk = pr.id_proveedor_pk " +
              "WHERE pr.id_datos_proveedor_fk = ?";
