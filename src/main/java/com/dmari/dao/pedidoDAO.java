@@ -23,6 +23,8 @@ public class pedidoDAO {
         String sqlPedido = "INSERT INTO pedido (id_cliente_fk, total_pagar, estado_pedido) VALUES (?, ?, 'Pendiente')";
         // preparamos la instruccion sql para insertar cada producto comprado en el detalle del pedido
         String sqlDetalle = "INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)";
+        // instruccion para restar permanentemente el stock del producto de inmediato al comprar
+        String sqlDescontarStock = "UPDATE producto SET stock = stock - ? WHERE id_producto_pk = ?";
         
         Connection con = null;
         try {
@@ -45,7 +47,8 @@ public class pedidoDAO {
             
             // paso 2: si mysql nos dio el id del pedido maestro, guardamos los detalles
             if (idPedidoGenerado > 0) {
-                try (PreparedStatement psDetalle = con.prepareStatement(sqlDetalle)) {
+                try (PreparedStatement psDetalle = con.prepareStatement(sqlDetalle);
+                     PreparedStatement psStock = con.prepareStatement(sqlDescontarStock)) {
                     for (detallePedido item : carrito) {
                         psDetalle.setInt(1, idPedidoGenerado);
                         psDetalle.setInt(2, item.getIdProductoFk());
@@ -55,8 +58,14 @@ public class pedidoDAO {
                         
                         // addbatch encola las instrucciones para ejecutarlas todas de golpe (mejor rendimiento)
                         psDetalle.addBatch(); 
+                        
+                        // configuramos la orden para descontar la cantidad comprada del inventario del producto
+                        psStock.setInt(1, item.getCantidad());
+                        psStock.setInt(2, item.getIdProductoFk());
+                        psStock.addBatch();
                     }
                     psDetalle.executeBatch(); // disparamos todas las inserciones del carrito
+                    psStock.executeBatch();   // disparamos todas las restas de inventario
                 }
                 
                 // paso 3: todo salio bien, confirmamos la transaccion
@@ -89,7 +98,7 @@ public class pedidoDAO {
         // preparamos la consulta uniendo 6 tablas para revelar el camino de datos desde el pedido hasta el proveedor
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, u.nombre AS nombre_cliente, " +
                      // traemos la direccion y telefono del cliente para que el proveedor sepa a donde enviar
-                     "c.direccion_envio, c.telefono_secundario, prod.nombre_producto, dp.cantidad, dp.subtotal " +
+                     "c.direccion_envio, c.telefono_secundario, c.referencia_ubicacion, prod.nombre_producto, dp.cantidad, dp.subtotal " +
                      // tabla principal de la consulta: el pedido maestro
                      "FROM pedido p " +
                      // inner join: el pedido debe tener un usuario real asociado si o si
@@ -114,11 +123,15 @@ public class pedidoDAO {
                      dp.setIdPedidoFk(rs.getInt("id_pedido_pk"));
                      dp.setFechaPedido(rs.getString("fecha"));
                      dp.setEstadoPedido(rs.getString("estado_pedido"));
-                     dp.setNombreCliente(rs.getString("nombre_cliente"));
                      
-                     // IMPORTANTE: Recuerda crear estos dos atributos en tu modelo `detallePedido.java`
-                     // dp.setDireccionEnvio(rs.getString("direccion_envio"));
-                     // dp.setTelefonoSecundario(rs.getString("telefono_secundario"));
+                     // Armamos un texto completo con todos los datos de envio para inyectarlo en el nombre
+                     String dir = rs.getString("direccion_envio");
+                     String detallesContacto = (dir != null) 
+                         ? dir + " | Tel: " + rs.getString("telefono_secundario") + 
+                           (rs.getString("referencia_ubicacion") != null && !rs.getString("referencia_ubicacion").isEmpty() ? " | Ref: " + rs.getString("referencia_ubicacion") : "") 
+                         : "sin direccion guardada";
+                         
+                     dp.setNombreCliente(rs.getString("nombre_cliente") + " - " + detallesContacto);
                      
                      dp.setNombreProducto(rs.getString("nombre_producto"));
                      dp.setCantidad(rs.getInt("cantidad"));
@@ -173,7 +186,7 @@ public class pedidoDAO {
     public ArrayList<detallePedido> listarTodosLosPedidos() {
         ArrayList<detallePedido> lista = new ArrayList<>();
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, u.nombre AS nombre_cliente, " +
-                     "c.direccion_envio, c.telefono_secundario, prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal " +
+                     "c.direccion_envio, c.telefono_secundario, c.referencia_ubicacion, prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal " +
                      "FROM pedido p " +
                      "INNER JOIN usuario u ON p.id_cliente_fk = u.id_usuario_pk " +
                      "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
@@ -193,9 +206,13 @@ public class pedidoDAO {
                  dp.setPrecioUnitario(rs.getDouble("precio_unitario"));
                  dp.setSubtotal(rs.getDouble("subtotal"));
                  
-                 // usamos setDireccionEnvio si lo agregaste a tu modelo, sino lo mandamos temporalmente en otro campo o lo imprimimos directamente en el json
-                 // aqui asumimos que la direccion puede concatenarse temporalmente para el administrador
-                 String detallesContacto = (rs.getString("direccion_envio") != null) ? rs.getString("direccion_envio") + " | Tel: " + rs.getString("telefono_secundario") : "sin direccion guardada";
+                 // Armamos el texto completo con la direccion, telefono y referencia para el administrador
+                 String dir = rs.getString("direccion_envio");
+                 String detallesContacto = (dir != null) 
+                     ? dir + " | Tel: " + rs.getString("telefono_secundario") + 
+                       (rs.getString("referencia_ubicacion") != null && !rs.getString("referencia_ubicacion").isEmpty() ? " | Ref: " + rs.getString("referencia_ubicacion") : "") 
+                     : "sin direccion guardada";
+                     
                  // usamos nombrecliente como portador de los datos si no has modificado la clase modelo aun
                  dp.setNombreCliente(rs.getString("nombre_cliente") + " - " + detallesContacto);
                  
@@ -210,10 +227,61 @@ public class pedidoDAO {
     */
     public boolean actualizarEstadoPedido(int idPedido, String nuevoEstado) {
         String sql = "UPDATE pedido SET estado_pedido = ? WHERE id_pedido_pk = ?";
-        try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, nuevoEstado);
-            ps.setInt(2, idPedido);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) { return false; }
+        Connection con = null;
+        try {
+            con = db.conectar();
+            // apagamos el autocommit para proteger la logica de devolucion de inventario
+            con.setAutoCommit(false);
+            
+            // 1. Averiguamos el estado actual antes de cambiarlo para evitar devolver stock duplicado
+            String estadoAnterior = "";
+            String sqlEstadoAnterior = "SELECT estado_pedido FROM pedido WHERE id_pedido_pk = ?";
+            try (PreparedStatement psVer = con.prepareStatement(sqlEstadoAnterior)) {
+                psVer.setInt(1, idPedido);
+                try (ResultSet rs = psVer.executeQuery()) {
+                    if (rs.next()) estadoAnterior = rs.getString("estado_pedido");
+                }
+            }
+            
+            // 2. Aplicamos el nuevo estado de envio/cancelacion
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, nuevoEstado);
+                ps.setInt(2, idPedido);
+                int afectadas = ps.executeUpdate();
+                
+                if (afectadas > 0) {
+                    // 3. LOGICA DE STOCK: Si el pedido se marca como "Cancelado" (y antes no lo estaba), 
+                    // regresamos los productos fisicos a los mostradores de la tienda.
+                    if ("Cancelado".equalsIgnoreCase(nuevoEstado) && !"Cancelado".equalsIgnoreCase(estadoAnterior)) {
+                        String sqlDetalles = "SELECT id_producto_fk, cantidad FROM detalle_pedido WHERE id_pedido_fk = ?";
+                        String sqlDevolverStock = "UPDATE producto SET stock = stock + ? WHERE id_producto_pk = ?";
+                        
+                        try (PreparedStatement psDetalles = con.prepareStatement(sqlDetalles);
+                             PreparedStatement psStock = con.prepareStatement(sqlDevolverStock)) {
+                             
+                            psDetalles.setInt(1, idPedido);
+                            try (ResultSet rsDetalles = psDetalles.executeQuery()) {
+                                while (rsDetalles.next()) {
+                                    psStock.setInt(1, rsDetalles.getInt("cantidad"));
+                                    psStock.setInt(2, rsDetalles.getInt("id_producto_fk"));
+                                    psStock.addBatch();
+                                }
+                                psStock.executeBatch();
+                            }
+                        }
+                    }
+                    con.commit();
+                    return true;
+                }
+            }
+            con.rollback();
+            return false;
+        } catch (SQLException e) {
+            try { if (con != null) con.rollback(); } catch (SQLException ex) {}
+            System.out.println("error al actualizar el estado del pedido: " + e.getMessage());
+            return false;
+        } finally {
+            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
+        }
     }
 }
