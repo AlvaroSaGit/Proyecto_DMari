@@ -1,33 +1,37 @@
 <section class="perfil-cliente-seccion" style="padding: 30px 20px; max-width: 600px; margin: 0 auto; background: #fff; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-top: 20px;">
     <div class="perfil-header" style="margin-bottom: 25px; border-bottom: 2px solid #f4f4f4; padding-bottom: 15px;">
         <h2 style="color: #212529; margin: 0; font-size: 1.5rem;">mi perfil de envio</h2>
-        <p style="color: #6c757d; font-size: 0.9rem; margin-top: 5px;">aqui puedes ver tu informacion actual. para modificarla, ve a configuracion.</p>
+        <p style="color: #6c757d; font-size: 0.9rem; margin-top: 5px;">administra y cambia tus datos de envio y contacto.</p>
     </div>
     
-    <div class="perfil-info" style="display: flex; flex-direction: column; gap: 18px;">
+    <form id="form-perfil-cliente" class="perfil-info" style="display: flex; flex-direction: column; gap: 18px;">
         <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-            <strong style="color: #495057; font-size: 0.9rem;">telefono de contacto</strong>
-            <span id="txt-telefono" style="padding: 10px; background: #f8f9fa; border-radius: 6px; color: #212529;">no configurado</span>
+            <label for="perfil-telefono" style="font-weight: 600; color: #495057; font-size: 0.9rem;">telefono principal</label>
+            <input type="text" id="perfil-telefono" required placeholder="ej. 3100000000" style="padding: 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; outline: none;">
         </div>
         
         <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-            <strong style="color: #495057; font-size: 0.9rem;">telefono alternativo</strong>
-            <span id="txt-telefono-sec" style="padding: 10px; background: #f8f9fa; border-radius: 6px; color: #212529;">no configurado</span>
+            <label for="perfil-telefono-sec" style="font-weight: 600; color: #495057; font-size: 0.9rem;">telefono alternativo (opcional)</label>
+            <input type="text" id="perfil-telefono-sec" placeholder="ej. 3200000000" style="padding: 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; outline: none;">
         </div>
 
         <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-            <strong style="color: #495057; font-size: 0.9rem;">direccion principal</strong>
-            <span id="txt-direccion" style="padding: 10px; background: #f8f9fa; border-radius: 6px; color: #212529;">no configurado</span>
+            <label for="perfil-direccion" style="font-weight: 600; color: #495057; font-size: 0.9rem;">direccion de entrega</label>
+            <input type="text" id="perfil-direccion" required placeholder="ej. calle 10 # 5-20" style="padding: 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; outline: none;">
         </div>
         
         <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-            <strong style="color: #495057; font-size: 0.9rem;">detalle de direccion</strong>
-            <span id="txt-detalle" style="padding: 10px; background: #f8f9fa; border-radius: 6px; color: #212529;">no configurado</span>
+            <label for="perfil-detalle" style="font-weight: 600; color: #495057; font-size: 0.9rem;">detalle (torre, apto) (opcional)</label>
+            <input type="text" id="perfil-detalle" placeholder="ej. apartamento 301, torre 2" style="padding: 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; outline: none;">
         </div>
         
         <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-            <strong style="color: #495057; font-size: 0.9rem;">referencia de ubicacion</strong>
-            <span id="txt-referencia" style="padding: 10px; background: #f8f9fa; border-radius: 6px; color: #212529;">no configurado</span>
+            <label for="perfil-referencia" style="font-weight: 600; color: #495057; font-size: 0.9rem;">referencia de ubicacion (opcional)</label>
+            <textarea id="perfil-referencia" rows="3" placeholder="ej. casa blanca esquinera, frente al parque" style="padding: 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; outline: none; resize: vertical;"></textarea>
         </div>
-    </div>
+        
+        <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+            <button type="submit" style="padding: 12px 24px; background: #212529; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s;">guardar cambios</button>
+        </div>
+    </form>
 </section>

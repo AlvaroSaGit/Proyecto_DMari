@@ -114,9 +114,9 @@ async function procesarCompra() {
                 const perfil = await resPerfil.json();
                 // verificamos si las cajas de texto de direccion o telefono estan vacias/inexistentes
                 if (!perfil.direccion || perfil.direccion.trim() === '' || !perfil.telefono || perfil.telefono.trim() === '') {
-                    alert('para poder entregar tu pedido, es obligatorio que completes tus datos de envio (direccion y telefono principal). te llevaremos a configuracion.');
+                    alert('para poder entregar tu pedido, es obligatorio que completes tus datos de envio (direccion y telefono principal). te llevaremos a tu perfil.');
                     cerrarCarrito();
-                    navegarA('configuracion'); // lo mandamos a llenar sus datos
+                    navegarA('perfil'); // lo mandamos a llenar sus datos
                     return; // detenemos la apertura del pago
                 }
             }

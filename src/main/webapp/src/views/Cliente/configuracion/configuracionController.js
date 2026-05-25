@@ -61,7 +61,7 @@ async function prepararFormularioPerfil() {
         });
     }
 
-    // 2. logica para el formulario de cambio de contrasena
+    // logica exclusiva para el formulario de cambio de contrasena
     if (formPassword) {
         formPassword.addEventListener('submit', async (e) => {
             e.preventDefault();

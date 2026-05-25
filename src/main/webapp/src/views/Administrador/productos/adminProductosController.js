@@ -352,7 +352,12 @@ async function cargarListaProductos() {
                     <div style="font-weight: bold; margin-bottom: 4px;">${nombre}</div>
                     <span style="font-size: 0.75rem; color: #666; background-color: #f0f0f0; padding: 2px 6px; border-radius: 10px;">${nombreCategoria}</span>
                 </td>
-                <td>$${prod.precio}</td>
+                <td>
+                    <div>$${prod.precio}</div>
+                    <div style="font-size: 0.8rem; margin-top: 4px; font-weight: 600; color: ${prod.stock > 5 ? '#28a745' : (prod.stock > 0 ? '#f39c12' : '#dc3545')};">
+                        stock: ${prod.stock} un.
+                    </div>
+                </td>
                 <td><span class="badge-estado ${prod.estado !== false ? 'badge-activo' : 'badge-inactivo'}">${prod.estado !== false ? 'ACTIVO' : 'PAUSADO'}</span></td>
                 <td>
                     <button class="btn-editar" 
