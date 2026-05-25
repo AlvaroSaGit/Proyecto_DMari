@@ -39,48 +39,67 @@ export async function inicializarUsuario() {
             if (btnLogin) btnLogin.style.display = 'none';
             if (btnRegistro) btnRegistro.style.display = 'none';
 
-            // 1.5 Creamos dinamicamente el boton de Historial de Pedidos
+            // 1.5 creamos dinamicamente el boton de historial de pedidos
             let btnPedidos = document.getElementById('btn-nav-historial');
             if (!btnPedidos) {
                 btnPedidos = document.createElement('button');
                 btnPedidos.className = 'btn-usuario-item'; 
                 btnPedidos.id = 'btn-nav-historial';
-                // Icono de bolsa de compras para diferenciarlo de la tuerca de configuracion
-                btnPedidos.innerHTML = "<i class='bx bx-shopping-bag'></i> Mis Pedidos";
+                // icono de bolsa de compras para diferenciarlo de la tuerca de configuracion
+                btnPedidos.innerHTML = "<i class='bx bx-shopping-bag'></i> Mis pedidos";
                 
-                // Lo insertamos en el menu, justo ANTES de Configuracion
+                // lo insertamos en el menu, justo antes de configuracion
                 if (btnConfiguracion && btnConfiguracion.parentNode) {
                     btnConfiguracion.parentNode.insertBefore(btnPedidos, btnConfiguracion);
                 }
                 
-                // Le damos la orden para navegar al historial al hacer clic
+                // le damos la orden para navegar al historial al hacer clic
                 btnPedidos.addEventListener('click', () => { cerrarUsuario(); navegarA('historial'); });
             }
 
-            // 2. Creamos y agregamos dinamicamente el boton de Cerrar Sesion
-            // Asi no tienes que modificar el HTML manualmente
+            // 1.6 creamos dinamicamente el boton de mi perfil
+            let btnPerfilUsuario = document.getElementById('btn-nav-perfil-usuario');
+            if (!btnPerfilUsuario) {
+                btnPerfilUsuario = document.createElement('button');
+                btnPerfilUsuario.className = 'btn-usuario-item'; 
+                btnPerfilUsuario.id = 'btn-nav-perfil-usuario';
+                // icono de usuario para mantener el diseno visual (boxicons)
+                btnPerfilUsuario.innerHTML = "<i class='bx bx-user'></i> mi perfil";
+                
+                // lo insertamos en el menu, justo antes de configuracion
+                if (btnConfiguracion && btnConfiguracion.parentNode) {
+                    btnConfiguracion.parentNode.insertBefore(btnPerfilUsuario, btnConfiguracion);
+                }
+                
+                // le damos la orden para navegar al perfil al hacer clic
+                btnPerfilUsuario.addEventListener('click', () => { cerrarUsuario(); navegarA('perfil'); });
+            }
+
+            // 2. creamos y agregamos dinamicamente el boton de cerrar sesion
+            // asi no tienes que modificar el html manualmente
             let btnSalir = document.getElementById('btn-nav-salir');
             if (!btnSalir) {
-                btnSalir = document.createElement('button'); // Ahora es un boton
-                btnSalir.className = 'btn-usuario-item'; // Misma clase que Configuracion
+                btnSalir = document.createElement('button'); // ahora es un boton
+                btnSalir.className = 'btn-usuario-item'; // misma clase que configuracion
                 btnSalir.id = 'btn-nav-salir';
-                btnSalir.style.color = '#ff4d4d'; // Color rojo
+                btnSalir.style.color = '#ff4d4d'; // color rojo
 
-                // Usamos el icono Boxicons para que coincida exactamente con los otros
-                btnSalir.innerHTML = "<i class='bx bx-log-out'></i> Salir de sesion";
+                // usamos el icono boxicons para que coincida exactamente con los otros
+                btnSalir.innerHTML = "<i class='bx bx-log-out'></i> salir de sesion";
 
-                // Lo insertamos en el menu, justo ANTES del separador gris
+                // lo insertamos al fondo del menu, debajo de todas las demas opciones
                 if (btnConfiguracion && btnConfiguracion.parentNode) {
+                    // movemos la linea separadora original para que quede justo encima del boton de salir
                     const separador = document.querySelector('.sidebar-body .separador');
                     if (separador) {
-                        btnConfiguracion.parentNode.insertBefore(btnSalir, separador);
-                    } else {
-                        btnConfiguracion.parentNode.insertBefore(btnSalir, btnConfiguracion);
+                        btnConfiguracion.parentNode.appendChild(separador);
                     }
+                    
+                    btnConfiguracion.parentNode.appendChild(btnSalir);
                 }
             }
 
-            // 3. Le damos la orden para destruir la sesion en el servidor al hacerle clic
+            // 3. le damos la orden para destruir la sesion en el servidor al hacerle clic
             btnSalir.addEventListener('click', async (e) => {
                 e.preventDefault();
                 await fetch('logout');

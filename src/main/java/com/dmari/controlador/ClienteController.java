@@ -34,11 +34,12 @@ public class ClienteController extends HttpServlet {
             
             try (PrintWriter out = response.getWriter()) {
                 if (perfil != null) {
-                    // armamos un json simple con los datos encontrados (direccion, detalle, telefono, referencia)
+                    // armamos un json simple con los datos encontrados (direccion, detalle, telefono, telefono_secundario, referencia)
                     out.print("{\"direccion\":\"" + (perfil[0] != null ? perfil[0] : "") + "\", " +
                               "\"direccionDetalle\":\"" + (perfil[1] != null ? perfil[1] : "") + "\", " +
                               "\"telefono\":\"" + (perfil[2] != null ? perfil[2] : "") + "\", " +
-                              "\"referencia\":\"" + (perfil[3] != null ? perfil[3] : "") + "\"}");
+                              "\"telefonoSecundario\":\"" + (perfil[3] != null ? perfil[3] : "") + "\", " +
+                              "\"referencia\":\"" + (perfil[4] != null ? perfil[4] : "") + "\"}");
                 } else {
                     out.print("{}"); // si esta vacio, mandamos un objeto json vacio
                 }
@@ -58,10 +59,11 @@ public class ClienteController extends HttpServlet {
             String direccion = request.getParameter("direccion");
             String direccionDetalle = request.getParameter("direccionDetalle");
             String telefono = request.getParameter("telefono");
+            String telefonoSecundario = request.getParameter("telefonoSecundario");
             String referencia = request.getParameter("referencia");
             
             clienteDAO dao = new clienteDAO();
-            if (dao.guardarOActualizarPerfil(user.getIdUsuario(), direccion, direccionDetalle, telefono, referencia)) response.setStatus(HttpServletResponse.SC_OK);
+            if (dao.guardarOActualizarPerfil(user.getIdUsuario(), direccion, direccionDetalle, telefono, telefonoSecundario, referencia)) response.setStatus(HttpServletResponse.SC_OK);
             else response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         } else {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

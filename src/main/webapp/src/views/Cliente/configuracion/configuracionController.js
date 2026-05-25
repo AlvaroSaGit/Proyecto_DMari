@@ -22,57 +22,71 @@ export async function cargarVistaConfiguracion() {
     // agregamos '?t=' + timestamp para destruir la cache del navegador y obligarlo a mostrar los campos nuevos.
     await cargarComponente('component-main', './src/views/Cliente/configuracion/configuracion.html?t=' + new Date().getTime());
     
-    // capturamos el nuevo boton para ir al historial
-    const btnIrHistorial = document.getElementById('btn-ir-historial');
-    if (btnIrHistorial) {
-        btnIrHistorial.addEventListener('click', () => {
-            navegarA('historial'); // Llama al router para cambiar de pantalla
-        });
-    }
-    
     // inicializamos la logica del formulario
     prepararFormularioPerfil();
 }
 
 async function prepararFormularioPerfil() {
-    const form = document.getElementById('form-perfil-cliente');
-    if (!form) return;
+    const formPerfil = document.getElementById('form-config-perfil');
+    const formPassword = document.getElementById('form-cambiar-password');
 
-    // 1. cargar los datos actuales del cliente si ya tenia perfil guardado
-    try {
-        const respuesta = await fetch('perfil-cliente');
-        if (respuesta.ok) {
-            const datos = await respuesta.json();
-            // si hay direccion, llenamos los campos automaticamente
-            if (datos.direccion) {
-                document.getElementById('cli-direccion').value = datos.direccion;
-                document.getElementById('cli-telefono').value = datos.telefono;
-                if(document.getElementById('cli-referencia')) document.getElementById('cli-referencia').value = datos.referencia || '';
-            }
-        }
-    } catch (error) { console.error('error al cargar perfil:', error); }
-
-    // 2. enviar los datos nuevos o editados a la base de datos
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault(); // prevenimos recarga
-
-        const direccion = document.getElementById('cli-direccion').value;
-        const telefono = document.getElementById('cli-telefono').value;
-        const referencia = document.getElementById('cli-referencia') ? document.getElementById('cli-referencia').value : '';
-
-        const parametros = new URLSearchParams();
-        parametros.append('direccion', direccion);
-        parametros.append('telefono', telefono);
-        parametros.append('referencia', referencia);
-
+    // 1. logica para el formulario de edicion de perfil
+    if (formPerfil) {
         try {
-            const respuesta = await fetch('perfil-cliente', { method: 'POST', body: parametros });
-
+            const respuesta = await fetch('perfil-cliente');
             if (respuesta.ok) {
-                alert('¡tu informacion de envio ha sido guardada correctamente!');
-            } else {
-                alert('hubo un error al guardar la informacion.');
+                const datos = await respuesta.json();
+                if (datos.telefono) document.getElementById('conf-telefono').value = datos.telefono;
+                if (datos.telefonoSecundario) document.getElementById('conf-telefono-sec').value = datos.telefonoSecundario;
+                if (datos.direccion) document.getElementById('conf-direccion').value = datos.direccion;
+                if (datos.direccionDetalle) document.getElementById('conf-detalle').value = datos.direccionDetalle;
+                if (datos.referencia) document.getElementById('conf-referencia').value = datos.referencia;
             }
-        } catch (error) { console.error('error al enviar perfil:', error); }
-    });
+        } catch (error) { console.error('error al cargar perfil:', error); }
+
+        formPerfil.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const parametros = new URLSearchParams();
+            parametros.append('telefono', document.getElementById('conf-telefono').value);
+            parametros.append('telefonoSecundario', document.getElementById('conf-telefono-sec').value);
+            parametros.append('direccion', document.getElementById('conf-direccion').value);
+            parametros.append('direccionDetalle', document.getElementById('conf-detalle').value);
+            parametros.append('referencia', document.getElementById('conf-referencia').value);
+
+            try {
+                const respuesta = await fetch('perfil-cliente', { method: 'POST', body: parametros });
+                if (respuesta.ok) alert('¡tu informacion de envio ha sido actualizada correctamente!');
+                else alert('hubo un error al actualizar la informacion.');
+            } catch (error) { console.error('error al enviar perfil:', error); }
+        });
+    }
+
+    // 2. logica para el formulario de cambio de contrasena
+    if (formPassword) {
+        formPassword.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const passActual = document.getElementById('pass-actual').value;
+            const passNueva = document.getElementById('pass-nueva').value;
+            const passConfirm = document.getElementById('pass-confirm').value;
+
+            if (passNueva !== passConfirm) {
+                alert('las contrasenas nuevas no coinciden');
+                return;
+            }
+
+            const parametros = new URLSearchParams();
+            parametros.append('passActual', passActual);
+            parametros.append('passNueva', passNueva);
+
+            try {
+                const respuesta = await fetch('cambiar-password', { method: 'POST', body: parametros });
+                if (respuesta.ok) {
+                    alert('¡tu contrasena ha sido cambiada con exito!');
+                    formPassword.reset();
+                } else {
+                    alert('la contrasena actual es incorrecta o hubo un error.');
+                }
+            } catch (error) { console.error('error al cambiar pass:', error); }
+        });
+    }
 }

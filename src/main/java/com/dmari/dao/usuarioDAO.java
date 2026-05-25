@@ -198,4 +198,22 @@ public class usuarioDAO {
             try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
         }
     }
+
+    // metodo seguro para cambiar la contrasena validando la contrasena actual
+    public boolean cambiarPassword(int idUsuario, String passwordActual, String nuevaPassword) {
+        // la instruccion update solo hara el cambio si desencriptar (aes_decrypt) la clave actual coincide con la que digito el usuario
+        String sql = "UPDATE credenciales SET passwd_encript = AES_ENCRYPT(?, ?) WHERE id_usuario = ? AND AES_DECRYPT(passwd_encript, ?) = ?";
+        
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nuevaPassword);
+            ps.setString(2, LLAVE_SECRETA);
+            ps.setInt(3, idUsuario);
+            ps.setString(4, LLAVE_SECRETA);
+            ps.setString(5, passwordActual);
+            
+            // devuelve true si al menos 1 fila fue modificada (lo que confirma que la contrasena antigua era correcta)
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { System.out.println("error al cambiar password: " + e.getMessage()); return false; }
+    }
 }

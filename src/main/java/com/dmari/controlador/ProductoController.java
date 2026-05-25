@@ -8,16 +8,20 @@
 package com.dmari.controlador;
 
 // Import del archivo productoDao y producto
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 
-import com.dmari.dao.productoDAO;
-import com.dmari.dao.imagenesDAO;
 import com.dmari.dao.etiquetaDAO;
+import com.dmari.dao.imagenesDAO;
+import com.dmari.dao.productoDAO;
+import com.dmari.helper.jsonHelper;
 import com.dmari.modelo.producto;
 import com.dmari.modelo.usuario;
-import com.dmari.helper.jsonHelper;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -27,10 +31,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
-import java.io.File;
-import java.nio.file.Paths;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 
 
 /*
@@ -268,18 +268,24 @@ public class ProductoController extends HttpServlet {
                 File targetFile = new File(targetDir, idProducto + "_" + fileName);
                 filePart.write(targetFile.getAbsolutePath());
                 
-                // 2. MAGIA LOCAL: Copiamos la foto a tu carpeta fuente de NetBeans para que NO se borre al reiniciar
-                // (Esta ruta es la de tu computadora personal donde tienes el proyecto)
-                String rutaProyecto = "C:\\Users\\salaz\\OneDrive\\Documentos\\NetBeansProjects\\DMari\\src\\main\\webapp\\src\\img\\productos";
-                File sourceDir = new File(rutaProyecto);
-                if (!sourceDir.exists()) sourceDir.mkdirs();
-                
-                File sourceFile = new File(sourceDir, idProducto + "_" + fileName);
-                Files.copy(targetFile.toPath(), sourceFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                
-                // Imprimimos en la consola de NetBeans para que verifiques que si se guardo en ambas partes
-                System.out.println("FOTO TEMPORAL (TOMCAT): " + targetFile.getAbsolutePath());
-                System.out.println("FOTO PERMANENTE (NETBEANS): " + sourceFile.getAbsolutePath());
+                // 2. magia local dinamica: calculamos la ruta fuente cortando el path de despliegue.
+                // cuando ejecutas en tu ide, apppath contiene la carpeta "target" o "build".
+                // cortamos esa palabra para retroceder a la raiz de tu proyecto, sin importar la pc.
+                if (appPath.contains("target")) {
+                    String rutaRaiz = appPath.substring(0, appPath.indexOf("target"));
+                    String rutaProyecto = rutaRaiz + "src" + File.separator + "main" + File.separator + "webapp" + File.separator + "src" + File.separator + "img" + File.separator + "productos";
+                    
+                    File sourceDir = new File(rutaProyecto);
+                    if (!sourceDir.exists()) sourceDir.mkdirs();
+                    
+                    File sourceFile = new File(sourceDir, idProducto + "_" + fileName);
+                    Files.copy(targetFile.toPath(), sourceFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    
+                    System.out.println("FOTO TEMPORAL (TOMCAT): " + targetFile.getAbsolutePath());
+                    System.out.println("FOTO PERMANENTE (DINAMICA): " + sourceFile.getAbsolutePath());
+                } else {
+                    System.out.println("FOTO TEMPORAL (TOMCAT): " + targetFile.getAbsolutePath());
+                }
                 
                 // Ruta que va a la base de datos (SIEMPRE con diagonales normales '/' para la web)
                 String rutaRelativa = "src/img/productos/" + idProducto + "_" + fileName;

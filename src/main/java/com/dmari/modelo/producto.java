@@ -1,38 +1,49 @@
+/*
+    objetivo de este archivo:
+    representar un articulo de la tienda (dona, vela, etc).
+    
+    nota de arquitectura:
+    al igual que detallepedido, este modelo esta "aplanado". 
+    esto significa que absorbe datos de las tablas 'categoria', 'imagenes' 
+    y 'etiqueta' para no tener que crear multiples archivos java.
+    el producto dao se encarga de llenar todo esto con una sola consulta sql.
+*/
 package com.dmari.modelo;
 
 import java.util.ArrayList;
 
 public class producto {
-    /*
-        Los mismos atributos que la tabla de la base de datos
-        producto
-    
-        ARCHIVO GETTER Y SETTER
-    */
-    
+
+    // ==========================================
+    // bloque 1: columnas originales de la tabla producto
+    // ==========================================
     private int idProductoPk;
     private int idCategoriaFk;
-    /*Informacion general del prodcuto*/
     private String nombreProducto;
     private String descripcion;
-    /*Precio del producto*/
     private double precio;
-    /*Cantidad de unidades del producto*/
     private int stock;
-    /*Estado del producto*/
     private boolean estado;
-    /*Fecha creacion temporal*/
     private String fechaCreacion;
-    /* Nueva variable para la ruta de la tabla imagenes */
+    
+    // ==========================================
+    // bloque 2: datos fusionados de tablas hijas (joins)
+    // ==========================================
+    
+    // absorbe la columna url_ruta de la tabla 'imagenes'
+    // nota: si a futuro un producto tiene galeria de 5 fotos, se debera cambiar a arraylist<string>
     private String urlRuta;
-    /* Nombre de la categoria proveniente del JOIN */
+    
+    // absorbe la columna nombre de la tabla 'categoria'
     private String categoria;
-    /* Lista de etiquetas de la tabla intermedia */
+    
+    // absorbe los cruces de la tabla intermedia 'producto_etiqueta'
     private ArrayList<String> etiquetas = new ArrayList<>();
     
-    /*Constructor vacio para poder armar objetos en blanco*/
+    // constructor vacio para poder instanciar objetos en blanco desde los daos
     public producto(){}
 
+    // metodos de acceso (getters y setters)
     public int getIdProductoPk() {
         return idProductoPk;
     }

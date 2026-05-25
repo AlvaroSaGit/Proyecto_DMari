@@ -49,6 +49,48 @@ export async function inicializarCarrito() {
     if(carrito.length > 0) {
         renderizarCarrito();
     }
+
+    // inyectamos dinamicamente el html de la pasarela de pagos
+    let modalPago = document.getElementById('modal-pago-simulado');
+    if (!modalPago) {
+        modalPago = document.createElement('div');
+        modalPago.id = 'modal-pago-simulado';
+        modalPago.innerHTML = `
+            <div style="background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                <h3 style="margin-bottom: 15px; color: #212529; font-size: 1.3rem;">pasarela de pago</h3>
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">selecciona tu metodo de pago simulado para finalizar la orden.</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-weight: 600; font-size: 0.9rem;">metodo de pago</label>
+                        <select id="select-metodo-pago" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none;">
+                            <!-- estos seran dinamicos despues, por ahora estan fijos para visualizar -->
+                            <option value="1">nequi</option>
+                            <option value="2">tarjeta de credito / debito</option>
+                            <option value="3">efectivo (contra entrega)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-weight: 600; font-size: 0.9rem;">numero de cuenta / celular</label>
+                        <input type="text" id="input-cuenta-pago" placeholder="ej. 3100000000" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none;">
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 25px;">
+                    <button id="btn-cancelar-pago" style="background: #f8f9fa; border: 1px solid #ddd; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; color: #333;">cancelar</button>
+                    <button id="btn-confirmar-pago" style="background: #212529; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">pagar ahora</button>
+                </div>
+            </div>
+        `;
+        // estilos css para que flote sobre toda la pagina
+        Object.assign(modalPago.style, { position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'none', justifyContent: 'center', alignItems: 'center', zIndex: '10000' });
+        
+        document.body.appendChild(modalPago);
+        
+        // eventos de los botones del modal
+        document.getElementById('btn-cancelar-pago').addEventListener('click', () => modalPago.style.display = 'none');
+        document.getElementById('btn-confirmar-pago').addEventListener('click', confirmarPagoSimulado);
+    }
 }
 
 // funcion que se ejecuta al intentar pagar
@@ -66,21 +108,11 @@ async function procesarCompra() {
         if (respuesta.ok) {
             // respondio 200 ok: esta logueado
             
-            // usamos el nuevo servicio modularizado para enviar el carrito a java
-            const exito = await enviarPedido(carrito);
-            
-            if (exito) {
-                // vaciamos el carrito tras la compra real
-                carrito = [];
-                localStorage.setItem('carritoDMari', JSON.stringify(carrito));
-                renderizarCarrito();
-                cerrarCarrito();
-                
-                window.dispatchEvent(new CustomEvent('inventarioActualizado'));
-                mostrarNotificacion('¡Compra realizada con éxito! Revisa tu historial.', 'exito');
-            } else {
-                window.dispatchEvent(new CustomEvent('inventarioActualizado'));
-                mostrarNotificacion('El pedido falló. Es posible que algún producto se haya agotado.', 'error');
+            // interrumpimos el envio directo y mejor abrimos el modal de pagos
+            const modalPago = document.getElementById('modal-pago-simulado');
+            if (modalPago) {
+                modalPago.style.display = 'flex';
+                cerrarCarrito(); // ocultamos el carrito para que no estorbe la vista del pago
             }
         } else {
             // Respondio 401: No esta logueado
@@ -91,6 +123,37 @@ async function procesarCompra() {
     } catch (error) {
         console.error('Error al verificar la sesion:', error);
         alert('Hubo un error de conexion con el servidor.');
+    }
+}
+
+// funcion que recolecta los datos de la pasarela y envia la orden final
+async function confirmarPagoSimulado() {
+    const cuenta = document.getElementById('input-cuenta-pago').value;
+    const idMetodo = document.getElementById('select-metodo-pago').value;
+    
+    if (!cuenta || cuenta.trim() === '') {
+        alert('por favor ingresa un numero de cuenta o telefono valido para continuar.');
+        return;
+    }
+    
+    // ocultamos el modal
+    document.getElementById('modal-pago-simulado').style.display = 'none';
+    
+    // NOTA: aqui estamos utilizando la funcion vieja de enviar pedido temporalmente.
+    // en el siguiente paso modificaremos esa peticion para que lleve el idMetodo y la cuenta
+    const exito = await enviarPedido(carrito);
+    
+    if (exito) {
+        // vaciamos el carrito local
+        carrito = [];
+        localStorage.setItem('carritoDMari', JSON.stringify(carrito));
+        renderizarCarrito();
+        
+        window.dispatchEvent(new CustomEvent('inventarioActualizado'));
+        mostrarNotificacion('¡pago aprobado y compra realizada con exito!', 'exito');
+    } else {
+        window.dispatchEvent(new CustomEvent('inventarioActualizado'));
+        mostrarNotificacion('el pedido fallo. revisa si algun producto se agoto.', 'error');
     }
 }
 

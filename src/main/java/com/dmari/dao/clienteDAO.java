@@ -18,8 +18,8 @@ public class clienteDAO {
 
     // metodo para leer los datos actuales del cliente uniendo las 3 tablas
     public String[] obtenerPerfil(int idUsuario) {
-        String[] perfil = new String[4];
-        String sql = "SELECT c.direccion_envio, c.referencia_ubicacion, d.direccion_detallada, t.numero_telefonico " +
+        String[] perfil = new String[5];
+        String sql = "SELECT c.direccion_envio, c.referencia_ubicacion, c.telefono_secundario, d.direccion_detallada, t.numero_telefonico " +
                      "FROM cliente c " +
                      "LEFT JOIN direccion d ON c.id_cliente_pk = d.id_usuario_fk " +
                      "LEFT JOIN telefono t ON c.id_cliente_pk = t.id_usuario_fk " +
@@ -33,7 +33,8 @@ public class clienteDAO {
                     perfil[0] = rs.getString("direccion_envio");
                     perfil[1] = rs.getString("direccion_detallada");
                     perfil[2] = rs.getString("numero_telefonico");
-                    perfil[3] = rs.getString("referencia_ubicacion");
+                    perfil[3] = rs.getString("telefono_secundario");
+                    perfil[4] = rs.getString("referencia_ubicacion");
                     return perfil;
                 }
             }
@@ -44,12 +45,12 @@ public class clienteDAO {
     }
         
     // metodo para guardar o actualizar el perfil usando las 3 tablas satelite
-    public boolean guardarOActualizarPerfil(int idUsuario, String direccionPrimaria, String direccionDetalle, String numeroTelefono, String referencia) {
+    public boolean guardarOActualizarPerfil(int idUsuario, String direccionPrimaria, String direccionDetalle, String numeroTelefono, String telefonoSecundario, String referencia) {
         
         // 1. sentencia para la tabla cliente (referencias generales)
         String sqlCliente = "INSERT INTO cliente (id_cliente_pk, direccion_envio, telefono_secundario, referencia_ubicacion) " +
-                            "VALUES (?, ?, '', ?) " +
-                            "ON DUPLICATE KEY UPDATE direccion_envio = VALUES(direccion_envio), referencia_ubicacion = VALUES(referencia_ubicacion)";
+                            "VALUES (?, ?, ?, ?) " +
+                            "ON DUPLICATE KEY UPDATE direccion_envio = VALUES(direccion_envio), telefono_secundario = VALUES(telefono_secundario), referencia_ubicacion = VALUES(referencia_ubicacion)";
                             
         // 2. sentencia para la tabla direccion
         // asumimos que si no existe, se crea. si existe, se actualiza la primera direccion encontrada de ese usuario.
@@ -71,7 +72,8 @@ public class clienteDAO {
             try (PreparedStatement psCli = con.prepareStatement(sqlCliente)) {
                 psCli.setInt(1, idUsuario);
                 psCli.setString(2, direccionPrimaria);
-                psCli.setString(3, referencia);
+                psCli.setString(3, telefonoSecundario);
+                psCli.setString(4, referencia);
                 psCli.executeUpdate();
             }
 

@@ -2,13 +2,21 @@
     objetivo de este archivo:
     molde para representar los productos individuales dentro de una compra.
     tambien contiene campos extra para facilitar las vistas cruzadas,
-    como el nombre del cliente y el estado del pedido para el proveedor.
+    como el nombre del cliente y el estado del pedido.
+    
+    nota de arquitectura:
+    este modelo funciona como un dto (data transfer object). 
+    para no crear clases separadas para 'pedido', 'cliente' y 'usuario', 
+    fusionamos todas esas columnas de mysql en este solo archivo. 
+    asi es mas facil enviar un solo paquete json al frontend javascript.
 */
 package com.dmari.modelo;
 
 public class detallePedido {
     
-    // datos puros de la tabla detalle_pedido
+    // ==========================================
+    // bloque 1: datos puros de la tabla detalle_pedido
+    // ==========================================
     private int idDetallePedido;
     private int idPedidoFk;
     private int idProductoFk;
@@ -16,7 +24,9 @@ public class detallePedido {
     private double precioUnitario;
     private double subtotal;
     
-    // datos extra (joins) para mostrarle la informacion al proveedor o cliente
+    // ==========================================
+    // bloque 2: datos fusionados (joins) de las tablas pedido, usuario y cliente
+    // ==========================================
     private String nombreProducto;
     private String nombreCliente;
     private String fechaPedido;
