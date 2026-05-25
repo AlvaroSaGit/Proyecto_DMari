@@ -44,6 +44,15 @@ export async function cargarVistaCatalogo() {
     // Exponemos la funcion al objeto global (window) para que el sidebar pueda usarla
     // sin sufrir el error de "clones vacios" por las rutas de importacion
     window.aplicarFiltroCatalogo = aplicarFiltroInteligente;
+    
+    // Oidos para la actualizacion silenciosa
+    if (!window.escuchadorStockCatalogo) {
+        window.addEventListener('inventarioActualizado', () => {
+            const vistaActiva = window.location.hash.replace(/^#\/?/, '') || 'inicio';
+            if (vistaActiva === 'catalogo') renderizarProductosCatalogo();
+        });
+        window.escuchadorStockCatalogo = true;
+    }
 }
 
 /**
@@ -56,13 +65,15 @@ async function renderizarProductosCatalogo() {
     const contenedor = document.getElementById('catalogo-productos-grid');
     if (!contenedor) return;
 
-    // mostramos un estado de carga mientras esperamos los datos
-    contenedor.innerHTML = '<p>Cargando productos...</p>';
+    // Si es una actualizacion silenciosa, NO borramos el HTML viejo para evitar que la pantalla parpadee.
+    if (!todosLosProductos || todosLosProductos.length === 0) {
+        contenedor.innerHTML = '<p>Cargando productos...</p>';
+    }
 
     // 3. Obtenemos los datos limpios directamente mediante fetch (mismo metodo que usa inicio)
     try {
-        // Agregamos un timestamp (&t=...) para obligar al navegador a pedirle los datos a Java y burlar el caché
-        const respuesta = await fetch('listar?activos=true&t=' + new Date().getTime());
+        // Cache-Busting estricto para evitar el inventario fantasma en el navegador
+        const respuesta = await fetch('listar?activos=true&t=' + Date.now(), { cache: 'no-store' });
         if (respuesta.ok) {
             todosLosProductos = await respuesta.json();
         } else {
@@ -86,8 +97,8 @@ async function renderizarProductosCatalogo() {
         aplicarFiltroInteligente(filtroPendiente, filtroPendiente === '' ? 'general' : 'categoria');
         sessionStorage.removeItem('filtroCategoriaSidebar');
     } else {
-        // si no habia ordenes del sidebar, dibujamos todos los productos inicialmente
-        dibujarGridCatalogo(todosLosProductos);
+        // Aplicamos el filtro inteligente para no perder la busqueda del usuario al actualizar
+        aplicarFiltroInteligente();
     }
 
     // 4. Asignamos los eventos de clics al nuevo contenedor

@@ -70,15 +70,17 @@ async function procesarCompra() {
             const exito = await enviarPedido(carrito);
             
             if (exito) {
-                alert('¡compra realizada con exito! el pedido se ha guardado en tu historial.');
-                
                 // vaciamos el carrito tras la compra real
                 carrito = [];
                 localStorage.setItem('carritoDMari', JSON.stringify(carrito));
                 renderizarCarrito();
                 cerrarCarrito();
+                
+                window.dispatchEvent(new CustomEvent('inventarioActualizado'));
+                mostrarNotificacion('¡Compra realizada con éxito! Revisa tu historial.', 'exito');
             } else {
-                alert('hubo un problema al registrar tu pedido en el sistema.');
+                window.dispatchEvent(new CustomEvent('inventarioActualizado'));
+                mostrarNotificacion('El pedido falló. Es posible que algún producto se haya agotado.', 'error');
             }
         } else {
             // Respondio 401: No esta logueado
@@ -273,4 +275,23 @@ function renderizarCarrito() {
             eliminarDelCarrito(parseInt(e.target.dataset.id));
         });
     });
+}
+
+/**
+ * Crea una alerta flotante moderna (Toast) no bloqueante.
+ * Esto permite que el navegador siga trabajando y actualice el catalogo visualmente de fondo.
+ */
+function mostrarNotificacion(mensaje, tipo) {
+    const toast = document.createElement('div');
+    toast.innerText = mensaje;
+    
+    const colorFondo = tipo === 'exito' ? '#4caf50' : '#f44336';
+    toast.style.cssText = `position: fixed; bottom: 30px; right: 30px; background: ${colorFondo}; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-weight: bold; z-index: 10000; transition: opacity 0.5s ease;`;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500); // Lo borramos del HTML tras la animacion
+    }, 3500);
 }
