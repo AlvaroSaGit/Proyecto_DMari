@@ -1,41 +1,56 @@
-// importamos el servicio necesario para cargar la vista html
+/*
+    objetivo de este archivo:
+    controlador principal de la vista de configuracion de cuenta.
+    se encarga de gestionar dos procesos criticos del usuario:
+    1. la actualizacion de sus datos personales y direcciones de entrega.
+    2. la seguridad de su cuenta mediante el cambio encriptado de su contrasena.
+*/
+
+// importamos el servicio necesario para inyectar la vista html en la pantalla
 import { cargarComponente } from '../../../services/uiService.js';
-// importamos el enrutador
+// importamos el enrutador para redireccionar al usuario si no tiene permisos
 import { navegarA } from '../../../router/router.js';
 
-// funcion principal que renderiza la vista de configuracion del cliente
 export async function cargarVistaConfiguracion() {
-    // Verificamos primero si el usuario tiene sesion activa
+    // 1. barrera de seguridad: verificamos con el servidor de java si el usuario realmente inicio sesion
     try {
         const respuesta = await fetch('session');
         if (!respuesta.ok) {
-            alert('Debes iniciar sesion para acceder a tu configuracion.');
-            navegarA('login'); // Lo mandamos a la pantalla de login
-            return; // Detenemos la carga de la vista de configuracion
+            alert('debes iniciar sesion para acceder a tu configuracion.');
+            navegarA('login'); // lo rebotamos a la pantalla de login
+            return; // cortamos la ejecucion para que no cargue la vista
         }
     } catch (error) {
-        console.error('Error al verificar sesion:', error);
+        console.error('error al verificar sesion:', error);
         return;
     }
 
-    // inyectamos la estructura html de la configuracion en el main.
-    // agregamos '?t=' + timestamp para destruir la cache del navegador y obligarlo a mostrar los campos nuevos.
+    // 2. inyeccion del html
+    // el truco de "?t=" mas el tiempo actual evita que el navegador use una version vieja (cacheada) del html
     await cargarComponente('component-main', './src/views/Cliente/configuracion/configuracion.html?t=' + new Date().getTime());
     
-    // inicializamos la logica del formulario
+    // 3. activamos todos los escuchadores de los botones y cajas de texto
     prepararFormularioPerfil();
 }
 
+/*
+    funcion interna que conecta los formularios de la pantalla con las apis de java.
+*/
 async function prepararFormularioPerfil() {
+    // extraemos las referencias de ambos formularios
     const formPerfil = document.getElementById('form-config-perfil');
     const formPassword = document.getElementById('form-cambiar-password');
 
-    // 1. logica para el formulario de edicion de perfil
+    // ====================================================================
+    // bloque 1: logica para el formulario de edicion de datos de envio
+    // ====================================================================
     if (formPerfil) {
+        // peticion get: le pedimos a java los datos actuales del cliente para pre-llenar las cajas
         try {
             const respuesta = await fetch('perfil-cliente');
             if (respuesta.ok) {
                 const datos = await respuesta.json();
+                // si la base de datos devolvio informacion, la inyectamos en cada input respectivo
                 if (datos.telefono) document.getElementById('conf-telefono').value = datos.telefono;
                 if (datos.telefonoSecundario) document.getElementById('conf-telefono-sec').value = datos.telefonoSecundario;
                 if (datos.direccion) document.getElementById('conf-direccion').value = datos.direccion;
@@ -44,8 +59,11 @@ async function prepararFormularioPerfil() {
             }
         } catch (error) { console.error('error al cargar perfil:', error); }
 
+        // evento submit: cuando el usuario le da clic al boton de guardar informacion
         formPerfil.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            e.preventDefault(); // prevenimos la recarga molesta de la pagina
+            
+            // usamos urlsearchparams para empaquetar los datos de una forma que java entienda facilmente
             const parametros = new URLSearchParams();
             parametros.append('telefono', document.getElementById('conf-telefono').value);
             parametros.append('telefonoSecundario', document.getElementById('conf-telefono-sec').value);
@@ -53,6 +71,7 @@ async function prepararFormularioPerfil() {
             parametros.append('direccionDetalle', document.getElementById('conf-detalle').value);
             parametros.append('referencia', document.getElementById('conf-referencia').value);
 
+            // peticion post: mandamos el paquete al servlet de clientecontroller
             try {
                 const respuesta = await fetch('perfil-cliente', { method: 'POST', body: parametros });
                 if (respuesta.ok) alert('¡tu informacion de envio ha sido actualizada correctamente!');
@@ -61,30 +80,37 @@ async function prepararFormularioPerfil() {
         });
     }
 
-    // logica exclusiva para el formulario de cambio de contrasena
+    // ====================================================================
+    // bloque 2: logica de seguridad (cambio de contrasena)
+    // ====================================================================
     if (formPassword) {
         formPassword.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // capturamos las 3 contrasenas digitadas
             const passActual = document.getElementById('pass-actual').value;
             const passNueva = document.getElementById('pass-nueva').value;
             const passConfirm = document.getElementById('pass-confirm').value;
 
+            // validacion del lado del cliente: comprobamos que no se haya equivocado al repetir la clave
             if (passNueva !== passConfirm) {
                 alert('las contrasenas nuevas no coinciden');
                 return;
             }
 
+            // preparamos el paquete seguro para java
             const parametros = new URLSearchParams();
             parametros.append('passActual', passActual);
             parametros.append('passNueva', passNueva);
 
+            // enviamos al passwordcontroller para que ejecute la funcion aes_encrypt en mysql
             try {
                 const respuesta = await fetch('cambiar-password', { method: 'POST', body: parametros });
                 if (respuesta.ok) {
                     alert('¡tu contrasena ha sido cambiada con exito!');
-                    formPassword.reset();
+                    formPassword.reset(); // vaciamos las cajas por seguridad
                 } else {
-                    alert('la contrasena actual es incorrecta o hubo un error.');
+                    alert('la contrasena actual es incorrecta o hubo un error en la base de datos.');
                 }
             } catch (error) { console.error('error al cambiar pass:', error); }
         });
