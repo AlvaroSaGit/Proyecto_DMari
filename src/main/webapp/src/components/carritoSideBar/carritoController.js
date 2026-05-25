@@ -108,6 +108,19 @@ async function procesarCompra() {
         if (respuesta.ok) {
             // respondio 200 ok: esta logueado
             
+            // validamos si el cliente ya configuro su perfil de envio
+            const resPerfil = await fetch('perfil-cliente');
+            if (resPerfil.ok) {
+                const perfil = await resPerfil.json();
+                // verificamos si las cajas de texto de direccion o telefono estan vacias/inexistentes
+                if (!perfil.direccion || perfil.direccion.trim() === '' || !perfil.telefono || perfil.telefono.trim() === '') {
+                    alert('para poder entregar tu pedido, es obligatorio que completes tus datos de envio (direccion y telefono principal). te llevaremos a configuracion.');
+                    cerrarCarrito();
+                    navegarA('configuracion'); // lo mandamos a llenar sus datos
+                    return; // detenemos la apertura del pago
+                }
+            }
+            
             // interrumpimos el envio directo y mejor abrimos el modal de pagos
             const modalPago = document.getElementById('modal-pago-simulado');
             if (modalPago) {

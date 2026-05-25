@@ -57,9 +57,6 @@ public class productoDAO {
         if (soloActivos) {
             sql += " WHERE p.estado = 1 AND p.stock > 0";
         }
-        
-        // AGRUPACION ESTRICTA: Fuerza a MySQL a aplastar filas duplicadas generadas por cruces multiples (JOINs)
-        sql += " GROUP BY p.id_producto_pk";
 
         /*
             usar el try como try-with-resources,
@@ -161,8 +158,7 @@ public class productoDAO {
              // asi garantizamos que el proveedor jamas vea un producto que no le pertenezca.
              "INNER JOIN proveedor_producto pp ON p.id_producto_pk = pp.id_producto_fk " +
              "INNER JOIN proveedor pr ON pp.id_proveedor_fk = pr.id_proveedor_pk " +
-             "WHERE pr.id_datos_proveedor_fk = ? " +
-             "GROUP BY p.id_producto_pk";
+             "WHERE pr.id_proveedor_pk = ?";
              
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -250,7 +246,7 @@ public class productoDAO {
             
             // paso 1: buscamos cual es el id interno del proveedor en su tabla principal.
             // esto se hace porque la tabla puente requiere el id de 'proveedor', no el id general de 'usuario'.
-            String sqlBuscar = "SELECT id_proveedor_pk FROM proveedor WHERE id_datos_proveedor_fk = ?";
+            String sqlBuscar = "SELECT id_proveedor_pk FROM proveedor WHERE id_proveedor_pk = ?";
             try (PreparedStatement psBuscar = con.prepareStatement(sqlBuscar)) {
                 psBuscar.setInt(1, idUsuarioProveedor);
                 try (ResultSet rs = psBuscar.executeQuery()) {
@@ -293,7 +289,7 @@ public class productoDAO {
             if (idUsuarioProveedor > 0) {
                 int idProveedorPk = 0;
                 // buscamos su id interno en la tabla
-                String sqlBuscar = "SELECT id_proveedor_pk FROM proveedor WHERE id_datos_proveedor_fk = ?";
+                String sqlBuscar = "SELECT id_proveedor_pk FROM proveedor WHERE id_proveedor_pk = ?";
                 try (PreparedStatement psBuscar = con.prepareStatement(sqlBuscar)) {
                     psBuscar.setInt(1, idUsuarioProveedor);
                     try (ResultSet rs = psBuscar.executeQuery()) {

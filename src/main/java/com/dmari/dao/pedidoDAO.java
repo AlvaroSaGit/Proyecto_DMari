@@ -109,15 +109,16 @@ public class pedidoDAO {
         
         // preparamos la consulta uniendo 6 tablas para revelar el camino de datos desde el pedido hasta el proveedor
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, u.nombre AS nombre_cliente, " +
-                     // traemos la direccion y telefono del cliente para que el proveedor sepa a donde enviar
-                     "c.direccion_envio, c.telefono_secundario, c.referencia_ubicacion, prod.nombre_producto, dp.cantidad, dp.subtotal " +
+                     // traemos la direccion y telefonos (principal y secundario) del cliente para que el proveedor sepa a donde enviar
+                     "c.direccion_envio, c.telefono_secundario, c.referencia_ubicacion, t.numero_telefonico, prod.nombre_producto, dp.cantidad, dp.subtotal " +
                      // tabla principal de la consulta: el pedido maestro
                      "FROM pedido p " +
                      // inner join: el pedido debe tener un usuario real asociado si o si
                      "INNER JOIN usuario u ON p.id_cliente_fk = u.id_usuario_pk " +
                      // left join: cruzamos con el perfil del cliente para traer su direccion fisica.
-                     // usamos left join porque si un usuario se acaba de registrar y compra, pero su perfil esta incompleto, queremos que el pedido siga saliendo en pantalla (con direccion en null) para no perder la venta.
                      "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
+                     // left join: traemos el telefono principal de la tabla satelite telefono
+                     "LEFT JOIN telefono t ON u.id_usuario_pk = t.id_usuario_fk " +
                      // inner join: estricto para ver que productos exactos compro en esa orden
                      "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
                      "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
@@ -125,7 +126,7 @@ public class pedidoDAO {
                      "INNER JOIN proveedor_producto pp ON prod.id_producto_pk = pp.id_producto_fk " +
                      "INNER JOIN proveedor pr ON pp.id_proveedor_fk = pr.id_proveedor_pk " +
                      // filtramos para que solo salgan los productos del proveedor logueado, ordenados del mas reciente al mas antiguo
-                     "WHERE pr.id_datos_proveedor_fk = ? ORDER BY p.fecha DESC";
+                     "WHERE pr.id_proveedor_pk = ? ORDER BY p.fecha DESC";
                      
         try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
              ps.setInt(1, idUsuarioProveedor);
@@ -136,10 +137,16 @@ public class pedidoDAO {
                      dp.setFechaPedido(rs.getString("fecha"));
                      dp.setEstadoPedido(rs.getString("estado_pedido"));
                      
-                     // Armamos un texto completo con todos los datos de envio para inyectarlo en el nombre
+                     // armamos un texto completo con todos los datos de envio para inyectarlo en el nombre
                      String dir = rs.getString("direccion_envio");
+                     String telPrincipal = rs.getString("numero_telefonico");
+                     String telSec = rs.getString("telefono_secundario");
+                     
+                     String telefonos = (telPrincipal != null && !telPrincipal.isEmpty() ? telPrincipal : "") + 
+                                        (telSec != null && !telSec.isEmpty() ? " / " + telSec : "");
+                                        
                      String detallesContacto = (dir != null) 
-                         ? dir + " | Tel: " + rs.getString("telefono_secundario") + 
+                         ? dir + " | Tel: " + (telefonos.isEmpty() ? "sin numero" : telefonos) + 
                            (rs.getString("referencia_ubicacion") != null && !rs.getString("referencia_ubicacion").isEmpty() ? " | Ref: " + rs.getString("referencia_ubicacion") : "") 
                          : "sin direccion guardada";
                          
@@ -198,10 +205,11 @@ public class pedidoDAO {
     public ArrayList<detallePedido> listarTodosLosPedidos() {
         ArrayList<detallePedido> lista = new ArrayList<>();
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, u.nombre AS nombre_cliente, " +
-                     "c.direccion_envio, c.telefono_secundario, c.referencia_ubicacion, prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal " +
+                     "c.direccion_envio, c.telefono_secundario, c.referencia_ubicacion, t.numero_telefonico, prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal " +
                      "FROM pedido p " +
                      "INNER JOIN usuario u ON p.id_cliente_fk = u.id_usuario_pk " +
                      "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
+                     "LEFT JOIN telefono t ON u.id_usuario_pk = t.id_usuario_fk " +
                      "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
                      "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
                      "ORDER BY p.id_pedido_pk DESC";
@@ -218,10 +226,15 @@ public class pedidoDAO {
                  dp.setPrecioUnitario(rs.getDouble("precio_unitario"));
                  dp.setSubtotal(rs.getDouble("subtotal"));
                  
-                 // Armamos el texto completo con la direccion, telefono y referencia para el administrador
+                 // armamos el texto completo con la direccion, telefono y referencia para el administrador
                  String dir = rs.getString("direccion_envio");
+                 String telPrincipal = rs.getString("numero_telefonico");
+                 String telSec = rs.getString("telefono_secundario");
+                 
+                 String telefonos = (telPrincipal != null && !telPrincipal.isEmpty() ? telPrincipal : "") + 
+                                    (telSec != null && !telSec.isEmpty() ? " / " + telSec : "");
                  String detallesContacto = (dir != null) 
-                     ? dir + " | Tel: " + rs.getString("telefono_secundario") + 
+                     ? dir + " | Tel: " + (telefonos.isEmpty() ? "sin numero" : telefonos) + 
                        (rs.getString("referencia_ubicacion") != null && !rs.getString("referencia_ubicacion").isEmpty() ? " | Ref: " + rs.getString("referencia_ubicacion") : "") 
                      : "sin direccion guardada";
                      

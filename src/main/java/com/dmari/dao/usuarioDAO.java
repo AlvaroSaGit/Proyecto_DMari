@@ -173,17 +173,9 @@ public class usuarioDAO {
             // ARREGLO: Si el usuario es ascendido a Proveedor (rol 4), inicializamos su perfil comercial
             // Esto garantiza que proveedor_producto funcione perfectamente cuando intente crear un producto.
             if (idRol == 4) {
-                String sqlDatos = "INSERT IGNORE INTO datos_proveedor (id_datos_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta) VALUES (?, '000000000', 'Mi Tienda', '0000', 'Banco', 'Ahorros')";
-                try (PreparedStatement psDatos = con.prepareStatement(sqlDatos)) {
-                    psDatos.setInt(1, idUsuario);
-                    psDatos.executeUpdate();
-                }
-                
-                // Insertamos en proveedor garantizando que no se duplique si ya existia
-                String sqlProv = "INSERT INTO proveedor (id_datos_proveedor_fk) SELECT ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM proveedor WHERE id_datos_proveedor_fk = ?)";
+                String sqlProv = "INSERT IGNORE INTO proveedor (id_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta) VALUES (?, '000000000', 'Mi Tienda', '0000', 'Banco', 'Ahorros')";
                 try (PreparedStatement psProv = con.prepareStatement(sqlProv)) {
                     psProv.setInt(1, idUsuario);
-                    psProv.setInt(2, idUsuario);
                     psProv.executeUpdate();
                 }
             }
