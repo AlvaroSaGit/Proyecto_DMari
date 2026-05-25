@@ -15,8 +15,8 @@ import jakarta.servlet.http.HttpSession;
 
 /*
     objetivo de este archivo:
-    manejar las peticiones de la vista de "configuracion" del cliente.
-    permite leer y actualizar su telefono y direccion de envios.
+    manejar las peticiones de la vista de "perfil" del cliente.
+    permite leer y actualizar su telefono y multiples campos de direccion.
 */
 @WebServlet(name = "ClienteController", urlPatterns = {"/perfil-cliente"})
 public class ClienteController extends HttpServlet {
@@ -34,8 +34,11 @@ public class ClienteController extends HttpServlet {
             
             try (PrintWriter out = response.getWriter()) {
                 if (perfil != null) {
-                    // armamos un json simple con los datos encontrados
-                    out.print("{\"direccion\":\"" + perfil[0] + "\", \"telefono\":\"" + perfil[1] + "\", \"referencia\":\"" + (perfil[2] != null ? perfil[2] : "") + "\"}");
+                    // armamos un json simple con los datos encontrados (direccion, detalle, telefono, referencia)
+                    out.print("{\"direccion\":\"" + (perfil[0] != null ? perfil[0] : "") + "\", " +
+                              "\"direccionDetalle\":\"" + (perfil[1] != null ? perfil[1] : "") + "\", " +
+                              "\"telefono\":\"" + (perfil[2] != null ? perfil[2] : "") + "\", " +
+                              "\"referencia\":\"" + (perfil[3] != null ? perfil[3] : "") + "\"}");
                 } else {
                     out.print("{}"); // si esta vacio, mandamos un objeto json vacio
                 }
@@ -53,11 +56,12 @@ public class ClienteController extends HttpServlet {
         if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
             usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
             String direccion = request.getParameter("direccion");
+            String direccionDetalle = request.getParameter("direccionDetalle");
             String telefono = request.getParameter("telefono");
             String referencia = request.getParameter("referencia");
             
             clienteDAO dao = new clienteDAO();
-            if (dao.guardarOActualizarPerfil(user.getIdUsuario(), direccion, telefono, referencia)) response.setStatus(HttpServletResponse.SC_OK);
+            if (dao.guardarOActualizarPerfil(user.getIdUsuario(), direccion, direccionDetalle, telefono, referencia)) response.setStatus(HttpServletResponse.SC_OK);
             else response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         } else {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

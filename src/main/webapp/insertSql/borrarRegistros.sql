@@ -1,50 +1,39 @@
-/*
-    objetivo de este archivo:
-    limpiar por completo la base de datos de dmari de forma segura.
-    utiliza truncate para borrar todos los registros y reiniciar los 
-    contadores de id autoincrementables a 1.
-*/
-
 USE DMari;
 
--- desactivamos temporalmente las llaves foraneas para evitar bloqueos de seguridad al vaciar las tablas
+-- 1. Apagamos la seguridad de llaves foraneas temporalmente
 SET FOREIGN_KEY_CHECKS = 0;
 
--- 1. vaciamos las tablas transaccionales (ventas y carritos)
-TRUNCATE TABLE pago;
+-- 2. Vaciamos las tablas transaccionales (Hijas)
 TRUNCATE TABLE detalle_pedido;
+TRUNCATE TABLE pago;
 TRUNCATE TABLE pedido;
+TRUNCATE TABLE detalle_carrito;
+TRUNCATE TABLE carrito;
 
--- 2. vaciamos las tablas puente y satelites de los productos
+-- 3. Vaciamos las tablas intermedias y satelites
 TRUNCATE TABLE proveedor_producto;
 TRUNCATE TABLE producto_etiqueta;
 TRUNCATE TABLE imagenes;
-
--- 3. vaciamos la tabla nucleo de productos
-TRUNCATE TABLE producto;
-
--- 4. vaciamos las tablas satelites de los usuarios
-TRUNCATE TABLE proveedor;
-TRUNCATE TABLE datos_proveedor;
 TRUNCATE TABLE cliente;
 TRUNCATE TABLE repartidor;
-TRUNCATE TABLE dato_repartidor;
+TRUNCATE TABLE proveedor;
 TRUNCATE TABLE credenciales;
 TRUNCATE TABLE notificacion;
 TRUNCATE TABLE correo;
 TRUNCATE TABLE telefono;
 TRUNCATE TABLE direccion;
 
--- 5. vaciamos la tabla nucleo de usuarios
+-- 4. Vaciamos las tablas principales
+TRUNCATE TABLE producto;
 TRUNCATE TABLE usuario;
-
--- 6. vaciamos las tablas de seguridad y maestras independientes
 TRUNCATE TABLE rol_permiso;
-TRUNCATE TABLE rol;
-TRUNCATE TABLE permiso;
-TRUNCATE TABLE categoria;
-TRUNCATE TABLE etiqueta;
-TRUNCATE TABLE metodo_pago;
 
--- reactivamos las llaves foraneas para que la base de datos vuelva a estar protegida
+-- 5. Vaciamos las tablas maestras (Padres)
+TRUNCATE TABLE metodo_pago;
+TRUNCATE TABLE etiqueta;
+TRUNCATE TABLE categoria;
+TRUNCATE TABLE permiso;
+TRUNCATE TABLE rol;
+
+-- 6. Volvemos a prender la seguridad de llaves foraneas (¡MUY IMPORTANTE!)
 SET FOREIGN_KEY_CHECKS = 1;

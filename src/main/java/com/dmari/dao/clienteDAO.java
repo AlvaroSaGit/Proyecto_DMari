@@ -1,10 +1,7 @@
 /*
     objetivo de este archivo:
-    dao enfocado a la gestion de la tabla satelite 'cliente'.
-    almacena y recupera los datos sensibles de envio como la direccion, 
-    telefono y las referencias del domicilio. 
-    usa la magia de 'on duplicate key update' para que un mismo metodo 
-    sirva tanto para crear el perfil por primera vez como para editarlo.
+    data access object (dao) para gestionar el perfil del cliente.
+    abarca la lectura y escritura en 3 tablas: cliente, direccion y telefono.
 */
 package com.dmari.dao;
 
@@ -12,64 +9,105 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 import com.dmari.helper.databaseHelper;
 
 public class clienteDAO {
     
     databaseHelper db = new databaseHelper();
 
-    // metodo magico: inserta los datos de configuracion o los actualiza si el cliente ya los habia llenado
-    public boolean guardarOActualizarPerfil(int idUsuario, String direccion, String telefono, String referencia) {
-        // preparamos la consulta sql para insertar o modificar el perfil del cliente
-        String sql = "INSERT INTO cliente (id_cliente_pk, direccion_envio, telefono_secundario, referencia_ubicacion) " +
-                     // enviamos los datos por primera vez si no existe el registro en la base de datos
-                     "VALUES (?, ?, ?, ?) " +
-                     // si el id del cliente ya existe, mysql sobreescribira los datos antiguos en lugar de dar error
-                     "ON DUPLICATE KEY UPDATE direccion_envio = ?, telefono_secundario = ?, referencia_ubicacion = ?";
-                     
+    // metodo para leer los datos actuales del cliente uniendo las 3 tablas
+    public String[] obtenerPerfil(int idUsuario) {
+        String[] perfil = new String[4];
+        String sql = "SELECT c.direccion_envio, c.referencia_ubicacion, d.direccion_detallada, t.numero_telefonico " +
+                     "FROM cliente c " +
+                     "LEFT JOIN direccion d ON c.id_cliente_pk = d.id_usuario_fk " +
+                     "LEFT JOIN telefono t ON c.id_cliente_pk = t.id_usuario_fk " +
+                     "WHERE c.id_cliente_pk = ?";
+        
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
-             
-            // parametros para insertar por primera vez
             ps.setInt(1, idUsuario);
-            ps.setString(2, direccion);
-            ps.setString(3, telefono);
-            ps.setString(4, referencia);
-            
-            // parametros para actualizar si ya existian los datos
-            ps.setString(5, direccion);
-            ps.setString(6, telefono);
-            ps.setString(7, referencia);
-            
-            int filasAfectadas = ps.executeUpdate();
-            return filasAfectadas > 0;
-            
-        } catch (SQLException e) {
-            System.out.println("error al actualizar el perfil del cliente en configuraciones: " + e.getMessage());
-            return false;
-        }
-    }
-    
-    // metodo para leer los datos de envio del cliente
-    public String[] obtenerPerfil(int idUsuario) {
-        String sql = "SELECT direccion_envio, telefono_secundario, referencia_ubicacion FROM cliente WHERE id_cliente_pk = ?";
-        
-        try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idUsuario);
-            
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    // retornamos un arreglo de textos con los 3 datos principales
-                    return new String[]{
-                        rs.getString("direccion_envio"),
-                        rs.getString("telefono_secundario"),
-                        rs.getString("referencia_ubicacion")
-                    };
+                    perfil[0] = rs.getString("direccion_envio");
+                    perfil[1] = rs.getString("direccion_detallada");
+                    perfil[2] = rs.getString("numero_telefonico");
+                    perfil[3] = rs.getString("referencia_ubicacion");
+                    return perfil;
                 }
             }
         } catch (SQLException e) {
-            System.out.println("error al leer el perfil del cliente: " + e.getMessage());
+            System.out.println("error al obtener perfil: " + e.getMessage());
         }
-        return null; // retornamos nulo si el cliente es nuevo y aun no tiene perfil
+        return null;
+    }
+        
+    // metodo para guardar o actualizar el perfil usando las 3 tablas satelite
+    public boolean guardarOActualizarPerfil(int idUsuario, String direccionPrimaria, String direccionDetalle, String numeroTelefono, String referencia) {
+        
+        // 1. sentencia para la tabla cliente (referencias generales)
+        String sqlCliente = "INSERT INTO cliente (id_cliente_pk, direccion_envio, telefono_secundario, referencia_ubicacion) " +
+                            "VALUES (?, ?, '', ?) " +
+                            "ON DUPLICATE KEY UPDATE direccion_envio = VALUES(direccion_envio), referencia_ubicacion = VALUES(referencia_ubicacion)";
+                            
+        // 2. sentencia para la tabla direccion
+        // asumimos que si no existe, se crea. si existe, se actualiza la primera direccion encontrada de ese usuario.
+        String sqlDireccion = "INSERT INTO direccion (id_usuario_fk, direccion, direccion_detallada, direccion_primario) " +
+                              "VALUES (?, ?, ?, 1) " +
+                              "ON DUPLICATE KEY UPDATE direccion = VALUES(direccion), direccion_detallada = VALUES(direccion_detallada)";
+                              
+        // 3. sentencia para la tabla telefono (el numero telefonico es unique en tu sql)
+        String sqlTelefono = "INSERT IGNORE INTO telefono (id_usuario_fk, numero_telefonico) " +
+                             "VALUES (?, ?)";
+
+        Connection con = null;
+        try {
+            con = db.conectar();
+            // iniciamos transaccion para asegurar que las 3 tablas se llenen al mismo tiempo
+            con.setAutoCommit(false);
+
+            // insertar/actualizar en cliente
+            try (PreparedStatement psCli = con.prepareStatement(sqlCliente)) {
+                psCli.setInt(1, idUsuario);
+                psCli.setString(2, direccionPrimaria);
+                psCli.setString(3, referencia);
+                psCli.executeUpdate();
+            }
+
+            // insertar/actualizar en direccion
+            try (PreparedStatement psDir = con.prepareStatement(sqlDireccion)) {
+                psDir.setInt(1, idUsuario);
+                psDir.setString(2, direccionPrimaria);
+                psDir.setString(3, direccionDetalle);
+                psDir.executeUpdate();
+            }
+
+            // insertar en telefono
+            // usamos update manual si el numero cambia, o insert ignore si es nuevo
+            String sqlActualizarTelefono = "UPDATE telefono SET numero_telefonico = ? WHERE id_usuario_fk = ?";
+            try (PreparedStatement psTelUpd = con.prepareStatement(sqlActualizarTelefono)) {
+                psTelUpd.setString(1, numeroTelefono);
+                psTelUpd.setInt(2, idUsuario);
+                int filas = psTelUpd.executeUpdate();
+                // si no habia telefono para actualizar, lo insertamos
+                if (filas == 0) {
+                    try (PreparedStatement psTelIns = con.prepareStatement(sqlTelefono)) {
+                        psTelIns.setInt(1, idUsuario);
+                        psTelIns.setString(2, numeroTelefono);
+                        psTelIns.executeUpdate();
+                    }
+                }
+            }
+
+            con.commit();
+            return true;
+        } catch (SQLException e) {
+            try { if (con != null) con.rollback(); } catch (SQLException ex) {}
+            System.out.println("error al guardar perfil del cliente: " + e.getMessage());
+            return false;
+        } finally {
+            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
+        }
     }
 }
