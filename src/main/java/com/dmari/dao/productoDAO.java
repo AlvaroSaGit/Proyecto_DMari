@@ -51,11 +51,15 @@ public class productoDAO {
              // uso de left join: traemos el producto incluso si no tiene imagen asignada
              "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk AND i.imagen_principal = 1 " +
              // uso de left join: traemos el nombre de la categoria. si el producto quedo sin categoria por algun error, no se ocultara.
-             "LEFT JOIN categoria c ON p.id_categoria_fk = c.id_categoria_pk";
+             "LEFT JOIN categoria c ON p.id_categoria_fk = c.id_categoria_pk " +
+             // nuevos left joins: traemos al proveedor (si tiene) para validar si su cuenta sigue activa
+             "LEFT JOIN proveedor_producto pp ON p.id_producto_pk = pp.id_producto_fk " +
+             "LEFT JOIN usuario u ON pp.id_proveedor_fk = u.id_usuario_pk";
         
         // si el parametro es verdadero, concatenamos la condicion a la consulta
         if (soloActivos) {
-            sql += " WHERE p.estado = 1 AND p.stock > 0";
+            // integridad logica: el producto debe estar activo, con stock, su categoria activa y su proveedor no bloqueado (o nulo si es de dmari)
+            sql += " WHERE p.estado = 1 AND p.stock > 0 AND c.estado_activo = 1 AND (u.estado_cuenta = 1 OR u.id_usuario_pk IS NULL)";
         }
 
         /*

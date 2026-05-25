@@ -8,9 +8,11 @@
 /**
  * empaqueta los items del carrito y los envia al servidor para procesar la venta.
  * @param {Array} carrito - el arreglo de productos que el usuario desea comprar.
+ * @param {number} idMetodo - el id del metodo de pago seleccionado.
+ * @param {string} cuenta - el numero de cuenta o telefono del cliente.
  * @returns {boolean} - retorna verdadero si el pedido se guardo en la base de datos, falso si ocurrio un error.
  */
-export async function enviarPedido(carrito) {
+export async function enviarPedido(carrito, idMetodo, cuenta) {
     // se utiliza urlsearchparams para emular el envio de un formulario html estandar.
     // esto evita el uso de json complejo y facilita la lectura directa en el backend.
     const parametros = new URLSearchParams();
@@ -23,6 +25,10 @@ export async function enviarPedido(carrito) {
         parametros.append('cantidad', item.cantidad);
         parametros.append('precio', item.precio);
     });
+    
+    // inyectamos los datos financieros
+    parametros.append('idMetodo', idMetodo);
+    parametros.append('cuenta', cuenta);
     
     try {
         // se realiza la peticion asincrona al endpoint '/pedido' usando el metodo post.

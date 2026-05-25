@@ -3,17 +3,17 @@ package com.dmari.controlador;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import com.dmari.dao.pedidoDAO;
+import com.dmari.helper.jsonHelper;
+import com.dmari.modelo.detallePedido;
+import com.dmari.modelo.usuario;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-
-import com.dmari.dao.pedidoDAO;
-import com.dmari.modelo.detallePedido;
-import com.dmari.helper.jsonHelper;
-import com.dmari.modelo.usuario;
 
 /*
     objetivo de este archivo:
@@ -76,8 +76,12 @@ public class PedidoController extends HttpServlet {
         String[] cantidades = request.getParameterValues("cantidad");
         String[] precios = request.getParameterValues("precio");
         
-        // Si el carrito llego vacio o corrupto, rechazamos la peticion
-        if (idsProductos == null || idsProductos.length == 0) {
+        // capturamos los datos financieros enviados desde el javascript de la pasarela
+        String idMetodoStr = request.getParameter("idMetodo");
+        String cuenta = request.getParameter("cuenta");
+        
+        // si el carrito llego vacio o corrupto, o si faltan los datos de pago, rechazamos la peticion
+        if (idsProductos == null || idsProductos.length == 0 || idMetodoStr == null || cuenta == null) {
             // sc_bad_request (400): el servidor rechaza la peticion porque faltan datos clave del carrito
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
@@ -101,9 +105,11 @@ public class PedidoController extends HttpServlet {
             carritoList.add(item);
         }
         
+        int idMetodo = Integer.parseInt(idMetodoStr);
+        
         // 4. Mandamos a guardar todo el bloque usando la transaccion segura del DAO
         pedidoDAO dao = new pedidoDAO();
-        boolean exito = dao.registrarPedido(user.getIdUsuario(), totalPagar, carritoList);
+        boolean exito = dao.registrarPedido(user.getIdUsuario(), totalPagar, carritoList, idMetodo, cuenta);
         
         // Respondemos a JavaScript segun el resultado
         if (exito) {

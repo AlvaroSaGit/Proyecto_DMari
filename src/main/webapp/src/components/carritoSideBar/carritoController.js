@@ -8,6 +8,9 @@ import { enviarPedido } from '../pedido/pedidoService.js';
 // intentamos cargar el carrito guardado en el navegador, si no hay, iniciamos vacio
 let carrito = JSON.parse(localStorage.getItem('carritoDMari')) || [];
 
+// variable para evitar saturar el servidor (tecnica de "debounce")
+let temporizadorSincronizacion = null;
+
 // funcion que inyecta el html del carrito oculto en el index al cargar la pagina
 export async function inicializarCarrito() {
     // esperamos a que el componente html se coloque en su contenedor
@@ -64,10 +67,7 @@ export async function inicializarCarrito() {
                     <div style="display: flex; flex-direction: column; gap: 5px;">
                         <label style="font-weight: 600; font-size: 0.9rem;">metodo de pago</label>
                         <select id="select-metodo-pago" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none;">
-                            <!-- estos seran dinamicos despues, por ahora estan fijos para visualizar -->
-                            <option value="1">nequi</option>
-                            <option value="2">tarjeta de credito / debito</option>
-                            <option value="3">efectivo (contra entrega)</option>
+                            <option value="" disabled selected>cargando opciones...</option>
                         </select>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 5px;">
@@ -90,6 +90,52 @@ export async function inicializarCarrito() {
         // eventos de los botones del modal
         document.getElementById('btn-cancelar-pago').addEventListener('click', () => modalPago.style.display = 'none');
         document.getElementById('btn-confirmar-pago').addEventListener('click', confirmarPagoSimulado);
+    }
+    
+    // al cargar la pagina, verificamos si el usuario esta logueado para descargar su carrito de mysql.
+    // asi, si se paso del celular a la computadora, recupera sus donas al instante.
+    try {
+        const resSess = await fetch('session');
+        if (resSess.ok) {
+            const resBD = await fetch('carrito-db');
+            if (resBD.ok) {
+                const carritoBD = await resBD.json();
+                // si la bd le devolvio productos, los inyectamos en la memoria local
+                if (carritoBD.length > 0) { carrito = carritoBD; localStorage.setItem('carritoDMari', JSON.stringify(carrito)); renderizarCarrito(); }
+            }
+        }
+    } catch (e) { console.error('error al sincronizar carrito inicial', e); }
+}
+
+// funcion interna para traer los metodos de la tabla metodo_pago
+async function cargarMetodosPago() {
+    const select = document.getElementById('select-metodo-pago');
+    if (!select) return;
+    
+    try {
+        select.innerHTML = '<option value="" disabled selected>cargando opciones...</option>';
+        const respuesta = await fetch('metodos-pago');
+        if (respuesta.ok) {
+            const metodos = await respuesta.json();
+            
+            if (metodos.length === 0) {
+                select.innerHTML = '<option value="" disabled selected>no hay metodos (revisa mysql)</option>';
+                return;
+            }
+            
+            select.innerHTML = '<option value="" disabled selected>elige una opcion...</option>';
+            metodos.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.descripcion;
+                select.appendChild(opt);
+            });
+        } else {
+            select.innerHTML = '<option value="" disabled selected>error en java (revisa netbeans)</option>';
+        }
+    } catch (error) { 
+        console.error('error al cargar metodos de pago:', error); 
+        select.innerHTML = '<option value="" disabled selected>falla de red</option>';
     }
 }
 
@@ -124,6 +170,7 @@ async function procesarCompra() {
             // interrumpimos el envio directo y mejor abrimos el modal de pagos
             const modalPago = document.getElementById('modal-pago-simulado');
             if (modalPago) {
+                await cargarMetodosPago(); // cargamos las opciones frescas justo antes de abrir el modal
                 modalPago.style.display = 'flex';
                 cerrarCarrito(); // ocultamos el carrito para que no estorbe la vista del pago
             }
@@ -152,14 +199,21 @@ async function confirmarPagoSimulado() {
     // ocultamos el modal
     document.getElementById('modal-pago-simulado').style.display = 'none';
     
-    // NOTA: aqui estamos utilizando la funcion vieja de enviar pedido temporalmente.
-    // en el siguiente paso modificaremos esa peticion para que lleve el idMetodo y la cuenta
-    const exito = await enviarPedido(carrito);
+    const botonConfirmar = document.getElementById('btn-confirmar-pago');
+    botonConfirmar.innerText = "procesando pago...";
+    botonConfirmar.disabled = true;
+    
+    // enviamos el carrito mas los datos financieros al backend
+    const exito = await enviarPedido(carrito, idMetodo, cuenta);
     
     if (exito) {
         // vaciamos el carrito local
         carrito = [];
         localStorage.setItem('carritoDMari', JSON.stringify(carrito));
+        
+        // le avisamos a la bd que el carrito ya se vacio tras la compra
+        programarSincronizacion();
+        
         renderizarCarrito();
         
         window.dispatchEvent(new CustomEvent('inventarioActualizado'));
@@ -168,6 +222,9 @@ async function confirmarPagoSimulado() {
         window.dispatchEvent(new CustomEvent('inventarioActualizado'));
         mostrarNotificacion('el pedido fallo. revisa si algun producto se agoto.', 'error');
     }
+    
+    botonConfirmar.innerText = "pagar ahora";
+    botonConfirmar.disabled = false;
 }
 
 // funcion para desplegar visualmente el carrito usando css
@@ -231,6 +288,9 @@ export function agregarAlCarrito(id, nombre, precio, stock = null) {
     // tras modificar los datos, redibujamos el html y forzamos a abrir el panel
     renderizarCarrito();
     abrirCarrito();
+    
+    // avisamos a la base de datos de forma silenciosa y sin saturar
+    programarSincronizacion();
 }
 
 /**
@@ -252,6 +312,9 @@ export function actualizarCantidad(id, nuevaCantidad) {
         
         localStorage.setItem('carritoDMari', JSON.stringify(carrito));
         renderizarCarrito(); // redibujamos con el nuevo precio subtotal
+        
+        // avisamos a la base de datos de forma silenciosa y sin saturar
+        programarSincronizacion();
     }
 }
 
@@ -263,6 +326,36 @@ export function eliminarDelCarrito(id) {
     carrito = carrito.filter(item => item.id !== id);
     localStorage.setItem('carritoDMari', JSON.stringify(carrito));
     renderizarCarrito();
+    
+    // avisamos a la base de datos de forma silenciosa y sin saturar
+    programarSincronizacion();
+}
+
+/**
+ * sincroniza el carrito con mysql utilizando un "temporizador de retardo" (debounce).
+ * esto evita saturar el servidor si el usuario da 20 clics rapidos al boton de '+'.
+ */
+function programarSincronizacion() {
+    // si ya habia un guardado programado en la recamara, lo cancelamos
+    if (temporizadorSincronizacion) clearTimeout(temporizadorSincronizacion);
+    
+    // programamos un nuevo envio al servidor para dentro de 1.5 segundos
+    temporizadorSincronizacion = setTimeout(async () => {
+        // empaquetamos el carrito tal cual lo hacemos para las facturas
+        const parametros = new URLSearchParams();
+        carrito.forEach(item => {
+            parametros.append('id_producto', item.id);
+            parametros.append('cantidad', item.cantidad);
+        });
+        
+        try {
+            // enviamos la peticion en la sombra sin bloquear la pantalla.
+            // si el usuario es visitante (no esta logueado), java respondera un error 401, 
+            // pero como estamos en un setTimeout en la sombra y omitimos los alerts, 
+            // el visitante jamas se dara cuenta y su pagina seguira perfecta con el localstorage.
+            await fetch('carrito-db', { method: 'POST', body: parametros });
+        } catch (e) {} 
+    }, 1500);
 }
 
 /**

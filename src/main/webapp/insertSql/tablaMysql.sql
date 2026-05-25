@@ -112,6 +112,7 @@ create table notificacion(
     id_emisor_fk int,
     titulo varchar(50) not null,
     mensaje text not null,
+    estado_leido boolean default false,
     fecha_envio timestamp default current_timestamp,
     foreign key (id_emisor_fk) references usuario(id_usuario_pk),
     foreign key (id_receptor_fk) references usuario(id_usuario_pk)
@@ -239,5 +240,3 @@ create table pago(
     foreign key (id_pedido_fk) references pedido(id_pedido_pk),
     foreign key (id_metodo_pago_fk) references metodo_pago(id_metodo_pago_pk)
 );
-
-

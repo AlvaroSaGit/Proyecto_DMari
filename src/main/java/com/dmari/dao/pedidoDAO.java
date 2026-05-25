@@ -18,7 +18,7 @@ public class pedidoDAO {
         guarda primero en la tabla 'pedido' para obtener el id, 
         y luego guarda todos los productos en 'detalle_pedido'.
     */
-    public boolean registrarPedido(int idCliente, double totalPagar, ArrayList<detallePedido> carrito) {
+    public boolean registrarPedido(int idCliente, double totalPagar, ArrayList<detallePedido> carrito, int idMetodoPago, String numeroCuenta) {
         // preparamos la instruccion sql para insertar la cabecera del pedido (el recibo principal)
         String sqlPedido = "INSERT INTO pedido (id_cliente_fk, total_pagar, estado_pedido) VALUES (?, ?, 'Pendiente')";
         // preparamos la instruccion sql para insertar cada producto comprado en el detalle del pedido
@@ -26,6 +26,8 @@ public class pedidoDAO {
         // instruccion para restar permanentemente el stock del producto de inmediato al comprar
         // el tercer parametro asegura que mysql jamas permita que el inventario quede en negativo
         String sqlDescontarStock = "UPDATE producto SET stock = stock - ? WHERE id_producto_pk = ? AND stock >= ?";
+        // instruccion para guardar el comprobante financiero en la tabla pago
+        String sqlPago = "INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, numero_cuenta_ahorro, comision_dmari, monto_total, estado_activo, estado_pago) VALUES (?, ?, ?, ?, ?, 1, 'Aprobado')";
         
         Connection con = null;
         try {
@@ -78,9 +80,22 @@ public class pedidoDAO {
                             return false; 
                         }
                     }
+                    
+                    // paso 3: registramos el comprobante de pago asociado a la factura
+                    try (PreparedStatement psPago = con.prepareStatement(sqlPago)) {
+                        psPago.setInt(1, idPedidoGenerado);
+                        psPago.setInt(2, idMetodoPago);
+                        psPago.setString(3, numeroCuenta);
+                        // simulamos que dmari retiene el 5% de comision por vender los productos de los proveedores
+                        double comision = totalPagar * 0.05;
+                        double totalProveedor = totalPagar - comision;
+                        psPago.setDouble(4, comision);
+                        psPago.setDouble(5, totalProveedor);
+                        psPago.executeUpdate();
+                    }
                 }
                 
-                // paso 3: todo salio bien, confirmamos la transaccion
+                // paso 4: todo salio bien, confirmamos la transaccion
                 con.commit(); 
                 return true;
             }

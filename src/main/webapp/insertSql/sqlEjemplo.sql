@@ -111,3 +111,12 @@ INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) VALUES
 (3, 4),
 (3, 5),
 (3, 6);
+
+-- ==========================================
+-- 13. POBLACION DE METODOS DE PAGO
+-- ==========================================
+INSERT INTO metodo_pago (descripcion_pago, estado_activo) VALUES 
+('Nequi', true),
+('Daviplata', true),
+('Tarjeta de Credito / Debito', true),
+('Efectivo (Contra Entrega)', true);
