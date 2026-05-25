@@ -16,7 +16,7 @@ export async function cargarVistaConfiguracion() {
     try {
         const respuesta = await fetch('session');
         if (!respuesta.ok) {
-            alert('debes iniciar sesion para acceder a tu configuracion.');
+            mostrarMensaje('Debes iniciar sesión para acceder a tu configuración.', 'error');
             navegarA('login'); // lo rebotamos a la pantalla de login
             return; // cortamos la ejecucion para que no cargue la vista
         }
@@ -74,8 +74,8 @@ async function prepararFormularioPerfil() {
             // peticion post: mandamos el paquete al servlet de clientecontroller
             try {
                 const respuesta = await fetch('perfil-cliente', { method: 'POST', body: parametros });
-                if (respuesta.ok) alert('¡tu informacion de envio ha sido actualizada correctamente!');
-                else alert('hubo un error al actualizar la informacion.');
+                if (respuesta.ok) mostrarMensaje('¡Tu información de envío ha sido actualizada correctamente!', 'exito');
+                else mostrarMensaje('Hubo un error al actualizar la información.', 'error');
             } catch (error) { console.error('error al enviar perfil:', error); }
         });
     }
@@ -94,7 +94,7 @@ async function prepararFormularioPerfil() {
 
             // validacion del lado del cliente: comprobamos que no se haya equivocado al repetir la clave
             if (passNueva !== passConfirm) {
-                alert('las contrasenas nuevas no coinciden');
+                mostrarMensaje('Las contraseñas nuevas no coinciden.', 'error');
                 return;
             }
 
@@ -107,12 +107,33 @@ async function prepararFormularioPerfil() {
             try {
                 const respuesta = await fetch('cambiar-password', { method: 'POST', body: parametros });
                 if (respuesta.ok) {
-                    alert('¡tu contrasena ha sido cambiada con exito!');
+                    mostrarMensaje('¡Tu contraseña ha sido cambiada con éxito!', 'exito');
                     formPassword.reset(); // vaciamos las cajas por seguridad
                 } else {
-                    alert('la contrasena actual es incorrecta o hubo un error en la base de datos.');
+                    mostrarMensaje('La contraseña actual es incorrecta o hubo un error.', 'error');
                 }
             } catch (error) { console.error('error al cambiar pass:', error); }
         });
     }
+}
+
+/**
+ * Crea una notificación minimalista acorde a los colores de la tienda (Oscuros).
+ * Reemplaza los molestos alert() y evita el uso de colores rojos agresivos.
+ */
+function mostrarMensaje(mensaje, tipo) {
+    const toast = document.createElement('div');
+    const icono = tipo === 'exito' ? '✓ ' : '⚠ ';
+    toast.innerText = icono + mensaje;
+    
+    // Usamos colores grises/oscuros elegantes (naturaleza de la pagina) en lugar de rojos
+    const colorFondo = tipo === 'exito' ? '#212529' : '#343a40'; 
+    toast.style.cssText = `position: fixed; bottom: 30px; right: 30px; background: ${colorFondo}; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-weight: 500; font-family: sans-serif; z-index: 10000; transition: opacity 0.5s ease;`;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
+    }, 3500);
 }

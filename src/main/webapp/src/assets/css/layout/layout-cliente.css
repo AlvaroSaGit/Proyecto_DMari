@@ -1,27 +1,31 @@
-/*Archivo para el layout grid para la vista cliente*/
+/* archivo para el layout grid para la vista cliente */
+
+* {
+    box-sizing: border-box; /* esto arregla el desbordamiento del header de forma global */
+}
 
 .layout-container{
     display:grid;
 
-    /* Definir areas para ubicar header, main y footer */
+    /* definir areas para ubicar header, main y footer */
     grid-template-areas: 
     "header"
     "main"
     "footer";
-    /* Header y footer se ajustan automaticamente */
+    /* header y footer se ajustan automaticamente */
     grid-template-rows: auto 1fr auto;
-    /* Para ubicar al footer siempre abajo de la pagina*/
+    /* para ubicar al footer siempre abajo de la pagina */
     min-height: 100vh;
-    /*El espaciado entre header, main y footer*/
+    /* el espaciado entre header, main y footer */
     gap: 20px;
 }
 
 .main-header{
     grid-area: header;
     display: flex;
-    /* Espacio entre los items distribuidos */
+    /* espacio entre los items distribuidos */
     justify-content: space-between;
-    /* Centrado verticalmente */
+    /* centrado verticalmente */
     align-items: center;
 }
 
