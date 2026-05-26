@@ -12,30 +12,33 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-/*
-    objetivo de este archivo:
-    controlador principal de seguridad. se encarga de recibir las peticiones 
-    de inicio de sesion (login), registro, cierre de sesion (logout) 
-    y de contestar si hay una sesion activa en el navegador.
-*/
+/**
+ * objetivo de este archivo:
+ * controlador principal de seguridad. se encarga de recibir las peticiones 
+ * de inicio de sesion (login), registro, cierre de sesion (logout) 
+ * y de contestar si hay una sesion activa en el navegador.
+ */
 @WebServlet(name = "AuthController", urlPatterns = {"/login", "/registro", "/logout", "/session"})
 public class AuthController extends HttpServlet {
 
-    /*
-        doget: responde a las peticiones de lectura.
-        en este controlador se usa para consultar el estado de la sesion (saber si hay alguien logueado) 
-        o para destruirla (hacer logout).
-    */
+    /**
+     * metodo get: lectura y destruccion de sesion
+     * responde a las peticiones de lectura. se usa para consultar el estado 
+     * de la sesion (saber si hay alguien logueado) o para destruirla (logout).
+     * 
+     * @param request httpservletrequest: intercepta la peticion url.
+     * @param response httpservletresponse: envia la confirmacion al cliente.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String ruta = request.getServletPath();
         
+        // condicional de enrutamiento: bifurca la logica segun la url visitada
         if ("/logout".equals(ruta)) {
-            // getsession(false) busca si el usuario tiene una sesion abierta. 
-            // el 'false' es crucial: significa "si no la tiene, no crees una nueva vacia".
             HttpSession sesion = request.getSession(false);
             
+            // condicional de limpieza: verifica si existe una sesion para destruirla
             if (sesion != null) {
                 // invalidate destruye la sesion por completo en la memoria del servidor (cierra la cuenta).
                 sesion.invalidate(); 
@@ -46,9 +49,11 @@ public class AuthController extends HttpServlet {
         } else if ("/session".equals(ruta)) {
             HttpSession sesion = request.getSession(false);
             
+            // condicional de seguridad: comprueba si la sesion es activa y legitima
             if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
                 usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
                 
+                // condicional secundario: evita errores nulos y devuelve el nombre del usuario
                 if (user != null) {
                     response.setContentType("application/json;charset=UTF-8");
                     response.setStatus(HttpServletResponse.SC_OK);
@@ -61,11 +66,15 @@ public class AuthController extends HttpServlet {
         }
     }
 
-    /*
-        dopost: responde a las peticiones de envio y modificacion de datos.
-        aqui recibe de forma segura (oculta en el cuerpo de la peticion) las credenciales 
-        para iniciar sesion o los datos para registrar un usuario nuevo.
-    */
+    /**
+     * metodo post: autenticacion y registro
+     * responde a las peticiones de envio y modificacion de datos.
+     * aqui recibe de forma segura las credenciales para iniciar sesion 
+     * o los datos para registrar un usuario nuevo.
+     * 
+     * @param request httpservletrequest: recolecta cajas de texto (credenciales).
+     * @param response httpservletresponse: envia estados 200, 400, o 403.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -73,6 +82,7 @@ public class AuthController extends HttpServlet {
         String ruta = request.getServletPath();
         usuarioDAO dao = new usuarioDAO();
 
+        // condicional de enrutamiento post
         if ("/registro".equals(ruta)) {
             // getparameter extrae el valor de los campos que javascript nos envio a traves de la red
             String nombre = request.getParameter("nombre");
@@ -84,6 +94,7 @@ public class AuthController extends HttpServlet {
             nuevoUsuario.setCorreo(correo);
             nuevoUsuario.setPassword(password);
 
+            // condicional de insercion: si fue exitoso (correo no repetido) devuelve 200
             if (dao.registrarUsuario(nuevoUsuario)) {
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
@@ -97,8 +108,10 @@ public class AuthController extends HttpServlet {
 
             usuario usuarioLogueado = dao.verificarLogin(correo, password);
 
+            // condicional de exito de login
             if (usuarioLogueado != null) {
                 // verificamos si el administrador lo bloqueo
+                // condicional punitivo: rechaza el acceso (403) si la cuenta esta suspendida
                 if (!usuarioLogueado.isEstadoCuenta()) {
                     // sc_forbidden (403) le indica al frontend que la accion esta prohibida
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);

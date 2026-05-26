@@ -11,17 +11,23 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.dmari.helper.databaseHelper;
+import com.dmari.modelo.perfilCliente;
 
 public class clienteDAO {
     
     databaseHelper db = new databaseHelper();
 
-    // metodo para leer los datos actuales del cliente uniendo las 3 tablas
-    public String[] obtenerPerfil(int idUsuario) {
-        String[] perfil = new String[5];
-        String sql = "SELECT c.direccion_envio, c.referencia_ubicacion, c.telefono_secundario, d.direccion_detallada, t.numero_telefonico " +
+    /**
+     * metodo de lectura que cruza las 3 tablas satelite vinculadas al perfil.
+     * 
+     * @param idUsuario int: el id del usuario del cual extraera los datos.
+     * @return perfilcliente: el objeto de transporte (dto) lleno con los atributos del domicilio.
+     */
+    public perfilCliente obtenerPerfil(int idUsuario) {
+        perfilCliente perfil = null;
+        String sql = "SELECT d.direccion, c.referencia_ubicacion, c.telefono_secundario, d.direccion_detallada, t.numero_telefonico " +
                      "FROM cliente c " +
-                     "LEFT JOIN direccion d ON c.id_cliente_pk = d.id_usuario_fk " +
+                     "LEFT JOIN direccion d ON c.id_cliente_pk = d.id_usuario_fk AND d.direccion_primario = 1 " +
                      "LEFT JOIN telefono t ON c.id_cliente_pk = t.id_usuario_fk " +
                      "WHERE c.id_cliente_pk = ?";
         
@@ -29,12 +35,15 @@ public class clienteDAO {
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idUsuario);
             try (ResultSet rs = ps.executeQuery()) {
+                // condicional: verifica si existe ese usuario en las tablas hijas.
+                // si entra, inicializa la clase modelo e inyecta uno a uno los strings.
                 if (rs.next()) {
-                    perfil[0] = rs.getString("direccion_envio");
-                    perfil[1] = rs.getString("direccion_detallada");
-                    perfil[2] = rs.getString("numero_telefonico");
-                    perfil[3] = rs.getString("telefono_secundario");
-                    perfil[4] = rs.getString("referencia_ubicacion");
+                    perfil = new perfilCliente();
+                    perfil.setDireccion(rs.getString("direccion"));
+                    perfil.setDireccionDetalle(rs.getString("direccion_detallada"));
+                    perfil.setTelefono(rs.getString("numero_telefonico"));
+                    perfil.setTelefonoSecundario(rs.getString("telefono_secundario"));
+                    perfil.setReferencia(rs.getString("referencia_ubicacion"));
                     return perfil;
                 }
             }
@@ -44,7 +53,18 @@ public class clienteDAO {
         return null;
     }
         
-    // metodo para guardar o actualizar el perfil usando las 3 tablas satelite
+    /**
+     * realiza un volcado maestro distribuyendo la nueva informacion hacia las tres
+     * tablas del modelo de datos de perfil, garantizando integridad.
+     * 
+     * @param idUsuario int: dueno de los registros
+     * @param direccionPrimaria string: texto de la calle principal
+     * @param direccionDetalle string: notas de ubicacion
+     * @param numeroTelefono string: telefono a insertar o cambiar
+     * @param telefonoSecundario string: telefono opcional
+     * @param referencia string: informacion logistica de punto de entrega
+     * @return boolean: true si las 3 operaciones sql salieron a la perfeccion, false si hubo error.
+     */
     public boolean guardarOActualizarPerfil(int idUsuario, String direccionPrimaria, String direccionDetalle, String numeroTelefono, String telefonoSecundario, String referencia) {
         
         // 1. sentencia para la tabla cliente (referencias generales)
@@ -92,7 +112,9 @@ public class clienteDAO {
                 psTelUpd.setString(1, numeroTelefono);
                 psTelUpd.setInt(2, idUsuario);
                 int filas = psTelUpd.executeUpdate();
-                // si no habia telefono para actualizar, lo insertamos
+                // condicional de base de datos: evalua si el update realmente sobreescribio filas.
+                // si filas == 0, significa que el usuario jamas habia tenido telefono, por ende
+                // cambiamos la instruccion de update a un insert tradicional.
                 if (filas == 0) {
                     try (PreparedStatement psTelIns = con.prepareStatement(sqlTelefono)) {
                         psTelIns.setInt(1, idUsuario);

@@ -10,9 +10,9 @@ export function crearBloquePedido(pedido) {
     let colorEstado = '#333';
     
     // se asigna un color semantico dependiendo de la fase actual del pedido.
-    // tolowercase garantiza que la comparacion no falle por diferencias de mayusculas.
-    if (pedido.estado.toLowerCase() === 'entregado') colorEstado = 'green';
-    if (pedido.estado.toLowerCase() === 'pendiente') colorEstado = 'orange';
+    // usamos includes() porque el estado ahora trae el metodo de pago (ej: "pendiente (nequi)")
+    if (pedido.estado.toLowerCase().includes('entregado')) colorEstado = 'green';
+    if (pedido.estado.toLowerCase().includes('pendiente')) colorEstado = 'orange';
 
     // variable para acumular el codigo html de cada producto individual dentro de la factura
     let htmlProductos = '';
@@ -50,6 +50,13 @@ export function crearBloquePedido(pedido) {
                 <span style="font-weight:bold; font-size:1.1rem; color:#000;">total: $${pedido.total.toFixed(2)}</span>
             </div>
         </div>
+        
+        ${pedido.cliente ? `
+        <div style="background-color: #f9f9f9; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9rem; border-left: 4px solid #333;">
+            <span style="color: #444;"><b>datos de entrega:</b> ${pedido.cliente}</span>
+        </div>
+        ` : ''}
+        
         <div>
             <p style="margin:0 0 5px 0; font-size:0.85rem; color:#444; font-weight:bold;">resumen de compra</p>
             ${htmlProductos}

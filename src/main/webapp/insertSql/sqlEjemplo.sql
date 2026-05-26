@@ -120,3 +120,45 @@ INSERT INTO metodo_pago (descripcion_pago, estado_activo) VALUES
 ('Daviplata', true),
 ('Tarjeta de Credito / Debito', true),
 ('Efectivo (Contra Entrega)', true);
+
+-- ==========================================
+-- 14. POBLACION DE TABLAS SATELITE (DIRECCION Y TELEFONO)
+-- ==========================================
+-- Agregamos el telefono y direccion especificos para el cliente Maria (ID 2)
+INSERT INTO telefono (id_usuario_fk, numero_telefonico) VALUES 
+(2, '3101234567');
+
+INSERT INTO direccion (id_usuario_fk, direccion, direccion_detallada, direccion_primario) VALUES 
+(2, 'Calle 10 # 5-20, Giron', 'Casa blanca esquinera, timbre 2', true);
+
+-- ==========================================
+-- 15. SIMULACION DE CARRITO DE COMPRAS
+-- ==========================================
+-- Maria (ID 2) crea un carrito (Asume ID auto_increment 1)
+INSERT INTO carrito (id_cliente_fk) VALUES (2);
+
+-- Maria agrega 2 Velas de Vainilla (ID 1) y 1 Dona Glaseada (ID 2) al carrito 
+INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad) VALUES 
+(1, 1, 2), 
+(1, 2, 1);
+
+-- ==========================================
+-- 16. SIMULACION DE PEDIDO (CHECKOUT)
+-- ==========================================
+-- Convertimos el carrito en un pedido real. (El id_repartidor_fk queda NULL por ahora)
+-- Total: (2 * 18000) + (1 * 4500) = 36000 + 4500 = 40500. 
+INSERT INTO pedido (id_cliente_fk, total_pagar, estado_pedido) VALUES 
+(2, 40500.00, 'Pendiente');
+
+-- Detalle de los productos comprados en el pedido (Asumiendo que el ID de pedido es 1)
+INSERT INTO detalle_pedido (id_producto_fk, id_pedido_fk, cantidad, precio_unitario, subtotal) VALUES 
+(1, 1, 2, 18000.00, 36000.00), 
+(2, 1, 1, 4500.00, 4500.00);
+
+-- ==========================================
+-- 17. SIMULACION DE PAGO
+-- ==========================================
+-- Maria paga el pedido 1 con Nequi (ID 1). 
+-- Comision DMari (5% de 40500 = 2025). Total a transferir al proveedor = 38475.
+INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, numero_cuenta_ahorro, comision_dmari, monto_total, estado_activo, estado_pago) VALUES 
+(1, 1, '3101234567', 2025.00, 38475.00, true, 'Aprobado');

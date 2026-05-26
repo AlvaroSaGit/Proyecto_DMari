@@ -53,11 +53,18 @@ export async function inicializarCarrito() {
         renderizarCarrito();
     }
 
-    // inyectamos dinamicamente el html de la pasarela de pagos
+    // =========================================================================
+    // INYECCION DINAMICA DEL MODAL DE PAGOS
+    // =========================================================================
+    // Creamos un modal de pagos usando JavaScript puro en lugar de tenerlo fijo en el HTML.
+    // Esto mantiene el DOM (la estructura de la pagina) ligero y limpio hasta que realmente
+    // el usuario este preparado para hacer una compra.
     let modalPago = document.getElementById('modal-pago-simulado');
     if (!modalPago) {
+        // Si el modal no existe, creamos un contenedor <div> en la memoria
         modalPago = document.createElement('div');
         modalPago.id = 'modal-pago-simulado';
+        // Inyectamos la estructura interna del modal (titulos, inputs, selectores y botones)
         modalPago.innerHTML = `
             <div style="background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
                 <h3 style="margin-bottom: 15px; color: #212529; font-size: 1.3rem;">pasarela de pago</h3>
@@ -82,12 +89,15 @@ export async function inicializarCarrito() {
                 </div>
             </div>
         `;
-        // estilos css para que flote sobre toda la pagina
+        // Aplicamos estilos directamente usando Object.assign (Es mas seguro que usar texto en cssText).
+        // 'fixed', 'top:0', 'left:0', 'width:100%', 'height:100%' garantizan que tape toda la pantalla.
+        // 'z-index: 10000' asegura que quede por encima de todo (navbars, banners, etc).
         Object.assign(modalPago.style, { position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'none', justifyContent: 'center', alignItems: 'center', zIndex: '10000' });
         
+        // Empujamos el modal de la memoria hacia la pagina visible
         document.body.appendChild(modalPago);
         
-        // eventos de los botones del modal
+        // Enganchamos el comportamiento de los dos botones recien creados
         document.getElementById('btn-cancelar-pago').addEventListener('click', () => modalPago.style.display = 'none');
         document.getElementById('btn-confirmar-pago').addEventListener('click', confirmarPagoSimulado);
     }
@@ -100,14 +110,17 @@ export async function inicializarCarrito() {
             const resBD = await fetch('carrito-db');
             if (resBD.ok) {
                 const carritoBD = await resBD.json();
-                // si la bd le devolvio productos, los inyectamos en la memoria local
+                // Si Java le devolvio productos en JSON, sobreescribimos la memoria local de su navegador
                 if (carritoBD.length > 0) { carrito = carritoBD; localStorage.setItem('carritoDMari', JSON.stringify(carrito)); renderizarCarrito(); }
             }
         }
     } catch (e) { console.error('error al sincronizar carrito inicial', e); }
 }
 
-// funcion interna para traer los metodos de la tabla metodo_pago
+/**
+ * Consulta al Backend los metodos de pago disponibles (Nequi, Efectivo, etc) 
+ * y llena la etiqueta <select> del modal dinamicamente.
+ */
 async function cargarMetodosPago() {
     const select = document.getElementById('select-metodo-pago');
     if (!select) return;
@@ -116,6 +129,7 @@ async function cargarMetodosPago() {
         select.innerHTML = '<option value="" disabled selected>cargando opciones...</option>';
         const respuesta = await fetch('metodos-pago');
         if (respuesta.ok) {
+            // Desempaquetamos el JSON que trae {id, descripcion}
             const metodos = await respuesta.json();
             
             if (metodos.length === 0) {
@@ -124,6 +138,7 @@ async function cargarMetodosPago() {
             }
             
             select.innerHTML = '<option value="" disabled selected>elige una opcion...</option>';
+            // Recorremos el JSON inyectando una etiqueta <option> por cada metodo habilitado
             metodos.forEach(m => {
                 const opt = document.createElement('option');
                 opt.value = m.id;
@@ -139,9 +154,13 @@ async function cargarMetodosPago() {
     }
 }
 
-// funcion que se ejecuta al intentar pagar
+/**
+ * Reacciona cuando el cliente presiona el boton principal de "Comprar".
+ * Verifica la sesion y valida que su perfil logistico este completo 
+ * (tenga direccion y telefono) antes de dejarlo pagar.
+ */
 async function procesarCompra() {
-    // evitamos que proceda si el carrito esta vacio
+    // Regla 1: No procesar aire.
     if (carrito.length === 0) {
         alert('Tu carrito esta vacio. ¡Agrega algunos productos primero!');
         return;
@@ -152,22 +171,22 @@ async function procesarCompra() {
         const respuesta = await fetch('session');
 
         if (respuesta.ok) {
-            // respondio 200 ok: esta logueado
+            // Respondio 200 (OK): El servidor de Java confirmo que tiene sesion iniciada.
             
-            // validamos si el cliente ya configuro su perfil de envio
+            // Validamos logisticamente al cliente: consultamos su perfil
             const resPerfil = await fetch('perfil-cliente');
             if (resPerfil.ok) {
                 const perfil = await resPerfil.json();
-                // verificamos si las cajas de texto de direccion o telefono estan vacias/inexistentes
+                // Si los datos llegan nulos o como un string de espacios vacios, bloqueamos el proceso.
                 if (!perfil.direccion || perfil.direccion.trim() === '' || !perfil.telefono || perfil.telefono.trim() === '') {
                     alert('para poder entregar tu pedido, es obligatorio que completes tus datos de envio (direccion y telefono principal). te llevaremos a tu perfil.');
-                    cerrarCarrito();
-                    navegarA('perfil'); // lo mandamos a llenar sus datos
-                    return; // detenemos la apertura del pago
+                    cerrarCarrito();    // Ocultamos el menu lateral
+                    navegarA('perfil'); // Forzamos una redireccion SPA hacia el formulario
+                    return;             // Abortamos la ejecucion para que no se abra el modal de pago
                 }
             }
             
-            // interrumpimos el envio directo y mejor abrimos el modal de pagos
+            // Si tiene cuenta y perfil completo, mostramos la pasarela.
             const modalPago = document.getElementById('modal-pago-simulado');
             if (modalPago) {
                 await cargarMetodosPago(); // cargamos las opciones frescas justo antes de abrir el modal
@@ -175,10 +194,10 @@ async function procesarCompra() {
                 cerrarCarrito(); // ocultamos el carrito para que no estorbe la vista del pago
             }
         } else {
-            // Respondio 401: No esta logueado
+            // Respondio 401 (UNAUTHORIZED): El visitante no se ha identificado.
             alert('Por favor, inicia sesion o registrate para poder finalizar tu compra.');
-            cerrarCarrito(); // Ocultamos el carrito
-            navegarA('login'); // Lo llevamos a la pantalla de login mediante el enrutador
+            cerrarCarrito(); 
+            navegarA('login'); // Interceptamos y lo enviamos al login
         }
     } catch (error) {
         console.error('Error al verificar la sesion:', error);
@@ -186,8 +205,13 @@ async function procesarCompra() {
     }
 }
 
-// funcion que recolecta los datos de la pasarela y envia la orden final
+/**
+ * Se dispara cuando el cliente llena el modal de pago y le da a "Pagar Ahora".
+ * Recolecta el estado del carrito local, el ID del pago, y delega todo al
+ * servicio de pedidos (pedidoService.js) para comunicarse con Java.
+ */
 async function confirmarPagoSimulado() {
+    // Extraemos los datos del formulario flotante
     const cuenta = document.getElementById('input-cuenta-pago').value;
     const idMetodo = document.getElementById('select-metodo-pago').value;
     
@@ -196,25 +220,27 @@ async function confirmarPagoSimulado() {
         return;
     }
     
-    // ocultamos el modal
+    // Quitamos el modal de la pantalla para evitar dobles envios
     document.getElementById('modal-pago-simulado').style.display = 'none';
     
+    // Cambiamos el boton a estado "cargando" por si la BD es lenta
     const botonConfirmar = document.getElementById('btn-confirmar-pago');
     botonConfirmar.innerText = "procesando pago...";
     botonConfirmar.disabled = true;
     
-    // enviamos el carrito mas los datos financieros al backend
+    // LLAMADO CENTRAL: Enviamos la informacion al controlador de Pedidos en Java
     const exito = await enviarPedido(carrito, idMetodo, cuenta);
     
     if (exito) {
-        // vaciamos el carrito local
+        // Si Java devolvio exito, vaciamos el arreglo local de JS
         carrito = [];
+        // Destruimos las cookies / almacenamiento local para que no reaparezcan donas fantasma
         localStorage.setItem('carritoDMari', JSON.stringify(carrito));
         
-        // le avisamos a la bd que el carrito ya se vacio tras la compra
+        // Le avisamos a la BD que sincronice nuestro carrito (mandara un carrito vacio que ejecutara el DELETE)
         programarSincronizacion();
         
-        renderizarCarrito();
+        renderizarCarrito(); // Redibujamos la canasta (quedara vacia en pantalla)
         
         window.dispatchEvent(new CustomEvent('inventarioActualizado'));
         mostrarNotificacion('¡pago aprobado y compra realizada con exito!', 'exito');

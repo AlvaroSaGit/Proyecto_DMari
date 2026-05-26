@@ -15,22 +15,28 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-/*
-    objetivo de este archivo:
-    gestionar la sincronizacion del carrito entre el navegador y la base de datos.
-*/
+/**
+ * objetivo de este archivo:
+ * gestionar la sincronizacion del carrito entre el navegador y la base de datos.
+ * permite recuperar la canasta guardada o sobrescribirla con nuevos datos.
+ */
 @WebServlet(name = "CarritoDBController", urlPatterns = {"/carrito-db"})
 public class CarritoDBController extends HttpServlet {
 
-    /*
-        doget: se dispara cuando el frontend (javascript) quiere leer el carrito guardado en la base de datos.
-        esto pasa generalmente cuando el usuario inicia sesion desde un dispositivo nuevo para no perder sus compras.
-    */
+    /**
+     * metodo get: lectura del carrito
+     * se dispara cuando el frontend (javascript) quiere leer el carrito guardado en mysql.
+     * esto pasa generalmente cuando el usuario inicia sesion desde un dispositivo nuevo.
+     * 
+     * @param request httpservletrequest: la peticion get entrante.
+     * @param response httpservletresponse: envia el arreglo json de productos.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("application/json;charset=UTF-8");
         HttpSession sesion = request.getSession(false);
         
+        // condicional de autorizacion
         if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
             // extraemos la identidad del usuario para buscar su carrito especifico
             usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
@@ -42,13 +48,18 @@ public class CarritoDBController extends HttpServlet {
         } else response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 
-    /*
-        dopost: recibe la canasta de compras actual desde javascript y la manda a guardar a mysql.
-        es un proceso destructivo-creativo: borra lo viejo y guarda lo mas reciente para mantener sincronia total.
-    */
+    /**
+     * metodo post: escritura y sobreescritura rapida (batch)
+     * recibe la canasta de compras actual desde javascript y la manda a guardar a mysql.
+     * es un proceso destructivo-creativo: borra lo viejo y guarda lo mas reciente.
+     * 
+     * @param request httpservletrequest: intercepta el formulario empaquetado.
+     * @param response httpservletresponse: despacha estados de control (200 o 500).
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession sesion = request.getSession(false);
+        // condicional de seguridad: ignora los intentos de sincronizar si es un visitante anonimo
         if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
             usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
             
@@ -58,8 +69,10 @@ public class CarritoDBController extends HttpServlet {
             
             ArrayList<detalleCarrito> items = new ArrayList<>();
             // verificamos que la lista no venga vacia o nula
+            // condicional vital: previene un 'nullpointerexception' si el carrito enviado esta vacio
             if (ids != null && cantidades != null) {
                 // recorremos los arreglos paralelos para armar los objetos en java
+                // iteracion paralela: avanza por ambos arreglos simultaneamente para unir el id con su cantidad correspondiente
                 for (int i = 0; i < ids.length; i++) {
                     detalleCarrito item = new detalleCarrito();
                     item.setIdProductoFk(Integer.parseInt(ids[i]));
@@ -71,6 +84,7 @@ public class CarritoDBController extends HttpServlet {
             
             // llamamos al dao para que ejecute la transaccion segura
             carritoDAO dao = new carritoDAO();
+            // condicional transaccional: evalua si el dao aprobo todo el lote de inserciones
             if (dao.sincronizarCarrito(user.getIdUsuario(), items)) response.setStatus(HttpServletResponse.SC_OK);
             else response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } else response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

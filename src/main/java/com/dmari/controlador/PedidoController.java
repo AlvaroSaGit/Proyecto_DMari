@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import com.dmari.dao.pedidoDAO;
+import com.dmari.dao.carritoDAO;
 import com.dmari.helper.jsonHelper;
 import com.dmari.modelo.detallePedido;
 import com.dmari.modelo.usuario;
@@ -25,34 +26,44 @@ import jakarta.servlet.http.HttpSession;
 @WebServlet(name = "PedidoController", urlPatterns = {"/pedido"})
 public class PedidoController extends HttpServlet {
 
-    /*
-        dopost: procesa las peticiones de modificacion de datos.
-        tiene dos funciones principales dependientes de lo que envia el frontend:
-        1. cambiar el estado de un pedido (exclusivo para admins/proveedores).
-        2. registrar una nueva compra desde el carrito (para los clientes), 
-           desempacando los arreglos de productos y calculando totales.
-    */
+    /**
+     * metodo post: enrutador de modificaciones
+     * actua como un guardia de trafico bidireccional dependiendo del contenido enviado:
+     * 
+     * ruta a: si detecta "accion = cambiar_estado", asume que es un empleado gestionando envios.
+     * ruta b: si detecta arreglos de productos, asume que es un cliente haciendo "checkout".
+     * 
+     * en ambos casos implementa rigurosas barreras de seguridad (401 y 403) para evitar hackeos.
+     * 
+     * @param request httpservletrequest: el paquete http enviado por javascript (con data o parametros).
+     * @param response httpservletresponse: el objeto usado para contestarle al navegador con codigos http.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
         // 1. Verificamos que el usuario tenga una sesion valida
+        // 1. capa de proteccion: exigir credencial de sesion activa en el navegador
         HttpSession sesion = request.getSession(false);
+        // condicional de seguridad: si no hay cookies activas, expulsa la peticion con un error 401.
         if (sesion == null || sesion.getAttribute("usuarioLogueado") == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401: usted no es quien dice ser
             return;
         }
         
         usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
         
-        // Identificar si la peticion es para cambiar el estado de un pedido existente
+        // =========================================================================
+        // ruta a: cambio de estado logistico (exclusivo del administrador y proveedor)
+        // =========================================================================
         String accion = request.getParameter("accion");
+        // condicional de bifurcacion: decide si entra al bloque de logistica o de nueva compra.
         if ("cambiar_estado".equals(accion)) {
             
-            // Medida de seguridad: Solo Administradores (1) y Proveedores (4) pueden hacer esto
+            // barrera de privilegios: evitamos que un cliente curioso cancele su propio pedido por la url
+            // condicional logico: si tu rol no es 1 (admin) ni 4 (proveedor), eres bloqueado.
             if (user.getIdRol() != 1 && user.getIdRol() != 4) {
-                // sc_forbidden (403): detiene a cualquier intruso o cliente sin permisos
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403: usted no tiene nivel jerarquico
                 return;
             }
             
@@ -62,25 +73,29 @@ public class PedidoController extends HttpServlet {
             pedidoDAO dao = new pedidoDAO();
             boolean exito = dao.actualizarEstadoPedido(idPedido, nuevoEstado);
             
+            // condicional de respuesta: si el dao devulve true responde 200, sino error 500.
             if (exito) {
                 response.setStatus(HttpServletResponse.SC_OK); // 200: estado actualizado con exito
             } else {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500: fallo interno
             }
-            return; // Cortamos la ejecucion aqui para que no intente guardar un carrito
+            return; // cortamos la ejecucion de la funcion para no mezclar las dos rutas
         }
         
-        // 2. Atrapamos los arreglos de datos que envio el pedidoService.js
-        // getParameterValues atrapa multiples datos con el mismo nombre (porque es un carrito con varios items)
+        // =========================================================================
+        // ruta b: creacion de un pedido nuevo (checkout del cliente)
+        // =========================================================================
+        // atrapamos arreglos completos generados por javascript. ejemplo: ids = [2, 5, 8]
         String[] idsProductos = request.getParameterValues("id_producto");
         String[] cantidades = request.getParameterValues("cantidad");
         String[] precios = request.getParameterValues("precio");
         
-        // capturamos los datos financieros enviados desde el javascript de la pasarela
+        // datos individuales inyectados desde el modal flotante (html)
         String idMetodoStr = request.getParameter("idMetodo");
         String cuenta = request.getParameter("cuenta");
         
         // si el carrito llego vacio o corrupto, o si faltan los datos de pago, rechazamos la peticion
+        // condicional de validacion de datos vitales para evitar fallos de codigo java por "nullpointerexception".
         if (idsProductos == null || idsProductos.length == 0 || idMetodoStr == null || cuenta == null) {
             // sc_bad_request (400): el servidor rechaza la peticion porque faltan datos clave del carrito
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -90,14 +105,17 @@ public class PedidoController extends HttpServlet {
         ArrayList<detallePedido> carritoList = new ArrayList<>();
         double totalPagar = 0;
         
-        // 3. Desempacamos los datos de texto y armamos los objetos Java
+        // 3. deserializacion y calculo financiero en zona segura
+        // recorremos el carrito para convertir el texto (string) en numeros matematicos (int/double).
+        // iteracion clasica: recorre la longitud del arreglo "idsproductos" que vino por http.
         for (int i = 0; i < idsProductos.length; i++) {
             detallePedido item = new detallePedido();
             item.setIdProductoFk(Integer.parseInt(idsProductos[i]));
             item.setCantidad(Integer.parseInt(cantidades[i]));
             item.setPrecioUnitario(Double.parseDouble(precios[i]));
             
-            // Calculamos el subtotal de forma segura en el servidor
+            // verificacion cruzada: calculamos precios totales en el backend (java) 
+            // para evitar que el cliente altere los precios totalizados usando f12 (inspeccionar elemento).
             double subtotal = item.getCantidad() * item.getPrecioUnitario();
             item.setSubtotal(subtotal);
             totalPagar += subtotal;
@@ -107,12 +125,17 @@ public class PedidoController extends HttpServlet {
         
         int idMetodo = Integer.parseInt(idMetodoStr);
         
-        // 4. Mandamos a guardar todo el bloque usando la transaccion segura del DAO
+        // 4. ejecucion del nucleo de datos
         pedidoDAO dao = new pedidoDAO();
         boolean exito = dao.registrarPedido(user.getIdUsuario(), totalPagar, carritoList, idMetodo, cuenta);
         
-        // Respondemos a JavaScript segun el resultado
+        // 5. resolucion web y limpieza
+        // condicional critico: confirma si mysql logro insertar todos los componentes.
         if (exito) {
+            // como el pago fue autorizado, la canasta en la base de datos se debe destruir.
+            carritoDAO cartDao = new carritoDAO();
+            cartDao.vaciarCarrito(user.getIdUsuario());
+            
             // sc_ok (200): todo salio perfecto, el pedido se registro en mysql
             response.setStatus(HttpServletResponse.SC_OK);
         } else {
@@ -121,19 +144,22 @@ public class PedidoController extends HttpServlet {
         }
     }
 
-    /*
-        doget: atiende las peticiones de lectura del historial de compras.
-        aplica un filtro de seguridad y privacidad basado en el rol del usuario:
-        - rol 1 (administrador): extrae absolutamente todos los pedidos del sistema.
-        - rol 4 (proveedor): extrae unicamente los pedidos que incluyen sus productos.
-        - rol 2 (cliente): extrae exclusivamente su historial de compras personal.
-        finalmente empaca todo en un arreglo json y lo envia al navegador.
-    */
+    /**
+     * metodo get: lectura dinamica de facturas
+     * este es un endpoint inteligente: responde de 3 formas totalmente distintas
+     * leyendo el rol del visitante autenticado. un solo codigo sirve para el 
+     * panel del cliente, el dashboard del administrador y la logistica del proveedor.
+     * el aislamiento es absoluto.
+     * 
+     * @param request httpservletrequest: la peticion get de lectura.
+     * @param response httpservletresponse: escribe el arreglo json hacia el javascript del cliente.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
             
         HttpSession sesion = request.getSession(false);
+        // condicional de acceso al historial: exige estar registrado y activo.
         if (sesion == null || sesion.getAttribute("usuarioLogueado") == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
@@ -143,16 +169,17 @@ public class PedidoController extends HttpServlet {
         pedidoDAO dao = new pedidoDAO();
         ArrayList<detallePedido> lista;
         
-        // Filtramos de forma inteligente dependiendo del rol del usuario
-        if (user.getIdRol() == 1) { // 1 = Administrador (ve toda la tienda)
+        // estructura de enrutamiento basada en rol (rbac)
+        // condicional de control de acceso: envia peticiones sql diferentes usando el perfil (rol)
+        if (user.getIdRol() == 1) { // rol 1 = administrador 
             lista = dao.listarTodosLosPedidos();
-        } else if (user.getIdRol() == 4) { // 4 = Proveedor (ve solo sus ventas)
+        } else if (user.getIdRol() == 4) { // rol 4 = proveedor 
             lista = dao.listarPedidosPorProveedor(user.getIdUsuario());
-        } else { // 2 = Cliente
+        } else { // rol 2 = cliente publico
             lista = dao.listarPedidosPorCliente(user.getIdUsuario());
         }
         
-        // Utilizamos el helper para convertir la lista a JSON de forma segura y limpia
+        // utilizamos el motor manual (helper) para parsear los arreglos complejos a texto legible para js
         jsonHelper helper = new jsonHelper();
         String jsonString = helper.pedidosAJson(lista);
         

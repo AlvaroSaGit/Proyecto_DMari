@@ -1,11 +1,11 @@
 package com.dmari.dao;
 
-/*
-    DAO ESTRUCTURA CRUD
-*/
-/*
-    Conexion database
-*/
+/**
+ * objetivo de este archivo:
+ * data access object (dao) central del catalogo.
+ * orquesta complejas consultas (left joins e inner joins) para recuperar el inventario,
+ * aplicando bloqueos si un producto, categoria o proveedor estan inactivos.
+ */
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -20,18 +20,17 @@ import com.dmari.modelo.producto;
 public class productoDAO {
     databaseHelper db = new databaseHelper();
     
-    /*
-        metodo para traer los productos de la base de datos.
-        recibe un booleano para filtrar solo los activos y con stock.
-    */
+    /**
+     * metodo de lectura global con filtros.
+     * trae los productos publicos de la base de datos.
+     * 
+     * @param soloActivos boolean: si es true, filtra solo los que tienen stock y estado=1.
+     * @return arraylist<producto>: lista de productos ensamblados.
+     */
     public ArrayList<producto> listarProductos(boolean soloActivos){
-        /*se crea una nueva lista*/
         ArrayList<producto> lista = new ArrayList<>();
-        /*
-            la sentencia sql base que se ejecutara en el motor de mysql
-        */
+
         String sql = "SELECT " +
-             // extraemos las columnas vitales de la tabla producto
              "p.id_producto_pk, " +
              "p.nombre_producto, " +
              "p.descripcion, " +
@@ -56,47 +55,19 @@ public class productoDAO {
              "LEFT JOIN proveedor_producto pp ON p.id_producto_pk = pp.id_producto_fk " +
              "LEFT JOIN usuario u ON pp.id_proveedor_fk = u.id_usuario_pk";
         
-        // si el parametro es verdadero, concatenamos la condicion a la consulta
+        // condicional: anexa exigencias estrictas al motor de base de datos
         if (soloActivos) {
-            // integridad logica: el producto debe estar activo, con stock, su categoria activa y su proveedor no bloqueado (o nulo si es de dmari)
             sql += " WHERE p.estado = 1 AND p.stock > 0 AND c.estado_activo = 1 AND (u.estado_cuenta = 1 OR u.id_usuario_pk IS NULL)";
         }
 
-        /*
-            usar el try como try-with-resources,
-            esto hace que se cierre automaticamente al llegar
-            a la llave de cierre como metodo de seguridad
-        */
         try(
-            /*
-                aqui se llama el metodo conectar() de la clase databasehelper.
-                se abre el flujo de datos hacia mysql.
-            */
             Connection con = db.conectar();
-            /*
-                se usa la conexion abierta para preparar el comando sql.
-                preparedstatement es mas seguro porque evita ataques de
-                inyeccion sql
-            */
             PreparedStatement ps = con.prepareStatement(sql);
-            /*
-                manda la orden a mysql
-            */
             ResultSet rs = ps.executeQuery()){
             
-            /*
-                mientras el resultset tenga filas por leer...
-            */
+            // iteracion: transforma las filas (records) devueltas por mysql en objetos de java.
             while(rs.next()){
-                /*
-                se crea un objeto producto que viene del archivo
-                producto de com.dmari.modelo.
-                */
                 producto prod = new producto();
-                /*
-                    sacamos los datos de las columnas mysql
-                    y se lo colocamos en los atributos del objeto.
-                */
                 prod.setIdProductoPk(rs.getInt("id_producto_pk"));
                 prod.setNombreProducto(rs.getString("nombre_producto"));
                 prod.setDescripcion(rs.getString("descripcion"));
@@ -105,13 +76,13 @@ public class productoDAO {
                 prod.setEstado(rs.getBoolean("estado"));
                 prod.setUrlRuta(rs.getString("url_ruta"));
                 
-                /* Extraemos el ID y el nombre de la categoria */
                 prod.setIdCategoriaFk(rs.getInt("id_categoria_fk"));
                 prod.setCategoria(rs.getString("nombre_categoria"));
                 
                 // extraemos la cadena de multiples etiquetas y la convertimos en un arreglo (lista)
                 String etiquetasStr = rs.getString("etiquetas_str");
                 ArrayList<String> listaTags = new ArrayList<>();
+                // condicional anidado con iteracion: deserializa las etiquetas (ej: dulce,regalo) en un array list.
                 if (etiquetasStr != null && !etiquetasStr.isEmpty()) {
                     String[] tagsArray = etiquetasStr.split(",");
                     for (String t : tagsArray) {
@@ -120,7 +91,6 @@ public class productoDAO {
                 }
                 prod.setEtiquetas(listaTags);
 
-                /*metemos el producto ya lleno en la lista general*/
                 lista.add(prod);
             }
         }catch(SQLException error){
@@ -130,10 +100,14 @@ public class productoDAO {
         return lista;
     }
     
-    /*
-        metodo para listar los productos que le pertenecen a un proveedor especifico.
-        no filtra por activos o inactivos, ya que el proveedor debe ver todos sus productos.
-    */
+    /**
+     * aislamiento de inventario de proveedor.
+     * lista el catalogo interno que le pertenece a un solo dueno (sin importar si esta pausado).
+     * usa un inner join estricto como escudo de seguridad.
+     * 
+     * @param idUsuarioProveedor int: id de la cuenta del proveedor en cuestion.
+     * @return arraylist<producto>: sus productos exclusivos.
+     */
     public ArrayList<producto> listarProductosPorProveedor(int idUsuarioProveedor) {
         ArrayList<producto> lista = new ArrayList<>();
         
@@ -171,6 +145,7 @@ public class productoDAO {
              ps.setInt(1, idUsuarioProveedor);
              
              try (ResultSet rs = ps.executeQuery()) {
+                 // iteracion: convierte las filas recuperadas en el dto respectivo.
                  while(rs.next()){
                      producto prod = new producto();
                      prod.setIdProductoPk(rs.getInt("id_producto_pk"));
@@ -186,6 +161,7 @@ public class productoDAO {
                      
                      String etiquetasStr = rs.getString("etiquetas_str");
                      ArrayList<String> listaTags = new ArrayList<>();
+                     // condicional: fragmenta las etiquetas solo si existen.
                      if (etiquetasStr != null && !etiquetasStr.isEmpty()) {
                          String[] tagsArray = etiquetasStr.split(",");
                          for (String t : tagsArray) {
@@ -204,19 +180,20 @@ public class productoDAO {
         return lista;
     }
 
+    /**
+     * escritura base de datos: insertar producto maestro.
+     * pide la creacion de la llave primaria para luego usarla en la insercion de fotos y etiquetas.
+     * 
+     * @param nuevoProducto producto: objeto lleno desde el servlet.
+     * @return int: id que mysql genero automaticamente (mayor a 0 si exito).
+     */
     public int insertarProducto(producto nuevoProducto){
-        // aca solo dejamos la consulta del producto solo
         String sql = "insert into producto (nombre_producto, descripcion, precio, stock, id_categoria_fk, estado) values (?, ?, ?, ?, ?, ?)";
         int idGenerado = 0;
 
         try (Connection con = db.conectar();
-                
-            // el try con parentesis abre la conexion a la base de datos y la cierra al final para no saturar la memoria
-            // el preparestatement prepara la orden sql de forma segura,
-            // y el return_generated_keys le exige a mysql que nos devuelva el id automatico que le acaba de asignar a ese producto nuevo   
             PreparedStatement ps = con.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
-            // pasamos los datos basicos del producto
             ps.setString(1, nuevoProducto.getNombreProducto());
             ps.setString(2, nuevoProducto.getDescripcion());
             ps.setDouble(3, nuevoProducto.getPrecio());
@@ -224,12 +201,11 @@ public class productoDAO {
             ps.setInt(5, nuevoProducto.getIdCategoriaFk());
             ps.setBoolean(6, nuevoProducto.isEstado());
 
-            // ejecutamos el insert
+            // condicional evaluativo: revisa si el insert arrojo confirmacion de insercion
             if (ps.executeUpdate() > 0) {
-                // getgeneratedkeys sirve para que mysql nos diga que id le puso a la dona o vela
                 ResultSet rs = ps.getGeneratedKeys();
+                // iteracion condicional: extrae la id
                 if (rs.next()) {
-                    // guardamos ese numero en nuestra variable
                     idGenerado = rs.getInt(1);
                 }
             }
@@ -237,29 +213,33 @@ public class productoDAO {
             System.out.println("error al insertar el producto: " + e.getMessage());
         }
 
-        // devolvemos el id.. si es 0 significa que no se guardo nada
         return idGenerado;
-
     }
 
-    // metodo para enlazar un producto nuevo con el proveedor que lo acaba de crear en el sistema.
-    // este metodo es vital porque los productos no pueden quedar huerfanos si los crea un proveedor.
+    /**
+     * puente vinculante entre vendedor y producto.
+     * garantiza que el inventario jamas quede huerfano si lo creo una cuenta comercial.
+     * 
+     * @param idProducto int: articulo recien creado.
+     * @param idUsuarioProveedor int: cuenta creadora.
+     * @return boolean: true si el puente 'proveedor_producto' se forjo con exito.
+     */
     public boolean asignarProductoAProveedor(int idProducto, int idUsuarioProveedor) {
         try (Connection con = db.conectar()) {
             int idProveedorPk = 0;
             
-            // paso 1: buscamos cual es el id interno del proveedor en su tabla principal.
-            // esto se hace porque la tabla puente requiere el id de 'proveedor', no el id general de 'usuario'.
+            // paso 1: ubicamos el id secundario de la tabla 'proveedor'
             String sqlBuscar = "SELECT id_proveedor_pk FROM proveedor WHERE id_proveedor_pk = ?";
             try (PreparedStatement psBuscar = con.prepareStatement(sqlBuscar)) {
                 psBuscar.setInt(1, idUsuarioProveedor);
                 try (ResultSet rs = psBuscar.executeQuery()) {
+                    // condicional: si lo encontro, guardamos la credencial.
                     if (rs.next()) idProveedorPk = rs.getInt("id_proveedor_pk");
                 }
             }
             
-            // paso 2: finalmente, hacemos el enlace directo y exacto a la tabla puente.
-            // unimos el id del producto con el id interno del proveedor validado.
+            // paso 2: enlazamos la mercancia
+            // condicional limitante: prohibe puentes si la credencial fallo.
             if (idProveedorPk > 0) {
                 String sqlInsert = "INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) VALUES (?, ?)";
                 try (PreparedStatement psInsert = con.prepareStatement(sqlInsert)) {
@@ -276,23 +256,26 @@ public class productoDAO {
         return false;
     }
     
-    // metodo para actualizar o quitar al proveedor de un producto existente (exclusivo del administrador).
+    /**
+     * editor maestro de pertenencia comercial.
+     * (exclusivo de rol admin) permite destruir un puente comercial y forjar otro.
+     * 
+     * @param idProducto int: articulo de destino.
+     * @param idUsuarioProveedor int: nueva cuenta duena (si se pasa 0, queda expropiado a dmari).
+     * @return boolean: confirmacion de transaccion.
+     */
     public boolean actualizarProveedorDeProducto(int idProducto, int idUsuarioProveedor) {
-        // preparamos la orden para destruir cualquier conexion vieja.
         String sqlDelete = "DELETE FROM proveedor_producto WHERE id_producto_fk = ?";
         
         try (Connection con = db.conectar()) {
-            // primero borramos cualquier conexion previa para que no queden duplicados (huerfanos) en la tabla puente.
             try (PreparedStatement psDel = con.prepareStatement(sqlDelete)) {
                 psDel.setInt(1, idProducto);
                 psDel.executeUpdate();
             }
             
-            // si el admin selecciono a un proveedor real del menu (id > 0), creamos el nuevo enlace.
-            // si selecciono "sin proveedor", el id llega como 0, se salta este bloque y el producto queda libre.
+            // condicional funcional: si el admin eligio 0 ("sin proveedor"), esta insercion no se ejecuta.
             if (idUsuarioProveedor > 0) {
                 int idProveedorPk = 0;
-                // buscamos su id interno en la tabla
                 String sqlBuscar = "SELECT id_proveedor_pk FROM proveedor WHERE id_proveedor_pk = ?";
                 try (PreparedStatement psBuscar = con.prepareStatement(sqlBuscar)) {
                     psBuscar.setInt(1, idUsuarioProveedor);
@@ -301,7 +284,6 @@ public class productoDAO {
                     }
                 }
                 
-                // creamos el nuevo puente en la base de datos
                 if (idProveedorPk > 0) {
                     String sqlInsert = "INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) VALUES (?, ?)";
                     try (PreparedStatement psInsert = con.prepareStatement(sqlInsert)) {
@@ -315,16 +297,18 @@ public class productoDAO {
         } catch (SQLException e) { return false; }
     }
 
+    /**
+     * funcion general de sobreescritura de tabla producto.
+     * 
+     * @param prod producto: dto con las cajas de texto actualizadas.
+     * @return boolean: true si sobreescribio con exito.
+     */
     public boolean actualizarProducto(producto prod) {
-    // actualiza la tabla principal del producto
-    // el where es vital: usamos id_producto_pk para asegurar que solo cambiamos ese item especifico
     String sql = "update producto set nombre_producto = ?, descripcion = ?, precio = ?, stock = ?, id_categoria_fk = ?, estado = ? where id_producto_pk = ?";
 
-    // abrimos conexion y preparamos la consulta de una vez
     try (Connection con = db.conectar();
         PreparedStatement ps = con.prepareStatement(sql)) {
 
-        // reemplazamos los signos de interrogacion con los datos nuevos
         ps.setString(1, prod.getNombreProducto());
         ps.setString(2, prod.getDescripcion());
         ps.setDouble(3, prod.getPrecio());
@@ -332,13 +316,11 @@ public class productoDAO {
         ps.setInt(5, prod.getIdCategoriaFk());
         ps.setBoolean(6, prod.isEstado());
         
-        // el quinto parametro es el id, para decirle a mysql cual producto exacto debe cambiar
         ps.setInt(7, prod.getIdProductoPk());
 
-        // ejecutamos la orden y guardamos cuantas filas se modificaron
         int filasAfectadas = ps.executeUpdate();
 
-        // si el numero es mayor a 0, significa que si encontro el producto y lo actualizo
+        // condicional de actualizacion: dictamina si el comando fue productivo.
         if (filasAfectadas > 0) {
             return true;
         }
@@ -347,79 +329,74 @@ public class productoDAO {
         System.out.println("hubo un error al intentar actualizar: " + e.getMessage());
     }
     
-    // si no lo encontro o hubo error, devuelve falso
     return false;
     }
     
-    // metodo para borrar un producto de la tienda
+    /**
+     * metodo de borrado en cascada manual (transaccional).
+     * destruye paulatinamente todas las referencias filiales antes de destruir al padre.
+     * 
+     * @param id int: numero de producto a destruir.
+     * @return boolean: confirmacion final.
+     */
     public boolean eliminarProducto(int id) {
-        // preparamos las sentencias para borrar primero los registros que dependen de este producto
-        // 1. borramos las relaciones en la tabla puente de etiquetas
         String sqlEtiquetas = "DELETE FROM producto_etiqueta WHERE id_producto = ?";
-        // 2. borramos la pertenencia en la tabla del proveedor
         String sqlProveedor = "DELETE FROM proveedor_producto WHERE id_producto_fk = ?";
-        // 3. borramos todas las rutas fotograficas de este producto
         String sqlImagenes = "DELETE FROM imagenes WHERE id_producto_fk = ?";
-        // 4. despues de vaciar a los hijos, finalmente borramos al padre (el producto)
         String sqlProducto = "DELETE FROM producto WHERE id_producto_pk = ?";
         
-        // 5. recolector de basura: eliminamos etiquetas huerfanas tras el borrado
         String sqlLimpiarEtiquetas = "DELETE FROM etiqueta WHERE id_etiqueta_pk NOT IN (SELECT DISTINCT id_etiqueta FROM producto_etiqueta)";
         
         Connection con = null;
         try {
             con = db.conectar();
-            // apagamos el autocommit para hacer un borrado en cascada manual y seguro
             con.setAutoCommit(false);
 
-            // 1. desvincular etiquetas
             try (PreparedStatement psEtiq = con.prepareStatement(sqlEtiquetas)) {
                 psEtiq.setInt(1, id);
                 psEtiq.executeUpdate();
             }
 
-            // 2. desvincular de los proveedores
             try (PreparedStatement psProv = con.prepareStatement(sqlProveedor)) {
                 psProv.setInt(1, id);
                 psProv.executeUpdate();
             }
 
-            // 3. borrar imagenes asociadas
             try (PreparedStatement psImg = con.prepareStatement(sqlImagenes)) {
                 psImg.setInt(1, id);
                 psImg.executeUpdate();
             }
 
-            // 4. finalmente, borrar el producto maestro
             int filasAfectadas = 0;
             try (PreparedStatement psProd = con.prepareStatement(sqlProducto)) {
                 psProd.setInt(1, id);
                 filasAfectadas = psProd.executeUpdate();
             }
             
-            // 5. limpiar etiquetas huerfanas generadas por esta eliminacion
             try (PreparedStatement psLimpiar = con.prepareStatement(sqlLimpiarEtiquetas)) {
                 psLimpiar.executeUpdate();
             }
 
-            // si todo salio bien, confirmamos los cambios en mysql
             con.commit();
             return filasAfectadas > 0;
             
         } catch (SQLException e) {
-            // si explota (por ejemplo, porque el producto ya esta en un pedido), revertimos todo
             try { if (con != null) con.rollback(); } catch (SQLException ex) {}
             System.out.println("no se pudo borrar el producto.. quiza este amarrado a un pedido: " + e.getMessage());
             return false;
         } finally {
-            // restauramos el comportamiento normal de la conexion
             try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
         }
     }
 
-    // metodo especifico para cambiar solo el estado de un producto (activo/inactivo)
+    /**
+     * interruptor de disponibilidad rapida.
+     * 
+     * @param id int: target a pausar o reactivar.
+     * @param nuevoEstado boolean: true para habilitar ventas, false para esconderlo.
+     * @return boolean: true si acerto la instruccion sql.
+     */
     public boolean actualizarEstado(int id, boolean nuevoEstado) {
-        // instruccion que afecta solo la columna 'estado' del articulo filtrado por su id
         String sql = "update producto set estado = ? where id_producto_pk = ?";
         
         try (Connection con = db.conectar();

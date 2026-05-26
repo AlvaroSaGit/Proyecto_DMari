@@ -19,7 +19,8 @@ export function crearTarjetaHTML(producto) {
     }
 
     // formateamos el precio a moneda local
-    const precioFormateado = producto.precio.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
+    const precioNumerico = parseFloat(producto.precio) || 0;
+    const precioFormateado = precioNumerico.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 });
 
     // contenedor principal de la tarjeta (se usa la etiqueta article por buena semantica web)
     const article = document.createElement('article');
@@ -33,8 +34,8 @@ export function crearTarjetaHTML(producto) {
     img.src = rutaImg;
     img.alt = nombreProd;
     
-    // MAGIA DE JAVASCRIPT: Si el archivo fisico se borro por culpa del Clean and Build de NetBeans,
-    // el navegador disparara un error 404. Este 'onerror' lo atrapa y pone la foto del gato.
+    // magia de javascript: si el archivo fisico se borro por culpa del clean and build de netbeans,
+    // el navegador disparara un error 404. este 'onerror' lo atrapa y pone la foto del gato.
     img.onerror = function() {
         this.onerror = null; // evita bucles infinitos si el gato tampoco existe
         this.src = 'src/img/productos/default/gato_programador.jpg';
@@ -55,7 +56,7 @@ export function crearTarjetaHTML(producto) {
     if (catProd) {
         const spanCat = document.createElement('span');
         spanCat.classList.add('etiqueta');
-        // Le damos un color elegante y oscuro a la categoria principal para que destaque
+        // le damos un color elegante y oscuro a la categoria principal para que destaque
         spanCat.style.backgroundColor = '#333333';
         spanCat.style.color = '#ffffff';
         spanCat.style.cursor = 'pointer';

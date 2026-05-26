@@ -73,7 +73,7 @@ export function filtrarPorCategoriaExacta(lista, nombreCategoria) {
     
     return lista.filter(prod => {
         // contingencia: buscar por el id numerico si el texto falla
-        const idCat = prod.idCategoriaFk || prod.id_categoria_fk;
+        const idCat = parseInt(prod.idCategoriaFk || prod.id_categoria_fk || 0);
         if (catBuscada === 'reposteria' && idCat === 1) return true;
         if (catBuscada === 'decoracion' && idCat === 2) return true;
         if (catBuscada === 'floristeria' && idCat === 3) return true;

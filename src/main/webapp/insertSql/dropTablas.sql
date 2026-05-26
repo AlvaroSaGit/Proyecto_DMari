@@ -34,6 +34,8 @@ DROP TABLE IF EXISTS permiso;
 DROP TABLE IF EXISTS categoria;
 DROP TABLE IF EXISTS etiqueta;
 DROP TABLE IF EXISTS metodo_pago;
+DROP TABLE IF EXISTS carrito;
+DROP TABLE IF EXISTS detalle_carrito;
 
 -- reactivamos las llaves foraneas
 SET FOREIGN_KEY_CHECKS = 1;

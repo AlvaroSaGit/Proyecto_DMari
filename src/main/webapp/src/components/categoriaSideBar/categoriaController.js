@@ -48,8 +48,7 @@ export async function inicializarCategoria() {
                         window.aplicarFiltroCatalogo(categoriaFormateada, 'categoria');
                     }
                 } else {
-                    // Respaldo por si la funcion no cargo a tiempo
-                    window.location.reload();
+                    // dow.location.reload();
                 }
             } else {
                 // si estamos en otra pantalla (como el inicio), guardamos el filtro en memoria

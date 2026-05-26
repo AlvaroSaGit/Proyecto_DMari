@@ -23,6 +23,13 @@ public class usuarioDAO {
     // llave secreta que mysql utilizara como algoritmo para mezclar la contrasena
     private static final String LLAVE_SECRETA = "llave_dmari";
 
+    /**
+     * registra un usuario nuevo en tres tablas simultaneamente: 
+     * usuario, correo y credenciales (encriptando la clave).
+     * 
+     * @param nuevoUsuario usuario: objeto con los datos digitados en el registro.
+     * @return boolean: true si las 3 inserciones tuvieron exito, false si fallo.
+     */
     public boolean registrarUsuario(usuario nuevoUsuario) {
         
         String sqlUsuario = "INSERT INTO usuario (nombre, id_rol_fk, estado_cuenta) VALUES (?, (SELECT id_rol_pk FROM rol WHERE tipo_rol = 'cliente' LIMIT 1), 1)";
@@ -46,10 +53,12 @@ public class usuarioDAO {
                 psUsuario.setString(1, nuevoUsuario.getNombre());
                 psUsuario.executeUpdate();
                 try (ResultSet rs = psUsuario.getGeneratedKeys()) {
+                    // condicional: verifica si mysql le otorgo un id unico al usuario.
                     if (rs.next()) idGenerado = rs.getInt(1);
                 }
             }
             
+            // condicional: solo continua si el usuario principal se guardo con exito.
             if (idGenerado > 0) {
                 try (PreparedStatement psCorreo = con.prepareStatement(sqlCorreo)) {
                     psCorreo.setInt(1, idGenerado);
@@ -90,6 +99,13 @@ public class usuarioDAO {
         }
     }
 
+    /**
+     * verifica si las credenciales coinciden con la base de datos usando aes_decrypt.
+     * 
+     * @param correo string: email digitado por el visitante.
+     * @param password string: contrasena digitada en texto plano.
+     * @return usuario: objeto con los datos del usuario si acerto, null si fallo.
+     */
     public usuario verificarLogin(String correo, String password) {
         
         // aes_decrypt hace el proceso inverso: usa la llave secreta para destrabar el blob y lo compara con el texto digitado.
@@ -110,7 +126,8 @@ public class usuarioDAO {
             ps.setString(3, password);
             
             try (ResultSet rs = ps.executeQuery()) {
-                // si avanza el cursor (rs.next), significa que encontro el correo y la contrasena era la correcta.
+                // condicional: si el cursor avanza, encontro coincidencias exactas.
+                // si no avanza, significa que el correo no existe o la clave esta mal.
                 if (rs.next()) {
                     usuarioLogueado = new usuario();
                     usuarioLogueado.setIdUsuario(rs.getInt("id_usuario_pk"));
@@ -128,7 +145,11 @@ public class usuarioDAO {
         return usuarioLogueado;
     }
 
-    // metodo para listar a todos los usuarios del sistema (para el panel del administrador)
+    /**
+     * extrae todos los usuarios registrados en el sistema (panel de administracion).
+     * 
+     * @return arraylist<usuario>: lista completa con roles, correos y estados.
+     */
     public ArrayList<usuario> listarUsuarios() {
         ArrayList<usuario> lista = new ArrayList<>();
         // cruzamos la tabla usuario con el correo usando left join (por si algun usuario no tiene correo registrado)
@@ -140,6 +161,7 @@ public class usuarioDAO {
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
              
+            // iteracion: lee todos los usuarios y los empaqueta en objetos java
             while(rs.next()) {
                 usuario u = new usuario();
                 u.setIdUsuario(rs.getInt("id_usuario_pk"));
@@ -154,7 +176,15 @@ public class usuarioDAO {
         return lista;
     }
 
-    // metodo transaccional para cambiar el rol y el estado de la cuenta de un usuario
+    /**
+     * actualiza los privilegios de un empleado o bloquea a un usuario malicioso.
+     * incluye un disparador logico para crear perfiles comerciales automaticamente.
+     * 
+     * @param idUsuario int: identificador de la cuenta a afectar.
+     * @param idRol int: nuevo numero de rol asignado (ej: 4 para proveedor).
+     * @param estadoCuenta boolean: true para habilitar, false para suspender.
+     * @return boolean: true si el cambio se guardo con exito.
+     */
     public boolean actualizarPermisos(int idUsuario, int idRol, boolean estadoCuenta) {
         String sql = "UPDATE usuario SET id_rol_fk = ?, estado_cuenta = ? WHERE id_usuario_pk = ?";
         Connection con = null;
@@ -172,6 +202,7 @@ public class usuarioDAO {
             
             // ARREGLO: Si el usuario es ascendido a Proveedor (rol 4), inicializamos su perfil comercial
             // Esto garantiza que proveedor_producto funcione perfectamente cuando intente crear un producto.
+            // condicional: evalua si el nuevo rol otorgado es especificamente "proveedor".
             if (idRol == 4) {
                 String sqlProv = "INSERT IGNORE INTO proveedor (id_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta) VALUES (?, '000000000', 'Mi Tienda', '0000', 'Banco', 'Ahorros')";
                 try (PreparedStatement psProv = con.prepareStatement(sqlProv)) {
@@ -191,7 +222,14 @@ public class usuarioDAO {
         }
     }
 
-    // metodo seguro para cambiar la contrasena validando la contrasena actual
+    /**
+     * permite al usuario cambiar su clave, forzando una doble verificacion.
+     * 
+     * @param idUsuario int: dueno de la cuenta.
+     * @param passwordActual string: clave vieja que debe coincidir con mysql.
+     * @param nuevaPassword string: clave a encriptar y guardar.
+     * @return boolean: true si se logro el cambio, false si la clave actual era incorrecta.
+     */
     public boolean cambiarPassword(int idUsuario, String passwordActual, String nuevaPassword) {
         // la instruccion update solo hara el cambio si desencriptar (aes_decrypt) la clave actual coincide con la que digito el usuario
         String sql = "UPDATE credenciales SET passwd_encript = AES_ENCRYPT(?, ?) WHERE id_usuario = ? AND AES_DECRYPT(passwd_encript, ?) = ?";

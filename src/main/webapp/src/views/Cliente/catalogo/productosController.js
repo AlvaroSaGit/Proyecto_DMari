@@ -1,9 +1,9 @@
 /**
- * Objetivo de este archivo:
- * Controlador principal de la vista del Catálogo de Productos para el Cliente.
- * Se encarga de solicitar los productos al servidor, manejar los filtros de 
- * búsqueda cruzada en memoria (texto, categorías, etiquetas y precios), y controlar 
- * las interacciones del usuario como agregar al carrito o seleccionar filtros dinámicos.
+ * objetivo de este archivo:
+ * controlador principal de la vista del catalogo de productos para el cliente.
+ * se encarga de solicitar los productos al servidor, manejar los filtros de 
+ * busqueda cruzada en memoria (texto, categorias, etiquetas y precios), y controlar 
+ * las interacciones del usuario como agregar al carrito o seleccionar filtros dinamicos.
  */
 
 import { cargarComponente } from '../../../services/uiService.js';
@@ -13,39 +13,39 @@ import { crearTarjetaHTML } from '../../../components/tarjeta/tarjetaComponent.j
 // importamos los pilares de filtrado y ordenamiento logico
 import { busquedaGeneral, filtrarPorCategoriaExacta, filtrarPorEtiqueta, ordenarProductos } from '../../../services/filtroService.js';
 
-// Variables globales para manejar el estado del catalogo sin recargar la BD
+// variables globales para manejar el estado del catalogo sin recargar la bd
 let todosLosProductos = [];
-// Variables de estado para recordar que categoria estamos viendo
+// variables de estado para recordar que categoria estamos viendo
 let terminoBusquedaActual = ''; 
 let tipoFiltroActual = 'general';
 
-// Variables para los filtros simples de la vista (texto, etiqueta, orden)
+// variables para los filtros simples de la vista (texto, etiqueta, orden)
 let textoFiltroSimple = '';
 let etiquetaFiltroSimple = '';
 let ordenFiltroSimple = 'relevancia';
 
 /**
- * Función principal (Entry Point) para inicializar la vista del catálogo.
- * 1. Inyecta el esqueleto HTML de la página.
- * 2. Desencadena la carga de productos desde la base de datos.
- * 3. Llena dinámicamente el filtro de etiquetas.
- * 4. Expone la función de filtrado al entorno global para que el menú lateral pueda interactuar con ella.
+ * funcion principal (entry point) para inicializar la vista del catalogo.
+ * 1. inyecta el esqueleto html de la pagina.
+ * 2. desencadena la carga de productos desde la base de datos.
+ * 3. llena dinamicamente el filtro de etiquetas.
+ * 4. expone la funcion de filtrado al entorno global para que el menu lateral pueda interactuar con ella.
  */
 export async function cargarVistaCatalogo() {
-    // 1. inyectamos el contenedor principal para el catalogo (Se añade ./ a la ruta)
+    // 1. inyectamos el contenedor principal para el catalogo (se añade ./ a la ruta)
     await cargarComponente('component-main', './src/views/Cliente/catalogo/catalogo.html');
     
     // 2. obtenemos y mostramos los productos desde el backend
     renderizarProductosCatalogo();
     
-    // 3. Cargamos las etiquetas de la base de datos de forma dinamica en el select
+    // 3. cargamos las etiquetas de la base de datos de forma dinamica en el select
     cargarEtiquetasFiltro();
     
-    // Exponemos la funcion al objeto global (window) para que el sidebar pueda usarla
+    // exponemos la funcion al objeto global (window) para que el sidebar pueda usarla
     // sin sufrir el error de "clones vacios" por las rutas de importacion
     window.aplicarFiltroCatalogo = aplicarFiltroInteligente;
     
-    // Oidos para la actualizacion silenciosa
+    // oidos para la actualizacion silenciosa
     if (!window.escuchadorStockCatalogo) {
         window.addEventListener('inventarioActualizado', () => {
             const vistaActiva = window.location.hash.replace(/^#\/?/, '') || 'inicio';
@@ -56,26 +56,34 @@ export async function cargarVistaCatalogo() {
 }
 
 /**
- * Se comunica con el backend para extraer el catálogo completo de productos activos.
- * Aplica técnicas de "Cache-Busting" para evitar mostrar datos viejos atrapados en el navegador.
- * Ademas, utiliza el patrón de "Delegación de Eventos" para manejar todos los clics de compras 
- * desde un solo escuchador padre, ahorrando memoria RAM de forma masiva.
+ * se comunica con el backend para extraer el catalogo completo de productos activos.
+ * aplica tecnicas de "cache-busting" para evitar mostrar datos viejos atrapados en el navegador.
+ * ademas, utiliza el patron de "delegacion de eventos" para manejar todos los clics de compras 
+ * desde un solo escuchador padre, ahorrando memoria ram de forma masiva.
  */
 async function renderizarProductosCatalogo() {
     const contenedor = document.getElementById('catalogo-productos-grid');
     if (!contenedor) return;
 
-    // Si es una actualizacion silenciosa, NO borramos el HTML viejo para evitar que la pantalla parpadee.
+    // si es una actualizacion silenciosa, no borramos el html viejo para evitar que la pantalla parpadee.
     if (!todosLosProductos || todosLosProductos.length === 0) {
         contenedor.innerHTML = '<p>Cargando productos...</p>';
     }
 
-    // 3. Obtenemos los datos limpios directamente mediante fetch (mismo metodo que usa inicio)
+    // 3. obtenemos los datos limpios directamente mediante fetch (mismo metodo que usa inicio)
     try {
-        // Cache-Busting estricto para evitar el inventario fantasma en el navegador
+        // cache-busting estricto para evitar el inventario fantasma en el navegador
         const respuesta = await fetch('listar?activos=true&t=' + Date.now(), { cache: 'no-store' });
         if (respuesta.ok) {
-            todosLosProductos = await respuesta.json();
+            const data = await respuesta.json();
+            
+            console.log("📦 PRODUCTOS RECIBIDOS EN CATÁLOGO:", data);
+            
+            // normalizamos para asegurar compatibilidad estricta con filtroService
+            todosLosProductos = data.map(p => {
+                p.categoria = p.categoria || p.nombre_categoria || p.nombreCategoria || 'Sin categoria';
+                return p;
+            });
         } else {
             todosLosProductos = null;
         }
@@ -97,34 +105,34 @@ async function renderizarProductosCatalogo() {
         aplicarFiltroInteligente(filtroPendiente, filtroPendiente === '' ? 'general' : 'categoria');
         sessionStorage.removeItem('filtroCategoriaSidebar');
     } else {
-        // Aplicamos el filtro inteligente para no perder la busqueda del usuario al actualizar
+        // aplicamos el filtro inteligente para no perder la busqueda del usuario al actualizar
         aplicarFiltroInteligente();
     }
 
-    // 4. Asignamos los eventos de clics al nuevo contenedor
+    // 4. asignamos los eventos de clics al nuevo contenedor
     contenedor.addEventListener('click', (evento) => {
         
-        // CASO A: El usuario hizo clic en el boton del carrito
+        // caso a: el usuario hizo clic en el boton del carrito
         const boton = evento.target.closest('.btn-agregar-carrito');
         if (boton) {
             const id = parseInt(boton.dataset.id);
             const nombre = boton.dataset.nombre;
             const precio = parseFloat(boton.dataset.precio);
-            // Extraemos el stock asegurandonos de que sea un numero. Si por alguna razon no viene, enviamos null.
+            // extraemos el stock asegurandonos de que sea un numero. si por alguna razon no viene, enviamos null.
             const stock = boton.dataset.stock ? parseInt(boton.dataset.stock) : null;
             
             agregarAlCarrito(id, nombre, precio, stock);
             return;
         }
 
-        // CASO B: El usuario hizo clic en la etiqueta de la categoria de la tarjeta
+        // caso b: el usuario hizo clic en la etiqueta de la categoria de la tarjeta
         const etiqueta = evento.target.closest('.etiqueta');
         if (etiqueta && etiqueta.dataset.filtro) {
             aplicarFiltroInteligente(etiqueta.dataset.filtro, 'categoria');
         }
     });
     
-    // 5. Asignamos los eventos a los nuevos filtros simples de la vista
+    // 5. asignamos los eventos a los nuevos filtros simples de la vista
     const inputTexto = document.getElementById('filtro-texto');
     const selectEtiqueta = document.getElementById('filtro-etiqueta');
     const selectOrden = document.getElementById('filtro-orden');
@@ -132,7 +140,7 @@ async function renderizarProductosCatalogo() {
     if (inputTexto) {
         inputTexto.addEventListener('input', (e) => {
             textoFiltroSimple = e.target.value;
-            aplicarFiltroInteligente(); // Refrescamos la vista llamando sin parametros
+            aplicarFiltroInteligente(); // refrescamos la vista llamando sin parametros
         });
     }
     if (selectEtiqueta) {
@@ -150,9 +158,9 @@ async function renderizarProductosCatalogo() {
 }
 
 /**
- * Llama al backend (EtiquetaController) para obtener todas las etiquetas registradas en el sistema.
- * Construye dinámicamente las opciones (<option>) del menú desplegable de filtros,
- * usando extracción segura para evitar fallos visuales de tipo "undefined".
+ * llama al backend (etiquetacontroller) para obtener todas las etiquetas registradas en el sistema.
+ * construye dinamicamente las opciones (<option>) del menu desplegable de filtros,
+ * usando extraccion segura para evitar fallos visuales de tipo "undefined".
  */
 async function cargarEtiquetasFiltro() {
     try {
@@ -163,7 +171,7 @@ async function cargarEtiquetasFiltro() {
             if (!selectEtiqueta) return;
             
             etiquetas.forEach(tag => {
-                // Extraccion segura: buscamos todas las posibles formas en las que Java pudo haber enviado el nombre
+                // extraccion segura: buscamos todas las posibles formas en las que java pudo haber enviado el nombre
                 const nombreTag = tag.nombreEtiqueta || tag.nombre_etiqueta || tag.nombre || 'Desconocido';
                 
                 if (nombreTag !== 'Desconocido') {
@@ -177,10 +185,10 @@ async function cargarEtiquetasFiltro() {
 }
 
 /**
- * Recibe un arreglo de productos (completo o previamente filtrado) y se encarga de pintarlo en la pantalla.
- * Incluye protección (Fail-safe) para que, si la creación de una tarjeta específica falla, 
- * no se rompa la vista entera del resto del catálogo.
- * @param {Array} listaProductos - Arreglo de objetos producto a iterar y dibujar.
+ * recibe un arreglo de productos (completo o previamente filtrado) y se encarga de pintarlo en la pantalla.
+ * incluye proteccion (fail-safe) para que, si la creacion de una tarjeta especifica falla, 
+ * no se rompa la vista entera del resto del catalogo.
+ * @param {Array} listaProductos - arreglo de objetos producto a iterar y dibujar.
  */
 function dibujarGridCatalogo(listaProductos) {
     const contenedor = document.getElementById('catalogo-productos-grid');
@@ -188,7 +196,7 @@ function dibujarGridCatalogo(listaProductos) {
     
     contenedor.innerHTML = '';
     
-    // Failsafe: Proteccion por si la lista llega nula desde los servicios de filtrado
+    // failsafe: proteccion por si la lista llega nula desde los servicios de filtrado
     const listaSegura = listaProductos || [];
     
     if (listaSegura.length === 0) {
@@ -197,7 +205,7 @@ function dibujarGridCatalogo(listaProductos) {
     }
 
     listaSegura.forEach(producto => {
-        // 2. Blindamos la creacion de cada tarjeta. Si una falla, no destruira el resto del catalogo
+        // 2. blindamos la creacion de cada tarjeta. si una falla, no destruira el resto del catalogo
         try {
             const tarjetaNodo = crearTarjetaHTML(producto);
             contenedor.appendChild(tarjetaNodo);
@@ -208,28 +216,28 @@ function dibujarGridCatalogo(listaProductos) {
 }
 
 /**
- * El "Cerebro" del sistema de búsqueda y filtrado en la memoria del navegador.
- * Combina múltiples criterios de forma escalonada (Cascada) sin volver a consultar a la base de datos:
- * 1. Filtro base (proveniente del menú lateral o clic directo en las etiquetas de las tarjetas).
- * 2. Filtro de texto libre (barra de búsqueda).
- * 3. Filtro por etiqueta seleccionada en el 'select'.
- * 4. Ordenamiento matemático o alfabético (Ascendente/Descendente).
- * Finalmente envía la lista resultante al motor de dibujado.
- * @param {string} terminoBusqueda - Palabra clave principal o término de filtro de origen.
- * @param {string} tipoFiltro - Categoría lógica del filtro a aplicar ('categoria', 'etiqueta', o 'general').
+ * el "cerebro" del sistema de busqueda y filtrado en la memoria del navegador.
+ * combina multiples criterios de forma escalonada (cascada) sin volver a consultar a la base de datos:
+ * 1. filtro base (proveniente del menu lateral o clic directo en las etiquetas de las tarjetas).
+ * 2. filtro de texto libre (barra de busqueda).
+ * 3. filtro por etiqueta seleccionada en el 'select'.
+ * 4. ordenamiento matematico o alfabetico (ascendente/descendente).
+ * finalmente envia la lista resultante al motor de dibujado.
+ * @param {string} terminoBusqueda - palabra clave principal o termino de filtro de origen.
+ * @param {string} tipoFiltro - categoria logica del filtro a aplicar ('categoria', 'etiqueta', o 'general').
  */
 export function aplicarFiltroInteligente(terminoBusqueda, tipoFiltro) {
-    // Guardamos el termino y el tipo en memoria
+    // guardamos el termino y el tipo en memoria
     if (terminoBusqueda !== undefined) terminoBusquedaActual = terminoBusqueda;
     if (tipoFiltro !== undefined) tipoFiltroActual = tipoFiltro;
 
-    // Aseguramos que siempre arranquemos con un arreglo valido
+    // aseguramos que siempre arranquemos con un arreglo valido
     let listaFiltrada = todosLosProductos || [];
     
-    // Proteccion: forzamos el termino a texto para evitar que .trim() lance error
+    // proteccion: forzamos el termino a texto para evitar que .trim() lance error
     const terminoTexto = (terminoBusquedaActual || '').toString().trim();
 
-    // 1. Aplicamos el filtro principal (del Sidebar o clic en una categoria)
+    // 1. aplicamos el filtro principal (del sidebar o clic en una categoria)
     if (terminoTexto !== '') {
         if (tipoFiltroActual === 'categoria') {
             listaFiltrada = filtrarPorCategoriaExacta(listaFiltrada, terminoTexto) || [];
@@ -240,33 +248,33 @@ export function aplicarFiltroInteligente(terminoBusqueda, tipoFiltro) {
         }
     }
     
-    // 2. Filtro simple por texto libre
+    // 2. filtro simple por texto libre
     if (textoFiltroSimple.trim() !== '') {
         listaFiltrada = busquedaGeneral(listaFiltrada, textoFiltroSimple) || [];
     }
     
-    // 3. Filtro simple por etiqueta seleccionada
+    // 3. filtro simple por etiqueta seleccionada
     if (etiquetaFiltroSimple !== '') {
         listaFiltrada = filtrarPorEtiqueta(listaFiltrada, etiquetaFiltroSimple) || [];
     }
     
-    // 4. Aplicamos el orden por precio (Mayor/Menor)
+    // 4. aplicamos el orden por precio (mayor/menor)
     if (ordenFiltroSimple !== 'relevancia') {
         listaFiltrada = ordenarProductos(listaFiltrada, ordenFiltroSimple) || listaFiltrada;
     }
     
-    // 2. Actualizar el titulo para dar feedback visual de que el filtro funciono
+    // 5. actualizar el titulo para dar feedback visual de que el filtro funciono
     const tituloCatalogo = document.querySelector('.catalogo-header h1');
     if (tituloCatalogo) {
         if (terminoTexto === '') {
             tituloCatalogo.textContent = 'Catálogo de Productos';
         } else {
-            // Capitalizamos la primera letra (ej. floristeria -> Floristeria)
+            // capitalizamos la primera letra (ej. floristeria -> Floristeria)
             const terminoCapitalizado = terminoTexto.charAt(0).toUpperCase() + terminoTexto.slice(1);
             tituloCatalogo.textContent = `Catálogo - ${terminoCapitalizado}`;
         }
     }
 
-    // Dibujamos en pantalla el resultado final limpio
+    // dibujamos en pantalla el resultado final limpio
     dibujarGridCatalogo(listaFiltrada);
 }

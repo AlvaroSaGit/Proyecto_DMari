@@ -65,11 +65,11 @@ function agruparPorPedido(listaPlana) {
     
     listaPlana.forEach(item => {
         // si el identificador del pedido no existe aun en el nuevo objeto, se crea su estructura base
-        if (!agrupado[item.idPedido]) {
-            agrupado[item.idPedido] = {
-                id: item.idPedido,
-                fecha: item.fecha,
-                estado: item.estado,
+        if (!agrupado[item.idPedidoFk]) {
+            agrupado[item.idPedidoFk] = {
+                id: item.idPedidoFk,
+                fecha: item.fechaPedido, // Propiedad exacta del DTO
+                estado: item.estadoPedido, // Aqui viene concatenado el metodo de pago (Ej: Pendiente (Nequi))
                 // capturamos la info de entrega si el servidor la envio (solo para admin/proveedor)
                 cliente: item.nombreCliente || null,
                 total: 0,
@@ -77,9 +77,9 @@ function agruparPorPedido(listaPlana) {
             };
         }
         // se inserta el producto actual dentro del sub-arreglo del pedido correspondiente
-        agrupado[item.idPedido].productos.push(item);
+        agrupado[item.idPedidoFk].productos.push(item);
         // se acumula el costo en el total de la factura
-        agrupado[item.idPedido].total += item.subtotal;
+        agrupado[item.idPedidoFk].total += item.subtotal;
     });
     
     // object.values convierte el diccionario agrupado en un arreglo tradicional.
