@@ -40,6 +40,9 @@ public class producto {
     // absorbe los cruces de la tabla intermedia 'producto_etiqueta'
     private ArrayList<String> etiquetas = new ArrayList<>();
     
+    // absorbe la marca del proveedor desde la base de datos
+    private String proveedorMarca;
+    
     // constructor vacio para poder instanciar objetos en blanco desde los daos
     public producto(){}
 
@@ -130,5 +133,13 @@ public class producto {
 
     public void setEtiquetas(ArrayList<String> etiquetas) {
         this.etiquetas = etiquetas;
+    }
+
+    public String getProveedorMarca() {
+        return proveedorMarca;
+    }
+
+    public void setProveedorMarca(String proveedorMarca) {
+        this.proveedorMarca = proveedorMarca;
     }
 }

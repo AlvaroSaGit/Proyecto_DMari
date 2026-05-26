@@ -25,11 +25,13 @@ public class clienteDAO {
      */
     public perfilCliente obtenerPerfil(int idUsuario) {
         perfilCliente perfil = null;
-        String sql = "SELECT d.direccion, c.referencia_ubicacion, c.telefono_secundario, d.direccion_detallada, t.numero_telefonico " +
-                     "FROM cliente c " +
-                     "LEFT JOIN direccion d ON c.id_cliente_pk = d.id_usuario_fk AND d.direccion_primario = 1 " +
-                     "LEFT JOIN telefono t ON c.id_cliente_pk = t.id_usuario_fk " +
-                     "WHERE c.id_cliente_pk = ?";
+        String sql = "SELECT d.direccion, c.referencia_ubicacion, c.telefono_secundario, d.direccion_detallada, t.numero_telefonico, co.correo " +
+                     "FROM usuario u " +
+                     "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
+                     "LEFT JOIN direccion d ON u.id_usuario_pk = d.id_usuario_fk AND d.direccion_primario = 1 " +
+                     "LEFT JOIN telefono t ON u.id_usuario_pk = t.id_usuario_fk " +
+                     "LEFT JOIN correo co ON u.id_usuario_pk = co.id_usuario_fk " +
+                     "WHERE u.id_usuario_pk = ?";
         
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -44,6 +46,7 @@ public class clienteDAO {
                     perfil.setTelefono(rs.getString("numero_telefonico"));
                     perfil.setTelefonoSecundario(rs.getString("telefono_secundario"));
                     perfil.setReferencia(rs.getString("referencia_ubicacion"));
+                    perfil.setCorreo(rs.getString("correo"));
                     return perfil;
                 }
             }
@@ -67,28 +70,31 @@ public class clienteDAO {
      */
     public boolean guardarOActualizarPerfil(int idUsuario, String direccionPrimaria, String direccionDetalle, String numeroTelefono, String telefonoSecundario, String referencia) {
         
-        // 1. sentencia para la tabla cliente (referencias generales)
+        // 1. preparamos la instruccion sql para la tabla cliente (referencias generales)
+        // usamos on duplicate key update para insertar si es nuevo, o actualizar si ya existe, ahorrando consultas extra
         String sqlCliente = "INSERT INTO cliente (id_cliente_pk, direccion_envio, telefono_secundario, referencia_ubicacion) " +
                             "VALUES (?, ?, ?, ?) " +
                             "ON DUPLICATE KEY UPDATE direccion_envio = VALUES(direccion_envio), telefono_secundario = VALUES(telefono_secundario), referencia_ubicacion = VALUES(referencia_ubicacion)";
                             
-        // 2. sentencia para la tabla direccion
-        // asumimos que si no existe, se crea. si existe, se actualiza la primera direccion encontrada de ese usuario.
+        // 2. preparamos la instruccion sql para la tabla direccion
+        // forzamos el 1 logico en direccion_primaria. actualiza solo la direccion principal de este usuario especifico.
         String sqlDireccion = "INSERT INTO direccion (id_usuario_fk, direccion, direccion_detallada, direccion_primario) " +
                               "VALUES (?, ?, ?, 1) " +
                               "ON DUPLICATE KEY UPDATE direccion = VALUES(direccion), direccion_detallada = VALUES(direccion_detallada)";
                               
-        // 3. sentencia para la tabla telefono (el numero telefonico es unique en tu sql)
+        // 3. preparamos la instruccion sql para la tabla telefono (el numero telefonico es unique en el esquema)
+        // usamos insert ignore para evitar que mysql explote si el telefono ya existe para otro usuario
         String sqlTelefono = "INSERT IGNORE INTO telefono (id_usuario_fk, numero_telefonico) " +
                              "VALUES (?, ?)";
 
         Connection con = null;
         try {
             con = db.conectar();
-            // iniciamos transaccion para asegurar que las 3 tablas se llenen al mismo tiempo
+            // apagamos el guardado automatico (autocommit) para iniciar un bloque transaccional.
+            // esto garantiza que si una insercion falla, las demas se anulan para mantener la base de datos limpia.
             con.setAutoCommit(false);
 
-            // insertar/actualizar en cliente
+            // ejecucion del bloque 1: actualizacion de la tabla central del cliente
             try (PreparedStatement psCli = con.prepareStatement(sqlCliente)) {
                 psCli.setInt(1, idUsuario);
                 psCli.setString(2, direccionPrimaria);
@@ -97,7 +103,7 @@ public class clienteDAO {
                 psCli.executeUpdate();
             }
 
-            // insertar/actualizar en direccion
+            // ejecucion del bloque 2: actualizacion de la tabla satelite de direccion
             try (PreparedStatement psDir = con.prepareStatement(sqlDireccion)) {
                 psDir.setInt(1, idUsuario);
                 psDir.setString(2, direccionPrimaria);
@@ -105,16 +111,16 @@ public class clienteDAO {
                 psDir.executeUpdate();
             }
 
-            // insertar en telefono
-            // usamos update manual si el numero cambia, o insert ignore si es nuevo
+            // ejecucion del bloque 3: actualizacion de la tabla satelite de telefono
+            // primero intentamos actualizar el registro asumiendo que el usuario ya tenia telefono asignado
             String sqlActualizarTelefono = "UPDATE telefono SET numero_telefonico = ? WHERE id_usuario_fk = ?";
             try (PreparedStatement psTelUpd = con.prepareStatement(sqlActualizarTelefono)) {
                 psTelUpd.setString(1, numeroTelefono);
                 psTelUpd.setInt(2, idUsuario);
                 int filas = psTelUpd.executeUpdate();
-                // condicional de base de datos: evalua si el update realmente sobreescribio filas.
-                // si filas == 0, significa que el usuario jamas habia tenido telefono, por ende
-                // cambiamos la instruccion de update a un insert tradicional.
+                // validacion de filas afectadas: comprobamos si mysql realmente sobreescribio algo.
+                // si filas == 0, significa que el usuario no tenia telefono previo, asi que 
+                // procedemos a inyectarle uno completamente nuevo.
                 if (filas == 0) {
                     try (PreparedStatement psTelIns = con.prepareStatement(sqlTelefono)) {
                         psTelIns.setInt(1, idUsuario);
@@ -124,13 +130,16 @@ public class clienteDAO {
                 }
             }
 
+            // si todo el codigo anterior fluyo sin lanzar excepciones, guardamos los datos definitivamente
             con.commit();
             return true;
         } catch (SQLException e) {
+            // si algo exploto en medio de la transaccion, deshacemos cualquier cambio incompleto
             try { if (con != null) con.rollback(); } catch (SQLException ex) {}
             System.out.println("error al guardar perfil del cliente: " + e.getMessage());
             return false;
         } finally {
+            // limpieza de memoria: volvemos a encender el autocommit y cerramos la tuberia a la base de datos
             try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
         }
     }

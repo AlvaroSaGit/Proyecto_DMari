@@ -8,74 +8,93 @@ import { cargarComponente } from '../../../services/uiService.js';
 
 // funcion de arranque, llamada por el enrutador
 export async function cargarVistaPerfil() {
-    await cargarComponente('component-main', './src/views/Cliente/perfil/perfil.html');
+    await cargarComponente('component-main', './src/views/Cliente/perfil/perfilCliente.html');
     prepararFormularioPerfil();
 }
 
 async function prepararFormularioPerfil() {
     const formulario = document.getElementById('form-perfil-cliente');
-    if (!formulario) return;
+    
+    if (!formulario) {
+        console.warn('advertencia: no se encontro el <form id="form-perfil-cliente"> en el html. revisa el nombre.');
+    }
 
     // 1. cargar datos actuales del cliente al abrir la pagina
     try {
         // hacemos una peticion get al servlet perfilcontroller (java)
-        const respuesta = await fetch('perfil-cliente');
+        // usamos cache-busting estricto para evitar datos de usuarios viejos
+        const respuesta = await fetch('perfil-cliente?t=' + Date.now(), { cache: 'no-store' });
         
         if (respuesta.ok) {
             const perfil = await respuesta.json();
             
-            // inyectamos los datos en los inputs solo si vienen con informacion valida
-            if (perfil.telefono) document.getElementById('perfil-telefono').value = perfil.telefono;
-            if (perfil.direccion) document.getElementById('perfil-direccion').value = perfil.direccion;
-            if (perfil.direccion_detallada) document.getElementById('perfil-detalle').value = perfil.direccion_detallada;
-            if (perfil.referencia_ubicacion) document.getElementById('perfil-referencia').value = perfil.referencia_ubicacion;
-            if (perfil.telefono_secundario) document.getElementById('perfil-telefono-sec').value = perfil.telefono_secundario;
+            // atrapamos las referencias del html de forma segura
+            const inTelefono = document.getElementById('perfil-telefono');
+            const inDireccion = document.getElementById('perfil-direccion');
+            const inDetalle = document.getElementById('perfil-detalle');
+            const inReferencia = document.getElementById('perfil-referencia');
+            const inTelSec = document.getElementById('perfil-telefono-sec');
+            const inCorreo = document.getElementById('perfil-correo');
+            const inNombre = document.getElementById('perfil-nombre');
+            const inApellido = document.getElementById('perfil-apellido');
+            
+            // inyectamos los datos solo si el dato existe Y la caja de texto existe en el html (evita crash)
+            if (perfil.telefono && inTelefono) inTelefono.value = perfil.telefono;
+            if (perfil.direccion && inDireccion) inDireccion.value = perfil.direccion;
+            if (perfil.direccion_detallada && inDetalle) inDetalle.value = perfil.direccion_detallada;
+            if (perfil.referencia_ubicacion && inReferencia) inReferencia.value = perfil.referencia_ubicacion;
+            if (perfil.telefono_secundario && inTelSec) inTelSec.value = perfil.telefono_secundario;
+            
+            // agregamos el correo por si el cliente tambien quiere visualizarlo aqui
+            if (perfil.correo !== undefined && inCorreo) inCorreo.value = perfil.correo;
+            if (perfil.nombre !== undefined && inNombre) inNombre.value = perfil.nombre;
+            if (perfil.apellido !== undefined && inApellido) inApellido.value = perfil.apellido;
         }
     } catch (error) {
         console.error('Error al cargar el perfil actual', error);
     }
 
     // 2. escuchar cuando el usuario intente guardar los datos nuevos
-    formulario.addEventListener('submit', async (e) => {
-        e.preventDefault(); // evitamos que la pagina parpadee o recargue
-        
-        const btnGuardar = document.getElementById('btn-guardar-perfil');
-        btnGuardar.innerText = 'Guardando...';
-        btnGuardar.disabled = true; // previene doble clic accidental
-
-        // empaquetamos los datos usando urlsearchparams para que java los pueda
-        // atrapar facilmente usando request.getparameter("nombre_campo");
-        const params = new URLSearchParams();
-        params.append('numeroTelefono', document.getElementById('perfil-telefono').value);
-        params.append('direccionPrimaria', document.getElementById('perfil-direccion').value);
-        params.append('direccionDetalle', document.getElementById('perfil-detalle').value);
-        params.append('referencia', document.getElementById('perfil-referencia').value);
-        params.append('telefonoSecundario', document.getElementById('perfil-telefono-sec').value);
-
-        try {
-            // hacemos un post al mismo servlet para decirle a java que guarde
-            const res = await fetch('perfil-cliente', {
-                method: 'POST',
-                body: params
-            });
+    if (formulario) {
+        formulario.addEventListener('submit', async (e) => {
+            e.preventDefault(); // evitamos que la pagina parpadee o recargue
             
-            if (res.ok) {
-                // si todo salio bien, le avisamos al cliente.
-                // en este punto, el clientedao hizo su magia y distribuyo la info en las 3 tablas.
-                alert('¡Tus datos de envío se han guardado con éxito!');
-                
-                // (opcional) si el cliente vino aqui bloqueado desde el carrito, 
-                // podria querer volver al catalogo a seguir comprando.
-                window.location.hash = 'catalogo';
-            } else {
-                alert('Hubo un error al intentar guardar tu perfil. Revisa tu conexión.');
+            const btnGuardar = document.getElementById('btn-guardar-perfil');
+            if(btnGuardar) {
+                btnGuardar.innerText = 'Guardando...';
+                btnGuardar.disabled = true; // previene doble clic accidental
             }
-        } catch (error) {
-            console.error('Fallo de red al guardar perfil', error);
-        } finally {
-            // restauramos el boton a la normalidad
-            btnGuardar.innerText = 'Guardar Perfil';
-            btnGuardar.disabled = false;
-        }
-    });
+    
+            // empaquetamos los datos usando urlsearchparams para que java los pueda
+            // atrapar facilmente usando request.getparameter("nombre_campo");
+            const params = new URLSearchParams();
+            params.append('numeroTelefono', document.getElementById('perfil-telefono')?.value || '');
+            params.append('direccionPrimaria', document.getElementById('perfil-direccion')?.value || '');
+            params.append('direccionDetalle', document.getElementById('perfil-detalle')?.value || '');
+            params.append('referencia', document.getElementById('perfil-referencia')?.value || '');
+            params.append('telefonoSecundario', document.getElementById('perfil-telefono-sec')?.value || '');
+    
+            try {
+                // hacemos un post al mismo servlet para decirle a java que guarde
+                const res = await fetch('perfil-cliente', {
+                    method: 'POST',
+                    body: params
+                });
+                
+                if (res.ok) {
+                    alert('¡Tus datos de envío se han guardado con éxito!');
+                    window.location.hash = 'catalogo';
+                } else {
+                    alert('Hubo un error al intentar guardar tu perfil. Revisa tu conexión.');
+                }
+            } catch (error) {
+                console.error('Fallo de red al guardar perfil', error);
+            } finally {
+                if(btnGuardar) {
+                    btnGuardar.innerText = 'Guardar Perfil';
+                    btnGuardar.disabled = false;
+                }
+            }
+        });
+    }
 }

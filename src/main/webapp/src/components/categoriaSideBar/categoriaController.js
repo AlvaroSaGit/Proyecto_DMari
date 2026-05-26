@@ -3,44 +3,50 @@ import { cargarComponente } from '../../services/uiService.js';
 // importamos el enrutador para poder viajar entre paginas
 import { navegarA } from '../../router/router.js';
 
-// funcion para inyectar las categorias al inicio
+/**
+ * funcion principal para inyectar y configurar el panel lateral de categorias.
+ * inyecta el html dinamicamente y activa los escuchadores de los botones.
+ */
 export async function inicializarCategoria() {
+    // pedimos al servicio ui que cargue el archivo html dentro del div especificado
     await cargarComponente('contenedor-sidebar-categoria', './src/components/categoriaSideBar/categoriaSidebar.html');
     
-    // preparamos los botones de cerrar
+    // capturamos los elementos visuales de cierre desde el dom
     const btnCerrar = document.getElementById('btn-cerrar-categoria');
     const overlay = document.getElementById('overlay-categoria');
     
+    // asignamos el evento click para cerrar el panel si los elementos existen
     if (btnCerrar) btnCerrar.addEventListener('click', cerrarCategoria);
     if (overlay) overlay.addEventListener('click', cerrarCategoria);
     
-    // preparamos los botones de cada categoria
+    // capturamos todos los botones que representan una categoria filtrable
     const botonesCategoria = document.querySelectorAll('.btn-categoria-item');
     
-    // recorremos los botones con un bucle clasico
+    // recorremos cada boton encontrado en el html para asignarle su respectiva logica
     for (let i = 0; i < botonesCategoria.length; i++) {
         botonesCategoria[i].addEventListener('click', function() {
-            // le quitamos la clase activo a todos primero
+            // limpieza visual: le quitamos la clase activo a todos los botones primero
             for (let j = 0; j < botonesCategoria.length; j++) {
                 botonesCategoria[j].classList.remove('activo');
             }
             
-            // se la ponemos solo al que acabamos de clickear
+            // iluminacion visual: se la ponemos unicamente al boton recien clickeado
             this.classList.add('activo');
             
-            // Extraemos la categoria limpiando espacios fantasma y comparamos en minusculas por seguridad
+            // extraemos la categoria limpiando espacios fantasma y comparamos en minusculas por seguridad
             const categoriaRaw = (this.getAttribute('data-categoria') || '').trim();
             const esBotonTodo = categoriaRaw.toLowerCase() === 'todo' || categoriaRaw === '';
             
-            // Transformamos "reposteria" a "Reposteria" para que coincida exactamente con MySQL
+            // transformamos la primera letra a mayuscula (ej: reposteria -> Reposteria) 
+            // esto es vital para que coincida exactamente con el texto de mysql
             const categoriaFormateada = categoriaRaw.charAt(0).toUpperCase() + categoriaRaw.slice(1);
             
-            // revisamos si el usuario ya se encuentra en la pantalla del catalogo
+            // revisamos en que vista se encuentra el usuario actualmente leyendo la url
             const hashActual = window.location.hash.replace(/^#\/?/, '');
             
             if (hashActual === 'catalogo') {
-                // si ya estamos en el catalogo, aplicamos el filtro al instante sin recargar la pagina
-                // Usamos la funcion global para evitar el error de doble instancia de modulos ES6
+                // si ya estamos en el catalogo, aplicamos el filtro al instante modificando el dom
+                // usamos la funcion global inyectada en window para evitar errores de modulos circulares
                 if (typeof window.aplicarFiltroCatalogo === 'function') {
                     if (esBotonTodo) {
                         window.aplicarFiltroCatalogo('', 'general');
@@ -51,32 +57,40 @@ export async function inicializarCategoria() {
                     // dow.location.reload();
                 }
             } else {
-                // si estamos en otra pantalla (como el inicio), guardamos el filtro en memoria
-                // y le ordenamos al router que nos lleve al catalogo
+                // si estamos en otra pantalla (inicio, perfil), guardamos el filtro deseado en sessionstorage
+                // luego le ordenamos al router que nos redirija forzosamente hacia el catalogo
                 sessionStorage.setItem('filtroCategoriaSidebar', esBotonTodo ? '' : categoriaFormateada);
                 navegarA('catalogo');
             }
             
-            // cerramos el panel automaticamente
+            // cerramos el panel lateral automaticamente tras elegir una opcion
             cerrarCategoria();
         });
     }
 }
 
-// funcion para mostrar el sidebar agregando clases css
+/**
+ * muestra visualmente el panel lateral de categorias.
+ * le inyecta la clase css activo al menu y al fondo oscuro.
+ */
 export function abrirCategoria() {
     const sidebar = document.getElementById('sidebar-categoria');
     const overlay = document.getElementById('overlay-categoria');
     
+    // validamos que existan en el html antes de modificar sus clases
     if (sidebar) sidebar.classList.add('activo');
     if (overlay) overlay.classList.add('activo');
 }
 
-// funcion para ocultar el sidebar
+/**
+ * oculta el panel lateral de categorias de la pantalla.
+ * le quita la clase css activo para esconder los elementos animadamente.
+ */
 export function cerrarCategoria() {
     const sidebar = document.getElementById('sidebar-categoria');
     const overlay = document.getElementById('overlay-categoria');
     
+    // validamos que existan en el html antes de remover sus clases
     if (sidebar) sidebar.classList.remove('activo');
     if (overlay) overlay.classList.remove('activo');
 }

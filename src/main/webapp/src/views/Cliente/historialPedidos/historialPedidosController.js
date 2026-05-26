@@ -68,8 +68,8 @@ function agruparPorPedido(listaPlana) {
         if (!agrupado[item.idPedidoFk]) {
             agrupado[item.idPedidoFk] = {
                 id: item.idPedidoFk,
-                fecha: item.fechaPedido, // Propiedad exacta del DTO
-                estado: item.estadoPedido, // Aqui viene concatenado el metodo de pago (Ej: Pendiente (Nequi))
+                fecha: item.fechaPedido || item.fecha || 'Fecha desconocida', 
+                estado: item.estadoPedido || item.estado || 'Pendiente', 
                 // capturamos la info de entrega si el servidor la envio (solo para admin/proveedor)
                 cliente: item.nombreCliente || null,
                 total: 0,

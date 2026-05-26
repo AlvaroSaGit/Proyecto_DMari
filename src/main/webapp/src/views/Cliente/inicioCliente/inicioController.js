@@ -49,8 +49,6 @@ async function cargarProductosDesdeBD() {
             // convertimos el json que nos mando java a un arreglo
             const productos = await respuesta.json();
             
-            console.log("🛒 PRODUCTOS RECIBIDOS EN INICIO:", productos);
-            
             // normalizamos la propiedad categoria por si java la envio con otro nombre
             // iteracion interna (map): recorre el arreglo mutando los nombres de atributos para evitar fallos
             const productosNormalizados = productos.map(p => {

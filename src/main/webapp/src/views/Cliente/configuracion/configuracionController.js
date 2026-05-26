@@ -47,15 +47,31 @@ async function prepararFormularioPerfil() {
     if (formPerfil) {
         // peticion get: le pedimos a java los datos actuales del cliente para pre-llenar las cajas
         try {
-            const respuesta = await fetch('perfil-cliente');
+            // usamos cache-busting estricto para evitar que cruce datos entre usuarios nuevos
+            const respuesta = await fetch('perfil-cliente?t=' + Date.now(), { cache: 'no-store' });
             if (respuesta.ok) {
                 const datos = await respuesta.json();
                 // si la base de datos devolvio informacion, la inyectamos en cada input respectivo
                 if (datos.telefono) document.getElementById('conf-telefono').value = datos.telefono;
-                if (datos.telefonoSecundario) document.getElementById('conf-telefono-sec').value = datos.telefonoSecundario;
+                if (datos.telefono_secundario) document.getElementById('conf-telefono-sec').value = datos.telefono_secundario;
                 if (datos.direccion) document.getElementById('conf-direccion').value = datos.direccion;
-                if (datos.direccionDetalle) document.getElementById('conf-detalle').value = datos.direccionDetalle;
-                if (datos.referencia) document.getElementById('conf-referencia').value = datos.referencia;
+                if (datos.direccion_detallada) document.getElementById('conf-detalle').value = datos.direccion_detallada;
+                if (datos.referencia_ubicacion) document.getElementById('conf-referencia').value = datos.referencia_ubicacion;
+                
+                // inyectamos los nuevos datos fijos de la cuenta
+                if (datos.nombre !== undefined) {
+                    const inNombre = document.getElementById('conf-nombre');
+                    if (inNombre) inNombre.value = datos.nombre;
+                }
+                if (datos.apellido !== undefined) {
+                    const inApellido = document.getElementById('conf-apellido');
+                    if (inApellido) inApellido.value = datos.apellido;
+                }
+                // validacion robusta para que inyecte el correo aun si llega vacio
+                if (datos.correo !== undefined) {
+                    const inputCorreo = document.getElementById('conf-correo');
+                    if (inputCorreo) inputCorreo.value = datos.correo;
+                }
             }
         } catch (error) { console.error('error al cargar perfil:', error); }
 
@@ -65,9 +81,9 @@ async function prepararFormularioPerfil() {
             
             // usamos urlsearchparams para empaquetar los datos de una forma que java entienda facilmente
             const parametros = new URLSearchParams();
-            parametros.append('telefono', document.getElementById('conf-telefono').value);
+            parametros.append('numeroTelefono', document.getElementById('conf-telefono').value);
             parametros.append('telefonoSecundario', document.getElementById('conf-telefono-sec').value);
-            parametros.append('direccion', document.getElementById('conf-direccion').value);
+            parametros.append('direccionPrimaria', document.getElementById('conf-direccion').value);
             parametros.append('direccionDetalle', document.getElementById('conf-detalle').value);
             parametros.append('referencia', document.getElementById('conf-referencia').value);
 

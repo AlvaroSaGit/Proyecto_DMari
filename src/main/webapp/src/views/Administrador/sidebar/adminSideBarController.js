@@ -19,6 +19,9 @@ export async function inicializarAdmin() {
     const btnUsuarios = document.getElementById('btn-nav-usuarios');
     const btnSalir = document.getElementById('btn-nav-salir');
     
+    // Ocultamos temporalmente la opcion de solicitudes para la presentacion
+    if (btnSolicitudes) btnSolicitudes.style.display = 'none';
+
     // configuramos la navegacion para cada boton.
     // si el boton existe en el html, le agregamos un escuchador de eventos 'click'.
     // cuando hagan clic, le ordenamos al router que cambie la url hacia esa vista especifica.
@@ -37,12 +40,6 @@ export async function inicializarAdmin() {
     if (btnPedidos) {
         btnPedidos.addEventListener('click', () => {
             navegarA('admin-pedidos');
-        });
-    }
-    
-    if (btnSolicitudes) {
-        btnSolicitudes.addEventListener('click', () => {
-            navegarA('admin-solicitudes');
         });
     }
 
@@ -92,8 +89,6 @@ export async function inicializarAdmin() {
             btnPedidos.classList.add('activo');
         } else if (hashActual.includes('admin-usuarios') && btnUsuarios) {
             btnUsuarios.classList.add('activo');
-        } else if (hashActual.includes('admin-solicitudes') && btnSolicitudes) {
-            btnSolicitudes.classList.add('activo');
         }
     }
 }

@@ -33,6 +33,8 @@ public class carritoDAO {
         String sqlSelect = "SELECT id_carrito_pk FROM carrito WHERE id_cliente_fk = ?";
         // Consulta para crearle una nueva canasta si la busqueda anterior no arroja resultados
         String sqlInsert = "INSERT INTO carrito (id_cliente_fk) VALUES (?)";
+        // salvavidas: asegura que el cliente exista en su tabla hija para que la llave foranea no explote
+        String sqlAsegurarCliente = "INSERT INTO cliente (id_cliente_pk, direccion_envio) VALUES (?, 'sin registrar') ON DUPLICATE KEY UPDATE direccion_envio = direccion_envio";
 
         try (Connection con = db.conectar()) {
             // PASO A: Intentamos leer la base de datos
@@ -45,6 +47,13 @@ public class carritoDAO {
                         return rs.getInt("id_carrito_pk");
                     }
                 }
+            }
+
+            // inyectamos un perfil basico fantasma antes de intentar crear el carrito.
+            // usamos 'insert ignore' para que, si el usuario ya habia llenado su perfil, mysql simplemente ignore la instruccion.
+            try (PreparedStatement psCli = con.prepareStatement(sqlAsegurarCliente)) {
+                psCli.setInt(1, idCliente);
+                psCli.executeUpdate();
             }
 
             // PASO B: Si llegamos a esta linea, significa que el cliente NO tenia carrito.

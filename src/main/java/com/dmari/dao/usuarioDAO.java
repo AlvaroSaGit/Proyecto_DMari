@@ -110,7 +110,7 @@ public class usuarioDAO {
         
         // aes_decrypt hace el proceso inverso: usa la llave secreta para destrabar el blob y lo compara con el texto digitado.
         // traemos tambien el estado_cuenta para validarlo desde java y poder darle un mensaje especifico al usuario
-        String sql = "SELECT u.id_usuario_pk, u.nombre, u.id_rol_fk, c.correo, u.estado_cuenta " +
+        String sql = "SELECT u.id_usuario_pk, u.nombre, u.apellido, u.id_rol_fk, c.correo, u.estado_cuenta " +
                      "FROM usuario u " +
                      "INNER JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk " +
                      "INNER JOIN credenciales cr ON u.id_usuario_pk = cr.id_usuario " +
@@ -132,6 +132,7 @@ public class usuarioDAO {
                     usuarioLogueado = new usuario();
                     usuarioLogueado.setIdUsuario(rs.getInt("id_usuario_pk"));
                     usuarioLogueado.setNombre(rs.getString("nombre"));
+                    usuarioLogueado.setApellido(rs.getString("apellido"));
                     usuarioLogueado.setCorreo(rs.getString("correo"));
                     usuarioLogueado.setIdRol(rs.getInt("id_rol_fk"));
                     usuarioLogueado.setEstadoCuenta(rs.getBoolean("estado_cuenta"));

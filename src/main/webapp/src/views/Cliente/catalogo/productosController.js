@@ -77,8 +77,6 @@ async function renderizarProductosCatalogo() {
         if (respuesta.ok) {
             const data = await respuesta.json();
             
-            console.log("📦 PRODUCTOS RECIBIDOS EN CATÁLOGO:", data);
-            
             // normalizamos para asegurar compatibilidad estricta con filtroService
             todosLosProductos = data.map(p => {
                 p.categoria = p.categoria || p.nombre_categoria || p.nombreCategoria || 'Sin categoria';

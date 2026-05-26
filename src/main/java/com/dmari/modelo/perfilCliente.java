@@ -12,6 +12,7 @@ public class perfilCliente {
     private String telefono;
     private String telefonoSecundario;
     private String referencia;
+    private String correo;
 
     // metodos de extraccion (getters)
     /**
@@ -44,6 +45,12 @@ public class perfilCliente {
     public String getReferencia() {
         return referencia;
     }
+    /**
+     * @return string: correo electronico vinculado
+     */
+    public String getCorreo() {
+        return correo;
+    }
 
     // metodos de inyeccion (setters)
     /**
@@ -75,5 +82,11 @@ public class perfilCliente {
      */
     public void setReferencia(String referencia) {
         this.referencia = referencia;
+    }
+    /**
+     * @param correo string: establece el correo de contacto
+     */
+    public void setCorreo(String correo) {
+        this.correo = correo;
     }
 }

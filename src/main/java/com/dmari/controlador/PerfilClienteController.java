@@ -56,22 +56,42 @@ public class PerfilClienteController extends HttpServlet {
         // si el dao devolvio null (porque es un usuario nuevo), enviamos un json vacio {}.
         // condicional: verifica si el dao logro encontrar al menos un registro previo.
         if (perfil != null) {
+            
+            // 3.1 candado: aseguramos que el correo jamas llegue vacio cruzando con la sesion actual
+            String correoSeguro = "";
+            if (perfil.getCorreo() != null && !perfil.getCorreo().trim().isEmpty()) {
+                correoSeguro = perfil.getCorreo();
+            } else if (user.getCorreo() != null) {
+                correoSeguro = user.getCorreo();
+            }
+
+            // extraemos y saneamos el nombre y apellido para que no rompan el json si tienen comillas
+            String nombreSeguro = user.getNombre() != null ? user.getNombre().replace("\"", "\\\"").replace("\n", " ").replace("\r", "") : "";
+            String apellidoSeguro = user.getApellido() != null ? user.getApellido().replace("\"", "\\\"").replace("\n", " ").replace("\r", "") : "";
+
             StringBuilder json = new StringBuilder();
             json.append("{")
+                .append("\"nombre\":\"").append(nombreSeguro).append("\",")
+                .append("\"apellido\":\"").append(apellidoSeguro).append("\",")
                 // reemplazamos los nulls por textos vacios para que javascript no imprima la palabra "null"
                 // se usa un operador ternario en linea (condicion ? verdadero : falso) para evitar imprimir "null".
-                .append("\"direccion\":\"").append(perfil.getDireccion() != null ? perfil.getDireccion() : "").append("\",")
-                .append("\"direccion_detallada\":\"").append(perfil.getDireccionDetalle() != null ? perfil.getDireccionDetalle() : "").append("\",")
-                .append("\"telefono\":\"").append(perfil.getTelefono() != null ? perfil.getTelefono() : "").append("\",")
-                .append("\"telefono_secundario\":\"").append(perfil.getTelefonoSecundario() != null ? perfil.getTelefonoSecundario() : "").append("\",")
-                .append("\"referencia_ubicacion\":\"").append(perfil.getReferencia() != null ? perfil.getReferencia() : "").append("\"")
+                .append("\"direccion\":\"").append(perfil.getDireccion() != null ? perfil.getDireccion().replace("\"", "\\\"").replace("\n", " ").replace("\r", "") : "").append("\",")
+                .append("\"direccion_detallada\":\"").append(perfil.getDireccionDetalle() != null ? perfil.getDireccionDetalle().replace("\"", "\\\"").replace("\n", " ").replace("\r", "") : "").append("\",")
+                .append("\"telefono\":\"").append(perfil.getTelefono() != null ? perfil.getTelefono().replace("\"", "\\\"").replace("\n", " ").replace("\r", "") : "").append("\",")
+                .append("\"telefono_secundario\":\"").append(perfil.getTelefonoSecundario() != null ? perfil.getTelefonoSecundario().replace("\"", "\\\"").replace("\n", " ").replace("\r", "") : "").append("\",")
+                .append("\"referencia_ubicacion\":\"").append(perfil.getReferencia() != null ? perfil.getReferencia().replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "") : "").append("\",")
+                .append("\"correo\":\"").append(correoSeguro).append("\"")
                 .append("}");
             
             response.setStatus(HttpServletResponse.SC_OK); // 200 OK
             response.getWriter().print(json.toString());
         } else {
+            String nombreSeguro = user.getNombre() != null ? user.getNombre().replace("\"", "\\\"").replace("\n", " ").replace("\r", "") : "";
+            String apellidoSeguro = user.getApellido() != null ? user.getApellido().replace("\"", "\\\"").replace("\n", " ").replace("\r", "") : "";
+            String correoSeguro = user.getCorreo() != null ? user.getCorreo().replace("\"", "\\\"").replace("\n", " ").replace("\r", "") : "";
+            
             response.setStatus(HttpServletResponse.SC_OK);
-            response.getWriter().print("{}");
+            response.getWriter().print("{\"nombre\":\"" + nombreSeguro + "\", \"apellido\":\"" + apellidoSeguro + "\", \"correo\":\"" + correoSeguro + "\"}");
         }
     }
 

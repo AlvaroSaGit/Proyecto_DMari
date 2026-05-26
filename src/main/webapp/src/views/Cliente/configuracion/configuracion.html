@@ -6,6 +6,20 @@
         <div style="background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
             <h3 style="margin-bottom: 20px; color: #333; font-size: 1.2rem;">Datos de envío y contacto</h3>
             <form id="form-config-perfil" style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: flex; gap: 15px;">
+                    <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
+                        <label for="conf-nombre" style="font-weight: 600; font-size: 0.9rem;">Nombre</label>
+                        <input type="text" id="conf-nombre" readonly title="Dato principal de tu cuenta" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; background-color: #f1f3f5; color: #6c757d; cursor: not-allowed;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
+                        <label for="conf-apellido" style="font-weight: 600; font-size: 0.9rem;">Apellido</label>
+                        <input type="text" id="conf-apellido" readonly title="Dato principal de tu cuenta" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; background-color: #f1f3f5; color: #6c757d; cursor: not-allowed;">
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label for="conf-correo" style="font-weight: 600; font-size: 0.9rem;">Correo electrónico</label>
+                    <input type="email" id="conf-correo" readonly title="Tu correo no se puede modificar" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; background-color: #f1f3f5; color: #6c757d; cursor: not-allowed;">
+                </div>
                 <div style="display: flex; flex-direction: column; gap: 5px;">
                     <label for="conf-telefono" style="font-weight: 600; font-size: 0.9rem;">Teléfono principal</label>
                     <input type="text" id="conf-telefono" required placeholder="Ej. 3100000000" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">

@@ -5,8 +5,24 @@
     </div>
     
     <form id="form-perfil-cliente" class="perfil-info" style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="display: flex; gap: 15px;">
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
+                <label for="perfil-nombre" style="font-weight: 600; color: #495057; font-size: 0.9rem;">nombre</label>
+                <input type="text" id="perfil-nombre" readonly title="dato principal de tu cuenta" style="padding: 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; outline: none; background: #e9ecef; color: #6c757d; cursor: not-allowed;">
+            </div>
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
+                <label for="perfil-apellido" style="font-weight: 600; color: #495057; font-size: 0.9rem;">apellido</label>
+                <input type="text" id="perfil-apellido" readonly title="dato principal de tu cuenta" style="padding: 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; outline: none; background: #e9ecef; color: #6c757d; cursor: not-allowed;">
+            </div>
+        </div>
+
         <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-            <label for="perfil-telefono" style="font-weight: 600; color: #495057; font-size: 0.9rem;">telefono principal</label>
+            <label for="perfil-correo" style="font-weight: 600; color: #495057; font-size: 0.9rem;">correo electronico</label>
+            <input type="email" id="perfil-correo" readonly title="tu correo no se puede modificar" style="padding: 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; outline: none; background: #e9ecef; color: #6c757d; cursor: not-allowed;">
+        </div>
+
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+            <label for="perfil-telefono" style="font-weight: 600; color: #495057; font-size: 0.9rem;">telefono principal <span style="color:red;">*</span></label>
             <input type="text" id="perfil-telefono" required placeholder="ej. 3100000000" style="padding: 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; outline: none;">
         </div>
         
@@ -16,7 +32,7 @@
         </div>
 
         <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-            <label for="perfil-direccion" style="font-weight: 600; color: #495057; font-size: 0.9rem;">direccion de entrega</label>
+            <label for="perfil-direccion" style="font-weight: 600; color: #495057; font-size: 0.9rem;">direccion de entrega <span style="color:red;">*</span></label>
             <input type="text" id="perfil-direccion" required placeholder="ej. calle 10 # 5-20" style="padding: 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; outline: none;">
         </div>
         
@@ -31,7 +47,7 @@
         </div>
         
         <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
-            <button type="submit" style="padding: 12px 24px; background: #212529; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s;">guardar cambios</button>
+            <button id="btn-guardar-perfil" type="submit" style="padding: 12px 24px; background: #212529; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s;">guardar cambios</button>
         </div>
     </form>
 </section>
