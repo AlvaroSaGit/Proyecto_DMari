@@ -24,13 +24,11 @@ TRUNCATE TABLE direccion;
 -- 4. Vaciamos las tablas principales
 TRUNCATE TABLE producto;
 TRUNCATE TABLE usuario;
-TRUNCATE TABLE rol_permiso;
 
 -- 5. Vaciamos las tablas maestras (Padres)
 TRUNCATE TABLE metodo_pago;
 TRUNCATE TABLE etiqueta;
 TRUNCATE TABLE categoria;
-TRUNCATE TABLE permiso;
 TRUNCATE TABLE rol;
 
 -- 6. Volvemos a prender la seguridad de llaves foraneas (¡MUY IMPORTANTE!)

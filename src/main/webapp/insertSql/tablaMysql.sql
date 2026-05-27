@@ -11,12 +11,6 @@ create table rol(
     tipo_rol enum('cliente','repartidor','administrador','proveedor') not null default 'cliente'
 );
 
--- tabla permisos
-create table permiso(
-    id_permiso_pk int auto_increment primary key,
-    nombre_permiso varchar(100) not null unique
-);
-
 -- tabla de categoria
 create table categoria(
     id_categoria_pk int auto_increment primary key,
@@ -41,15 +35,6 @@ create table metodo_pago(
 -- ==========================================================
 -- 2. TABLAS PRINCIPALES NUCLEO
 -- ==========================================================
-
--- tabla rol permisos conecta rol y permiso
-create table rol_permiso(
-    id_rol_permiso_pk int auto_increment primary key,
-    id_rol_fk int,
-    id_permiso_fk int,
-    foreign key (id_rol_fk) references rol(id_rol_pk),
-    foreign key (id_permiso_fk) references permiso(id_permiso_pk)
-);
 
 -- tabla de usuarios para todos los roles
 create table usuario(
