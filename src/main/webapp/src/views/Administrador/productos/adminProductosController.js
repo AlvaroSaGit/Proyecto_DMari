@@ -104,6 +104,28 @@ function prepararVistaAdminProductos() {
             // capturamos el texto de las etiquetas separadas por coma
             const etiquetas = document.getElementById('prod-etiquetas') ? document.getElementById('prod-etiquetas').value : '';
             
+            // VALIDACION SENA FRONTEND: Evitar textos en blanco, valores negativos y campos vacios
+            if (nombre.trim() === '') {
+                alert('Error: El nombre del producto no puede estar vacio ni contener solo espacios.');
+                guardandoProducto = false;
+                return;
+            }
+            if (precio <= 0) {
+                alert('Error: El precio debe ser mayor a 0.');
+                guardandoProducto = false;
+                return;
+            }
+            if (stock < 0) {
+                alert('Error: El stock no puede ser un numero negativo.');
+                guardandoProducto = false;
+                return;
+            }
+            if (!idCategoria) {
+                alert('Error: Debes seleccionar una categoria obligatoriamente.');
+                guardandoProducto = false;
+                return;
+            }
+            
             /*
              * tecnica de envio con formdata:
              * formdata permite enviar archivos fisicos combinados con texto normal.

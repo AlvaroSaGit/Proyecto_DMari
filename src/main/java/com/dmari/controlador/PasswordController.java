@@ -12,13 +12,21 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-/*
+/**
     objetivo de este archivo:
-    recibir la peticion de actualizacion de contrasena desde la vista de configuracion
-*/
+    controlador (servlet) dedicado exclusivamente a gestionar la actualizacion
+    de contrasenas de los usuarios. escucha las peticiones post en la ruta
+    '/cambiar-password' y se comunica con el dao para validar y ejecutar el cambio.
+ */
 @WebServlet(name = "PasswordController", urlPatterns = {"/cambiar-password"})
 public class PasswordController extends HttpServlet {
 
+    /*
+        metodo post: actualizacion de contrasena
+        recibe la contrasena actual y la nueva desde el formulario de configuracion.
+        implementa una barrera de seguridad para asegurar que solo un usuario
+        con sesion activa pueda intentar cambiar su propia clave.
+    */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession sesion = request.getSession(false);
