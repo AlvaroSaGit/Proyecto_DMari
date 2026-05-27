@@ -109,13 +109,6 @@ INSERT INTO proveedor (id_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancar
 (5, '900555666-3', 'Vivero San Luis', '555666777', 'Nequi', 'Ahorros');
 
 -- ==========================================
--- 8. COMPLETAR PERFILES DE REPARTIDORES
--- ==========================================
-INSERT INTO repartidor (id_repartidor_pk, placa_vehiculo, tipo_vehiculo, modelo_vehiculo, licencia) VALUES
-(6, 'XYZ-123', 'Moto', 'Yamaha FZ 2021', 'LIC-98765'),
-(15, 'ABC-987', 'Moto', 'Suzuki SZ 2020', 'LIC-12345');
-
--- ==========================================
 -- 9. REGISTRO DE PRODUCTOS (15 Registros para SENA)
 -- ==========================================
 INSERT INTO producto (id_categoria_fk, nombre_producto, descripcion, precio, stock, estado) VALUES 
@@ -251,17 +244,17 @@ INSERT INTO detalle_pedido (id_producto_fk, id_pedido_fk, cantidad, precio_unita
 INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, numero_cuenta_ahorro, comision_dmari, monto_total, estado_activo, estado_pago) VALUES 
 (1, 1, '3101234567', 2025.00, 38475.00, true, 'Aprobado');
 
--- === PEDIDO 2: Laura (ID 7) - Ya asignado a un repartidor y Entregado ===
-INSERT INTO pedido (id_cliente_fk, id_repartidor_fk, total_pagar, estado_pedido) VALUES 
-(7, 6, 150000.00, 'Entregado');
+-- === PEDIDO 2: Laura (ID 7) - Entregado ===
+INSERT INTO pedido (id_cliente_fk, total_pagar, estado_pedido) VALUES 
+(7, 150000.00, 'Entregado');
 INSERT INTO detalle_pedido (id_producto_fk, id_pedido_fk, cantidad, precio_unitario, subtotal) VALUES 
 (11, 2, 1, 150000.00, 150000.00); -- Peluche Oso Gigante
 INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, numero_cuenta_ahorro, comision_dmari, monto_total, estado_activo, estado_pago) VALUES 
 (2, 3, '444455556666', 7500.00, 142500.00, true, 'Aprobado');
 
 -- === PEDIDO 3: Jorge (ID 8) - En Camino ===
-INSERT INTO pedido (id_cliente_fk, id_repartidor_fk, total_pagar, estado_pedido) VALUES 
-(8, 15, 85000.00, 'En Camino');
+INSERT INTO pedido (id_cliente_fk, total_pagar, estado_pedido) VALUES 
+(8, 85000.00, 'En Camino');
 INSERT INTO detalle_pedido (id_producto_fk, id_pedido_fk, cantidad, precio_unitario, subtotal) VALUES 
 (7, 3, 1, 85000.00, 85000.00); -- Desayuno Feliz
 INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, numero_cuenta_ahorro, comision_dmari, monto_total, estado_activo, estado_pago) VALUES 

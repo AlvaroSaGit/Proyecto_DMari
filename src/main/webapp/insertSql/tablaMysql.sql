@@ -105,19 +105,6 @@ create table correo(
     foreign key (id_usuario_fk) references usuario(id_usuario_pk)
 );
 
--- tabla notificaciones
-create table notificacion(
-    id_notificacion_pk int auto_increment primary key,
-    id_receptor_fk int,
-    id_emisor_fk int,
-    titulo varchar(50) not null,
-    mensaje text not null,
-    estado_leido boolean default false,
-    fecha_envio timestamp default current_timestamp,
-    foreign key (id_emisor_fk) references usuario(id_usuario_pk),
-    foreign key (id_receptor_fk) references usuario(id_usuario_pk)
-);
-
 -- tabla credenciales
 create table credenciales(
     id_usuario int primary key,
@@ -134,16 +121,6 @@ create table proveedor(
     banco_nombre varchar(50),
     tipo_cuenta enum('Ahorros','Corriente'),
     foreign key (id_proveedor_pk) references usuario(id_usuario_pk)
-);
-
--- tabla repartidor unificada (Elimina la duplicidad y reune los datos del vehiculo)
-create table repartidor(
-    id_repartidor_pk int primary key,
-    placa_vehiculo varchar(10),
-    tipo_vehiculo enum('Moto','Carro','Bicicleta'),
-    modelo_vehiculo varchar(50),
-    licencia varchar(20),
-    foreign key (id_repartidor_pk) references usuario(id_usuario_pk)
 );
 
 -- tabla cliente
@@ -206,12 +183,10 @@ create table detalle_carrito(
 create table pedido(
     id_pedido_pk int auto_increment primary key,
     id_cliente_fk int,
-    id_repartidor_fk int,
     fecha timestamp default current_timestamp,
     total_pagar decimal(10,2) not null,
     estado_pedido enum('Pendiente', 'Preparando', 'En Camino', 'Entregado', 'Cancelado') default 'Pendiente',
-    foreign key (id_cliente_fk) references cliente(id_cliente_pk),
-    foreign key (id_repartidor_fk) references repartidor(id_repartidor_pk)
+    foreign key (id_cliente_fk) references cliente(id_cliente_pk)
 );
 
 -- tabla detalle pedido
