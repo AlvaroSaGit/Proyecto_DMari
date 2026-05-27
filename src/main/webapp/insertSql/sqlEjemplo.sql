@@ -3,11 +3,10 @@ USE DMari;
 -- ==========================================
 -- 1. POBLACION DE ROLES
 -- ==========================================
-INSERT INTO rol (tipo_rol) VALUES 
-('administrador'), -- ID 1
-('cliente'),       -- ID 2
-('repartidor'),    -- ID 3
-('proveedor');     -- ID 4
+INSERT INTO rol (id_rol_pk, tipo_rol) VALUES 
+(1, 'administrador'),
+(2, 'cliente'),
+(4, 'proveedor');
 
 -- ==========================================
 -- 2. POBLACION DE CATEGORIAS (15 Registros para SENA)
@@ -39,7 +38,7 @@ INSERT INTO usuario (nombre, apellido, id_rol_fk, estado_cuenta) VALUES
 ('Carlos', 'Suministros', 4, true), -- ID 3: Proveedor Ceras
 ('Ana', 'Repostera', 4, true),     -- ID 4: Proveedor Postres
 ('Luis', 'Flores', 4, true),       -- ID 5: Proveedor Vivero
-('Pedro', 'Moto', 3, true),        -- ID 6: Repartidor
+('Pedro', 'Moto', 2, true),        -- ID 6: Cliente (Antes Repartidor)
 ('Laura', 'Perez', 2, true),       -- ID 7: Cliente
 ('Jorge', 'Diaz', 2, true),        -- ID 8: Cliente
 ('Diana', 'Rojas', 2, true),       -- ID 9: Cliente
@@ -48,7 +47,7 @@ INSERT INTO usuario (nombre, apellido, id_rol_fk, estado_cuenta) VALUES
 ('Andres', 'Castillo', 2, true),   -- ID 12: Cliente
 ('Valentina', 'Ortiz', 2, true),   -- ID 13: Cliente
 ('Diego', 'Ramirez', 2, true),     -- ID 14: Cliente
-('Miguel', 'Reparte', 3, true);    -- ID 15: Repartidor 2
+('Miguel', 'Reparte', 2, true);    -- ID 15: Cliente (Antes Repartidor)
 
 -- ==========================================
 -- 4. REGISTRO DE CORREOS SATELITE (15 Registros)

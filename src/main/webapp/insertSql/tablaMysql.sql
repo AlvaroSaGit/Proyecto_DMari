@@ -8,7 +8,7 @@ use DMari;
 -- tabla rol (Ahora incluye explicitamente al proveedor en el ENUM)
 create table rol(
     id_rol_pk int auto_increment primary key,
-    tipo_rol enum('cliente','repartidor','administrador','proveedor') not null default 'cliente'
+    tipo_rol enum('cliente','administrador','proveedor') not null default 'cliente'
 );
 
 -- tabla de categoria
@@ -128,10 +128,12 @@ create table imagenes(
 
 -- tabla producto etiqueta
 create table producto_etiqueta(
+    id_producto_etiqueta_pk int auto_increment primary key,
     id_producto int,
     id_etiqueta int,
     foreign key (id_producto) references producto(id_producto_pk),
-    foreign key (id_etiqueta) references etiqueta(id_etiqueta_pk)
+    foreign key (id_etiqueta) references etiqueta(id_etiqueta_pk),
+    unique (id_producto, id_etiqueta)
 );
 
 -- tabla proveedor producto (Conectada a la nueva estructura de proveedor unificada)

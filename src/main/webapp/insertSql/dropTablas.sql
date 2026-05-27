@@ -18,7 +18,6 @@ DROP TABLE IF EXISTS producto_etiqueta;
 DROP TABLE IF EXISTS imagenes;
 DROP TABLE IF EXISTS producto;
 DROP TABLE IF EXISTS proveedor;
-DROP TABLE IF EXISTS datos_proveedor;
 DROP TABLE IF EXISTS cliente;
 DROP TABLE IF EXISTS credenciales;
 DROP TABLE IF EXISTS correo;
