@@ -9,24 +9,12 @@ INSERT INTO rol (id_rol_pk, tipo_rol) VALUES
 (4, 'proveedor');
 
 -- ==========================================
--- 2. POBLACION DE CATEGORIAS (15 Registros para SENA)
+-- 2. POBLACION DE CATEGORIAS (3 Registros Principales)
 -- ==========================================
 INSERT INTO categoria (nombre, descripcion, estado_activo) VALUES 
 ('Reposteria', 'Postres, donas y dulces artesanales', true), -- ID 1
 ('Decoracion', 'Velas y articulos decorativos para el hogar', true), -- ID 2
-('Floristeria', 'Arreglos florales hermosos para toda ocasion', true), -- ID 3
-('Desayunos Sorpresa', 'Bandejas de desayuno para regalar', true), -- ID 4
-('Anchetas', 'Cestas de regalos surtidas', true), -- ID 5
-('Chocolateria', 'Bombones y trufas de chocolate fino', true), -- ID 6
-('Globos', 'Globos de helio y metalizados', true), -- ID 7
-('Peluches', 'Peluches de todos los tamanos', true), -- ID 8
-('Licores', 'Vinos y licores para acompanar regalos', true), -- ID 9
-('Tarjetas', 'Tarjetas con mensajes personalizados', true), -- ID 10
-('Empaques', 'Cajas y bolsas de regalo especiales', true), -- ID 11
-('Combos', 'Paquetes de regalo prearmados', true), -- ID 12
-('Eventos', 'Bocaditos y decoracion para fiestas', true), -- ID 13
-('Estacionales', 'Productos de navidad, amor y amistad, etc', true), -- ID 14
-('Saludables', 'Postres sin azucar y opciones fit', true); -- ID 15
+('Floristeria', 'Arreglos florales hermosos para toda ocasion', true); -- ID 3
 
 -- ==========================================
 -- 3. REGISTRO DE USUARIOS BASE (15 Registros para SENA)
@@ -117,13 +105,13 @@ INSERT INTO producto (id_categoria_fk, nombre_producto, descripcion, precio, sto
 (3, 'Ramo de Rosas Rojas', 'Hermoso arreglo floral para regalar a mama', 65000, 5, true), -- prod 4
 (1, 'Dona Rellena de Arequipe', 'Masa suave con relleno tradicional', 5500, 25, true),    -- prod 5
 (1, 'Caja de Mini Donas', 'Set de 6 mini donas surtidas para regalo', 15000, 10, true),   -- prod 6
-(4, 'Desayuno Feliz', 'Bandeja con jugo, sanduche, fruta y globo', 85000, 8, true),       -- prod 7
-(5, 'Ancheta Cumpleanos', 'Dulces surtidos y cervezas', 110000, 4, true),                 -- prod 8
-(6, 'Caja de Trufas', '12 trufas de chocolate belga', 35000, 20, true),                   -- prod 9
-(7, 'Globo Helio Te Amo', 'Globo metalizado gigante', 12000, 50, true),                   -- prod 10
-(8, 'Peluche Oso Gigante', 'Oso de felpa de 1 metro de alto', 150000, 3, true),           -- prod 11
-(9, 'Vino Tinto Reserva', 'Botella de vino tinto importado', 75000, 12, true),            -- prod 12
-(10, 'Tarjeta 3D Cumpleanos', 'Tarjeta artesanal con relieve', 8000, 100, true),          -- prod 13
+(1, 'Desayuno Feliz', 'Bandeja con jugo, sanduche, fruta y globo', 85000, 8, true),       -- prod 7 (Reasignado a Reposteria)
+(2, 'Ancheta Cumpleanos', 'Dulces surtidos y cervezas', 110000, 4, true),                 -- prod 8 (Reasignado a Decoracion)
+(1, 'Caja de Trufas', '12 trufas de chocolate belga', 35000, 20, true),                   -- prod 9 (Reasignado a Reposteria)
+(2, 'Globo Helio Te Amo', 'Globo metalizado gigante', 12000, 50, true),                   -- prod 10 (Reasignado a Decoracion)
+(2, 'Peluche Oso Gigante', 'Oso de felpa de 1 metro de alto', 150000, 3, true),           -- prod 11 (Reasignado a Decoracion)
+(2, 'Vino Tinto Reserva', 'Botella de vino tinto importado', 75000, 12, true),            -- prod 12 (Reasignado a Decoracion)
+(2, 'Tarjeta 3D Cumpleanos', 'Tarjeta artesanal con relieve', 8000, 100, true),           -- prod 13 (Reasignado a Decoracion)
 (1, 'Pastel de Chocolate', 'Pastel humedo para 10 personas', 55000, 6, true),             -- prod 14
 (1, 'Cupcakes Decorados', 'Caja de 4 cupcakes personalizados', 20000, 15, true);          -- prod 15
 

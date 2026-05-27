@@ -89,7 +89,8 @@ public class etiquetaDAO {
         String[] tags = etiquetasStr.split(",");
         String sqlBuscar = "SELECT id_etiqueta_pk FROM etiqueta WHERE nombre_etiqueta = ?";
         String sqlInsertarTag = "INSERT INTO etiqueta (nombre_etiqueta) VALUES (?)";
-        String sqlVincular = "INSERT INTO producto_etiqueta (id_producto, id_etiqueta) VALUES (?, ?)";
+        // Usamos INSERT IGNORE para que no explote si el usuario escribe etiquetas repetidas (Ej: "Dulce, Dulce")
+        String sqlVincular = "INSERT IGNORE INTO producto_etiqueta (id_producto, id_etiqueta) VALUES (?, ?)";
 
         try (Connection con = db.conectar()) {
             for (String tag : tags) {
