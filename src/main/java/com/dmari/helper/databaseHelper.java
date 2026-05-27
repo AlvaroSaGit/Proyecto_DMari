@@ -34,12 +34,12 @@ public class databaseHelper {
             
             // drivermanager.getconnection usa las credenciales para "llamar" a la base de datos y mantener la linea abierta
             conexion = DriverManager.getConnection(URL, USUARIO, CLAVE);
-            System.out.println("conexion realizada a la base de datos dmari");
+            System.out.println("Conexion realizada a la base de datos dmari");
             
         }catch (ClassNotFoundException error){
-            System.out.println("no se encontro el driver de mysql - "+error.getMessage());
+            System.out.println("No se encontro el driver de mysql - "+error.getMessage());
         }catch (SQLException error){
-            System.out.println("error de credenciales o mysql apagado - "+error.getMessage());
+            System.out.println("Error de credenciales o mysql apagado - "+error.getMessage());
         }
         
         return conexion;

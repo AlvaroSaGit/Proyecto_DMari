@@ -83,8 +83,10 @@ public class usuarioDAO {
             return false;
             
         } catch (SQLException e) {
-            try { if (con != null) con.rollback(); } catch (SQLException ex) {}
-            System.err.println("\n=== error critico al registrar ===");
+            try { if (con != null) con.rollback(); } catch (SQLException ex) {
+                System.err.println("Fallo critico al intentar hacer rollback en registro: " + ex.getMessage());
+            }
+            System.err.println("\n=== Error critico al registrar ===");
             System.err.println("Motivo: " + e.getMessage());
             System.err.println("==================================\n");
             return false;
@@ -95,7 +97,9 @@ public class usuarioDAO {
                     con.setAutoCommit(true); 
                     con.close(); 
                 }
-            } catch (SQLException e) {}
+            } catch (SQLException e) {
+                System.err.println("Error al cerrar la conexion en registro: " + e.getMessage());
+            }
         }
     }
 
@@ -140,7 +144,7 @@ public class usuarioDAO {
             }
             
         } catch (SQLException e) {
-            System.out.println("error al verificar login: " + e.getMessage());
+            System.out.println("Error al verificar login: " + e.getMessage());
         }
         
         return usuarioLogueado;
@@ -173,7 +177,7 @@ public class usuarioDAO {
                 u.setEstadoCuenta(rs.getBoolean("estado_cuenta"));
                 lista.add(u);
             }
-        } catch (SQLException e) { System.out.println("error al listar usuarios: " + e.getMessage()); }
+        } catch (SQLException e) { System.out.println("Error al listar usuarios: " + e.getMessage()); }
         return lista;
     }
 
@@ -215,11 +219,15 @@ public class usuarioDAO {
             con.commit();
             return true;
         } catch (SQLException e) {
-            try { if (con != null) con.rollback(); } catch (SQLException ex) {}
+            try { if (con != null) con.rollback(); } catch (SQLException ex) {
+                System.err.println("Fallo critico al intentar hacer rollback en actualizacion de permisos: " + ex.getMessage());
+            }
             System.out.println("Error al actualizar permisos: " + e.getMessage());
             return false;
         } finally {
-            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
+            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {
+                System.err.println("Error al cerrar la conexion en actualizacion de permisos: " + e.getMessage());
+            }
         }
     }
 
@@ -245,6 +253,6 @@ public class usuarioDAO {
             
             // devuelve true si al menos 1 fila fue modificada (lo que confirma que la contrasena antigua era correcta)
             return ps.executeUpdate() > 0;
-        } catch (SQLException e) { System.out.println("error al cambiar password: " + e.getMessage()); return false; }
+        } catch (SQLException e) { System.out.println("Error al cambiar password: " + e.getMessage()); return false; }
     }
 }

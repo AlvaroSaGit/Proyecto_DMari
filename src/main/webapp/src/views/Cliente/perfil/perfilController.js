@@ -16,7 +16,7 @@ async function prepararFormularioPerfil() {
     const formulario = document.getElementById('form-perfil-cliente');
     
     if (!formulario) {
-        console.warn('advertencia: no se encontro el <form id="form-perfil-cliente"> en el html. revisa el nombre.');
+        console.warn('Advertencia: no se encontro el <form id="form-perfil-cliente"> en el html. Revisa el nombre.');
     }
 
     // 1. cargar datos actuales del cliente al abrir la pagina
@@ -82,10 +82,10 @@ async function prepararFormularioPerfil() {
                 });
                 
                 if (res.ok) {
-                    alert('¡Tus datos de envío se han guardado con éxito!');
+                    alert('¡Tus datos de envio se han guardado con exito!');
                     window.location.hash = 'catalogo';
                 } else {
-                    alert('Hubo un error al intentar guardar tu perfil. Revisa tu conexión.');
+                    alert('Hubo un error al intentar guardar tu perfil. Revisa tu conexion.');
                 }
             } catch (error) {
                 console.error('Fallo de red al guardar perfil', error);

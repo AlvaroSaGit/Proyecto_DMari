@@ -56,7 +56,7 @@ public class imagenesDAO {
             return filas > 0;
 
         } catch (SQLException e) {
-            System.out.println("error al borrar fotos: " + e.getMessage());
+            System.out.println("Error al borrar fotos: " + e.getMessage());
             return false;
         }
     }

@@ -80,7 +80,7 @@ public class etiquetaDAO {
         try (Connection con = db.conectar(); PreparedStatement psDel = con.prepareStatement(sqlDelete)) {
             psDel.setInt(1, idProducto);
             psDel.executeUpdate();
-        } catch (SQLException e) { System.out.println("error al limpiar etiquetas viejas: " + e.getMessage()); }
+        } catch (SQLException e) { System.out.println("Error al limpiar etiquetas viejas: " + e.getMessage()); }
 
         // si el usuario no escribio nada, terminamos el proceso aqui
         if (etiquetasStr == null || etiquetasStr.trim().isEmpty()) return;
@@ -133,6 +133,6 @@ public class etiquetaDAO {
             try (PreparedStatement psLimpiar = con.prepareStatement(sqlLimpiar)) {
                 psLimpiar.executeUpdate();
             }
-        } catch (SQLException e) { System.out.println("error al procesar etiquetas: " + e.getMessage()); }
+        } catch (SQLException e) { System.out.println("Error al procesar etiquetas: " + e.getMessage()); }
     }
 }

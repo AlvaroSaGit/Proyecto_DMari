@@ -57,11 +57,11 @@ async function cargarProductosDesdeBD() {
             });
             renderizarProductos(productosNormalizados);
         } else {
-            console.error('error al cargar los productos del backend');
+            console.error('Error al cargar los productos del backend');
         }
     } catch (error) {
         // atrapamos errores de red o servidor caido
-        console.error('falla de conexion al intentar traer productos:', error);
+        console.error('Falla de conexion al intentar traer productos:', error);
     }
 }
 
@@ -110,7 +110,7 @@ function inyectarEnContenedor(idContenedor, lista) {
         try {
             const tarjeta = crearTarjetaHTML(prod);
             contenedor.appendChild(tarjeta);
-        } catch (e) { console.error("error al crear tarjeta individual", e); }
+        } catch (e) { console.error("Error al crear tarjeta individual", e); }
     });
 
     return true;

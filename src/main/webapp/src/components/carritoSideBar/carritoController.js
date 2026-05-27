@@ -67,25 +67,25 @@ export async function inicializarCarrito() {
         // Inyectamos la estructura interna del modal (titulos, inputs, selectores y botones)
         modalPago.innerHTML = `
             <div style="background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-                <h3 style="margin-bottom: 15px; color: #212529; font-size: 1.3rem;">pasarela de pago</h3>
-                <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">selecciona tu metodo de pago simulado para finalizar la orden.</p>
+                <h3 style="margin-bottom: 15px; color: #212529; font-size: 1.3rem;">Pasarela de pago</h3>
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">Selecciona tu metodo de pago simulado para finalizar la orden.</p>
                 
                 <div style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
                     <div style="display: flex; flex-direction: column; gap: 5px;">
-                        <label style="font-weight: 600; font-size: 0.9rem;">metodo de pago</label>
+                        <label style="font-weight: 600; font-size: 0.9rem;">Metodo de pago</label>
                         <select id="select-metodo-pago" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none;">
-                            <option value="" disabled selected>cargando opciones...</option>
+                            <option value="" disabled selected>Cargando opciones...</option>
                         </select>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 5px;">
-                        <label style="font-weight: 600; font-size: 0.9rem;">numero de cuenta / celular</label>
-                        <input type="text" id="input-cuenta-pago" placeholder="ej. 3100000000" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none;">
+                        <label style="font-weight: 600; font-size: 0.9rem;">Numero de cuenta / celular</label>
+                        <input type="text" id="input-cuenta-pago" placeholder="Ej. 3100000000" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none;">
                     </div>
                 </div>
                 
                 <div style="display: flex; justify-content: space-between; margin-top: 25px;">
-                    <button id="btn-cancelar-pago" style="background: #f8f9fa; border: 1px solid #ddd; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; color: #333;">cancelar</button>
-                    <button id="btn-confirmar-pago" style="background: #212529; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">pagar ahora</button>
+                    <button id="btn-cancelar-pago" style="background: #f8f9fa; border: 1px solid #ddd; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; color: #333;">Cancelar</button>
+                    <button id="btn-confirmar-pago" style="background: #212529; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">Pagar ahora</button>
                 </div>
             </div>
         `;
@@ -110,11 +110,43 @@ export async function inicializarCarrito() {
             const resBD = await fetch('carrito-db');
             if (resBD.ok) {
                 const carritoBD = await resBD.json();
-                // Si Java le devolvio productos en JSON, sobreescribimos la memoria local de su navegador
-                if (carritoBD.length > 0) { carrito = carritoBD; localStorage.setItem('carritoDMari', JSON.stringify(carrito)); renderizarCarrito(); }
+                if (carritoBD.length > 0) { 
+                    let huboCambiosStock = false;
+                    
+                    // Mapeamos el carrito para normalizar llaves (idProducto -> id) y verificar recortes de inventario
+                    carrito = carritoBD.map(item => {
+                        let cantidadReal = item.cantidad;
+                        
+                        // Si el stock en BD es menor a la cantidad guardada por el cliente, lo topamos al máximo disponible
+                        if (item.stock != null && cantidadReal > item.stock) {
+                            cantidadReal = item.stock;
+                            huboCambiosStock = true;
+                        }
+                        
+                        return {
+                            id: item.idProducto || item.id, // Normalizamos el ID para que los botones de sumar/restar funcionen
+                            nombre: item.nombre,
+                            precio: item.precio,
+                            cantidad: cantidadReal,
+                            stock: item.stock,
+                            imagen: item.imagen
+                        };
+                    }).filter(item => item.cantidad > 0); // Quitamos los artículos que se agotaron por completo (stock 0)
+                    
+                    if (carritoBD.length !== carrito.length) huboCambiosStock = true;
+
+                    localStorage.setItem('carritoDMari', JSON.stringify(carrito)); 
+                    renderizarCarrito(); 
+                    
+                    if (huboCambiosStock) {
+                        // Retrasamos la alerta medio segundo para no trabar el renderizado visual
+                        setTimeout(() => alert('Atencion: Algunos productos de tu carrito fueron ajustados o removidos porque el inventario disponible cambio.'), 500);
+                        programarSincronizacion(); // Obligamos a MySQL a registrar el nuevo límite
+                    }
+                }
             }
         }
-    } catch (e) { console.error('error al sincronizar carrito inicial', e); }
+    } catch (e) { console.error('Error al sincronizar carrito inicial', e); }
 }
 
 /**
@@ -126,18 +158,18 @@ async function cargarMetodosPago() {
     if (!select) return;
     
     try {
-        select.innerHTML = '<option value="" disabled selected>cargando opciones...</option>';
+        select.innerHTML = '<option value="" disabled selected>Cargando opciones...</option>';
         const respuesta = await fetch('metodos-pago');
         if (respuesta.ok) {
             // Desempaquetamos el JSON que trae {id, descripcion}
             const metodos = await respuesta.json();
             
             if (metodos.length === 0) {
-                select.innerHTML = '<option value="" disabled selected>no hay metodos (revisa mysql)</option>';
+                select.innerHTML = '<option value="" disabled selected>No hay metodos (revisa mysql)</option>';
                 return;
             }
             
-            select.innerHTML = '<option value="" disabled selected>elige una opcion...</option>';
+            select.innerHTML = '<option value="" disabled selected>Elige una opcion...</option>';
             // Recorremos el JSON inyectando una etiqueta <option> por cada metodo habilitado
             metodos.forEach(m => {
                 const opt = document.createElement('option');
@@ -146,11 +178,11 @@ async function cargarMetodosPago() {
                 select.appendChild(opt);
             });
         } else {
-            select.innerHTML = '<option value="" disabled selected>error en java (revisa netbeans)</option>';
+            select.innerHTML = '<option value="" disabled selected>Error en java (revisa netbeans)</option>';
         }
     } catch (error) { 
-        console.error('error al cargar metodos de pago:', error); 
-        select.innerHTML = '<option value="" disabled selected>falla de red</option>';
+        console.error('Error al cargar metodos de pago:', error); 
+        select.innerHTML = '<option value="" disabled selected>Falla de red</option>';
     }
 }
 
@@ -179,7 +211,7 @@ async function procesarCompra() {
                 const perfil = await resPerfil.json();
                 // Si los datos llegan nulos o como un string de espacios vacios, bloqueamos el proceso.
                 if (!perfil.direccion || perfil.direccion.trim() === '' || !perfil.telefono || perfil.telefono.trim() === '') {
-                    alert('para poder entregar tu pedido, es obligatorio que completes tus datos de envio (direccion y telefono principal). te llevaremos a tu perfil.');
+                    alert('Para poder entregar tu pedido, es obligatorio que completes tus datos de envio (direccion y telefono principal). Te llevaremos a tu perfil.');
                     cerrarCarrito();    // Ocultamos el menu lateral
                     navegarA('perfil'); // Forzamos una redireccion SPA hacia el formulario
                     return;             // Abortamos la ejecucion para que no se abra el modal de pago
@@ -216,7 +248,7 @@ async function confirmarPagoSimulado() {
     const idMetodo = document.getElementById('select-metodo-pago').value;
     
     if (!cuenta || cuenta.trim() === '') {
-        alert('por favor ingresa un numero de cuenta o telefono valido para continuar.');
+        alert('Por favor ingresa un numero de cuenta o telefono valido para continuar.');
         return;
     }
     
@@ -225,7 +257,7 @@ async function confirmarPagoSimulado() {
     
     // Cambiamos el boton a estado "cargando" por si la BD es lenta
     const botonConfirmar = document.getElementById('btn-confirmar-pago');
-    botonConfirmar.innerText = "procesando pago...";
+    botonConfirmar.innerText = "Procesando pago...";
     botonConfirmar.disabled = true;
     
     // LLAMADO CENTRAL: Enviamos la informacion al controlador de Pedidos en Java
@@ -243,13 +275,13 @@ async function confirmarPagoSimulado() {
         renderizarCarrito(); // Redibujamos la canasta (quedara vacia en pantalla)
         
         window.dispatchEvent(new CustomEvent('inventarioActualizado'));
-        mostrarNotificacion('¡pago aprobado y compra realizada con exito!', 'exito');
+        mostrarNotificacion('¡Pago aprobado y compra realizada con exito!', 'exito');
     } else {
         window.dispatchEvent(new CustomEvent('inventarioActualizado'));
-        mostrarNotificacion('el pedido fallo. revisa si algun producto se agoto.', 'error');
+        mostrarNotificacion('El pedido fallo. Revisa si algun producto se agoto.', 'error');
     }
     
-    botonConfirmar.innerText = "pagar ahora";
+    botonConfirmar.innerText = "Pagar ahora";
     botonConfirmar.disabled = false;
 }
 
@@ -380,7 +412,9 @@ function programarSincronizacion() {
             // pero como estamos en un setTimeout en la sombra y omitimos los alerts, 
             // el visitante jamas se dara cuenta y su pagina seguira perfecta con el localstorage.
             await fetch('carrito-db', { method: 'POST', body: parametros });
-        } catch (e) {} 
+        } catch (e) {
+            console.warn('Fallo la sincronizacion silenciosa del carrito. Esto es normal si el usuario no ha iniciado sesion.', e.message);
+        } 
     }, 1500);
 }
 

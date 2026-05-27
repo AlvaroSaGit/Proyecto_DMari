@@ -30,7 +30,7 @@ public class metodoPagoDAO {
                     .append(",\"descripcion\":\"").append(rs.getString("descripcion_pago")).append("\"}");
                 primero = false;
             }
-        } catch (SQLException e) { System.out.println("error al listar metodos de pago: " + e.getMessage()); }
+        } catch (SQLException e) { System.out.println("Error al listar metodos de pago: " + e.getMessage()); }
         
         json.append("]");
         return json.toString();

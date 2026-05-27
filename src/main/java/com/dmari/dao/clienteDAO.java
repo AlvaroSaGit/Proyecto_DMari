@@ -51,7 +51,7 @@ public class clienteDAO {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("error al obtener perfil: " + e.getMessage());
+            System.out.println("Error al obtener perfil: " + e.getMessage());
         }
         return null;
     }
@@ -136,7 +136,7 @@ public class clienteDAO {
         } catch (SQLException e) {
             // si algo exploto en medio de la transaccion, deshacemos cualquier cambio incompleto
             try { if (con != null) con.rollback(); } catch (SQLException ex) {}
-            System.out.println("error al guardar perfil del cliente: " + e.getMessage());
+            System.out.println("Error al guardar perfil del cliente: " + e.getMessage());
             return false;
         } finally {
             // limpieza de memoria: volvemos a encender el autocommit y cerramos la tuberia a la base de datos

@@ -88,7 +88,7 @@ public class carritoDAO {
     public String obtenerCarritoJSON(int idCliente) {
         // Usamos StringBuilder porque es mucho mas rapido y eficiente en memoria que usar String normal ("" + "")
         StringBuilder json = new StringBuilder("[");
-        String sql = "SELECT dc.id_producto_fk, dc.cantidad, p.precio, p.nombre_producto, i.url_ruta " +
+        String sql = "SELECT dc.id_producto_fk, dc.cantidad, p.precio, p.nombre_producto, p.stock, i.url_ruta " +
                      "FROM carrito c " +
                      "INNER JOIN detalle_carrito dc ON c.id_carrito_pk = dc.id_carrito_fk " + // Une la canasta con sus productos
                      "INNER JOIN producto p ON dc.id_producto_fk = p.id_producto_pk " + // Trae el nombre y precio
@@ -110,6 +110,7 @@ public class carritoDAO {
                         .append("\"nombre\":\"").append(rs.getString("nombre_producto")).append("\",")
                         .append("\"precio\":").append(rs.getDouble("precio")).append(",")
                         .append("\"cantidad\":").append(rs.getInt("cantidad")).append(",")
+                        .append("\"stock\":").append(rs.getInt("stock")).append(",")
                         .append("\"imagen\":\"").append(rs.getString("url_ruta")).append("\"")
                         .append("}");
                     primero = false;

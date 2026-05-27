@@ -120,12 +120,16 @@ public class pedidoDAO {
             
         } catch (SQLException e) {
             // si explota cualquier cosa (ej. id producto no existe), revertimos todo el carrito
-            try { if (con != null) con.rollback(); } catch (SQLException ex) {}
-            System.out.println("error al registrar el pedido transaccional: " + e.getMessage());
+            try { if (con != null) con.rollback(); } catch (SQLException ex) {
+                System.err.println("Fallo critico al intentar hacer rollback en pedido: " + ex.getMessage());
+            }
+            System.out.println("Error al registrar el pedido transaccional: " + e.getMessage());
             return false;
         } finally {
             // restauramos el modo normal de mysql para futuras conexiones
-            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
+            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {
+                System.err.println("Error al cerrar la conexion en pedido: " + e.getMessage());
+            }
         }
     }
 
@@ -198,7 +202,7 @@ public class pedidoDAO {
                      lista.add(dp);
                  }
              }
-        } catch (SQLException e) { System.out.println("error al listar pedidos del proveedor: " + e.getMessage()); }
+        } catch (SQLException e) { System.out.println("Error al listar pedidos del proveedor: " + e.getMessage()); }
         return lista;
     }
 
@@ -250,7 +254,7 @@ public class pedidoDAO {
                      lista.add(dp);
                  }
              }
-        } catch (SQLException e) { System.out.println("error al listar pedidos del cliente: " + e.getMessage()); }
+        } catch (SQLException e) { System.out.println("Error al listar pedidos del cliente: " + e.getMessage()); }
         return lista;
     }
 
@@ -314,7 +318,7 @@ public class pedidoDAO {
                  
                  lista.add(dp);
              }
-        } catch (SQLException e) { System.out.println("error al listar todos los pedidos: " + e.getMessage()); }
+        } catch (SQLException e) { System.out.println("Error al listar todos los pedidos: " + e.getMessage()); }
         return lista;
     }
 
@@ -388,11 +392,15 @@ public class pedidoDAO {
             con.rollback();
             return false;
         } catch (SQLException e) {
-            try { if (con != null) con.rollback(); } catch (SQLException ex) {}
-            System.out.println("error al actualizar el estado del pedido: " + e.getMessage());
+            try { if (con != null) con.rollback(); } catch (SQLException ex) {
+                System.err.println("Fallo critico al intentar hacer rollback en actualizacion de estado: " + ex.getMessage());
+            }
+            System.out.println("Error al actualizar el estado del pedido: " + e.getMessage());
             return false;
         } finally {
-            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
+            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {
+                System.err.println("Error al cerrar la conexion en actualizacion de estado: " + e.getMessage());
+            }
         }
     }
 }

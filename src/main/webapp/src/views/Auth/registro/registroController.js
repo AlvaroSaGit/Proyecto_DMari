@@ -30,7 +30,7 @@ function prepararFormularioRegistro() {
     
     // validacion de seguridad por si falla la carga html
     if (!formulario) {
-        console.error('critico: no se encontro el formulario de registro en el dom. verifica que exista el id "form-registro" en el html.');
+        console.error('Critico: no se encontro el formulario de registro en el dom. Verifica que exista el id "form-registro" en el html.');
         return;
     }
     
@@ -46,14 +46,14 @@ function prepararFormularioRegistro() {
         
         // validacion manual para obligarlos a llenar las 3 cajas
         if (nombre === '' || correo === '' || password === '') {
-            alert('por favor completa todos los campos');
+            alert('Por favor completa todos los campos');
             // detenemos la ejecucion si hay error cortando la funcion
             return; 
         }
         
         // validamos que la contrasena cumpla el minimo de seguridad
         if (password.length < 6) {
-            alert('la contrasena debe tener al menos 6 caracteres');
+            alert('La contrasena debe tener al menos 6 caracteres');
             return;
         }
         
@@ -80,8 +80,8 @@ function prepararFormularioRegistro() {
             }
         } catch (error) {
             // si falla la promesa de java caera aqui sin crashear la pagina
-            console.error('error al conectar con el servidor:', error);
-            alert('hubo un problema de conexion');
+            console.error('Error al conectar con el servidor:', error);
+            alert('Hubo un problema de conexion');
         }
     });
 }

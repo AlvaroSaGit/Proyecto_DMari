@@ -44,7 +44,7 @@ public class categoriaDAO {
             }
             
         } catch (SQLException e) {
-            System.out.println("error al listar categorias: " + e.getMessage());
+            System.out.println("Error al listar categorias: " + e.getMessage());
         }
         
         return lista;
@@ -73,7 +73,7 @@ public class categoriaDAO {
             }
             
         } catch (SQLException e) {
-            System.out.println("error al listar todas las categorias: " + e.getMessage());
+            System.out.println("Error al listar todas las categorias: " + e.getMessage());
         }
         
         return lista;
@@ -98,7 +98,7 @@ public class categoriaDAO {
             return filasAfectadas > 0;
             
         } catch (SQLException e) {
-            System.out.println("error al cambiar estado de la categoria: " + e.getMessage());
+            System.out.println("Error al cambiar estado de la categoria: " + e.getMessage());
             return false;
         }
     }
@@ -120,7 +120,7 @@ public class categoriaDAO {
             return ps.executeUpdate() > 0;
             
         } catch (SQLException e) {
-            System.out.println("error al insertar categoria: " + e.getMessage());
+            System.out.println("Error al insertar categoria: " + e.getMessage());
             return false;
         }
     }
@@ -142,7 +142,7 @@ public class categoriaDAO {
             return ps.executeUpdate() > 0;
             
         } catch (SQLException e) {
-            System.out.println("error al actualizar categoria: " + e.getMessage());
+            System.out.println("Error al actualizar categoria: " + e.getMessage());
             return false;
         }
     }

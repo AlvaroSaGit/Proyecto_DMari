@@ -94,7 +94,7 @@ public class productoDAO {
                 lista.add(prod);
             }
         }catch(SQLException error){
-            System.out.println("problema en el dao al listar productos: "+error.getMessage());
+            System.out.println("Problema en el dao al listar productos: "+error.getMessage());
         }
         
         return lista;
@@ -174,7 +174,7 @@ public class productoDAO {
                  }
              }
         } catch(SQLException error) {
-            System.out.println("problema en el dao al listar productos de proveedor: " + error.getMessage());
+            System.out.println("Problema en el dao al listar productos de proveedor: " + error.getMessage());
         }
         
         return lista;
@@ -210,7 +210,7 @@ public class productoDAO {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("error al insertar el producto: " + e.getMessage());
+            System.out.println("Error al insertar el producto: " + e.getMessage());
         }
 
         return idGenerado;
@@ -246,12 +246,12 @@ public class productoDAO {
                     psInsert.setInt(1, idProveedorPk);
                     psInsert.setInt(2, idProducto);
                     int filas = psInsert.executeUpdate();
-                    System.out.println("enlace creado exitosamente: producto " + idProducto + " -> proveedor " + idProveedorPk);
+                    System.out.println("Enlace creado exitosamente: producto " + idProducto + " -> proveedor " + idProveedorPk);
                     return filas > 0;
                 }
             }
         } catch (SQLException e) {
-            System.out.println("error critico al asignar el proveedor: " + e.getMessage());
+            System.out.println("Error critico al asignar el proveedor: " + e.getMessage());
         }
         return false;
     }
@@ -326,7 +326,7 @@ public class productoDAO {
         }
 
     } catch (SQLException e) {
-        System.out.println("hubo un error al intentar actualizar: " + e.getMessage());
+        System.out.println("Hubo un error al intentar actualizar: " + e.getMessage());
     }
     
     return false;
@@ -382,7 +382,7 @@ public class productoDAO {
             
         } catch (SQLException e) {
             try { if (con != null) con.rollback(); } catch (SQLException ex) {}
-            System.out.println("no se pudo borrar el producto.. quiza este amarrado a un pedido: " + e.getMessage());
+            System.out.println("No se pudo borrar el producto.. quiza este amarrado a un pedido: " + e.getMessage());
             return false;
         } finally {
             try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
@@ -409,7 +409,7 @@ public class productoDAO {
             return filasAfectadas > 0;
             
         } catch (SQLException e) {
-            System.out.println("error al cambiar el estado del producto: " + e.getMessage());
+            System.out.println("Error al cambiar el estado del producto: " + e.getMessage());
         }
         
         return false;
