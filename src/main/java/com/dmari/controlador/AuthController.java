@@ -3,6 +3,7 @@ package com.dmari.controlador;
 import java.io.IOException;
 
 import com.dmari.dao.usuarioDAO;
+import com.dmari.helper.validacionHelper;
 import com.dmari.modelo.usuario;
 
 import jakarta.servlet.ServletException;
@@ -89,6 +90,25 @@ public class AuthController extends HttpServlet {
             String correo = request.getParameter("correo");
             String password = request.getParameter("password");
 
+            // validamos el nombre campo por campo para enviar mensajes precisos
+            if (!validacionHelper.validarNombre(nombre)) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().print("el nombre solo puede contener letras y espacios");
+                return;
+            }
+            // validamos el correo buscando el arroba y el punto com
+            if (!validacionHelper.validarCorreo(correo)) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().print("el correo debe tener @ y terminar en .com");
+                return;
+            }
+            // validamos que la contraseña sea segura segun nuestras reglas
+            if (!validacionHelper.validarPassword(password)) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().print("la contraseña requiere 8 caracteres y al menos un numero");
+                return;
+            }
+
             usuario nuevoUsuario = new usuario();
             nuevoUsuario.setNombre(nombre);
             nuevoUsuario.setCorreo(correo);
@@ -105,6 +125,19 @@ public class AuthController extends HttpServlet {
         } else if ("/login".equals(ruta)) {
             String correo = request.getParameter("correo");
             String password = request.getParameter("password");
+
+            // validamos el correo en el inicio de sesion
+            if (!validacionHelper.validarCorreo(correo)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().print("formato de correo no valido");
+                return;
+            }
+            // validamos la contraseña en el inicio de sesion
+            if (!validacionHelper.validarPassword(password)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().print("la contraseña no cumple con los requisitos");
+                return;
+            }
 
             usuario usuarioLogueado = dao.verificarLogin(correo, password);
 

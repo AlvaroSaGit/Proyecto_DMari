@@ -44,19 +44,6 @@ function prepararFormularioRegistro() {
         const correo = document.getElementById('reg-correo').value;
         const password = document.getElementById('reg-password').value;
         
-        // validacion manual para obligarlos a llenar las 3 cajas
-        if (nombre === '' || correo === '' || password === '') {
-            alert('Por favor completa todos los campos');
-            // detenemos la ejecucion si hay error cortando la funcion
-            return; 
-        }
-        
-        // validamos que la contrasena cumpla el minimo de seguridad
-        if (password.length < 6) {
-            alert('La contrasena debe tener al menos 6 caracteres');
-            return;
-        }
-        
         // Usamos URLSearchParams para enviar los datos como formulario (facilita la lectura en Java sin librerías extra)
         const parametros = new URLSearchParams();
         parametros.append('nombre', nombre);
@@ -76,7 +63,9 @@ function prepararFormularioRegistro() {
                 formulario.reset();
                 navegarA('login'); // Enviamos al usuario a la vista de login
             } else {
-            alert('Hubo un error en el registro. Revisa la consola de tu navegador o el output de NetBeans.');
+                // capturamos el mensaje de error que viene desde el validacionhelper de java
+                const mensajeError = await respuesta.text();
+                alert(mensajeError || 'error al registrarse');
             }
         } catch (error) {
             // si falla la promesa de java caera aqui sin crashear la pagina

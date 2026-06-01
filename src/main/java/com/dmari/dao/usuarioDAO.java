@@ -35,9 +35,7 @@ public class usuarioDAO {
         // usamos un select anidado para buscar el id del rol cliente automaticamente.
         String sqlUsuario = "INSERT INTO usuario (nombre, id_rol_fk, estado_cuenta) VALUES (?, (SELECT id_rol_pk FROM rol WHERE tipo_rol = 'cliente' LIMIT 1), 1)";
         
-        // consulta para la tabla principal de usuario
-        String sqlUsuario = "INSERT INTO usuario (nombre, id_rol_fk, estado_cuenta) VALUES (?, (SELECT id_rol_pk FROM rol WHERE tipo_rol = 'cliente' LIMIT 1), 1)";
-        // consulta para enlazar el correo electronico
+        // consulta para insertar el correo vinculado al usuario
         String sqlCorreo = "INSERT INTO correo (id_usuario_fk, correo, correo_primario) VALUES (?, ?, 1)";
         
         // aes_encrypt es un comando nativo de mysql que convierte el texto en codigo ilegible (formato binario blob). 
@@ -117,18 +115,15 @@ public class usuarioDAO {
             System.err.println("error al registrar: " + e.getMessage());
             return false;
         } finally {
-            // restauramos la conexion y la cerramos
-            // restauramos la conexion y la cerramos usando el databasehelper.
+            // cerramos los recursos para liberar memoria del servidor
             try { 
                 if (con != null) {
-                    // se debe restaurar el comportamiento normal de la conexion antes de devolverla a la memoria
-                    // se debe restaurar el comportamiento normal de la conexion antes de cerrarla.
+                    // devolvemos el autocommit a su estado original
                     con.setAutoCommit(true); 
-                    con.close(); 
+                    // usamos el helper para cerrar la conexion de forma segura
                     db.cerrar(con); 
                 }
             } catch (SQLException e) {
-                System.err.println("Error al cerrar la conexion en registro: " + e.getMessage());
                 System.err.println("error al cerrar conexion: " + e.getMessage());
             }
         }

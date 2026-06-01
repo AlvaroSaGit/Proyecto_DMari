@@ -2,10 +2,10 @@
 package com.dmari.helper;
 
 /*
-    objetivo de este archivo:
-    este es el motor principal de conexion del proyecto. 
-    su unico trabajo es abrir el puente de comunicacion entre 
-    el codigo de java y el servidor de la base de datos mysql.
+   objetivo de este archivo:
+   este es el motor principal de conexion del proyecto. 
+   su unico trabajo es abrir el puente de comunicacion entre 
+   el codigo de java y el servidor de la base de datos mysql.
 */
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -22,10 +22,10 @@ public class databaseHelper {
     public Connection conectar(){
         Connection conexion = null;
         try{
-            // class.forname busca e inicializa el archivo .jar (driver) que le enseña a java como hablar el idioma de mysql
+            // class.forname busca e inicializa el archivo .jar (driver) que le ensena a java como hablar el idioma de mysql
             Class.forName("com.mysql.cj.jdbc.Driver");
             
-            // drivermanager.getconnection usa las credenciales para "llamar" a la base de datos y mantener la linea abierta
+            // drivermanager.getconnection usa las credenciales para llamar a la base de datos y mantener la linea abierta
             conexion = DriverManager.getConnection(URL, USUARIO, CLAVE);
             System.out.println("Conexion realizada a la base de datos dmari");
             
@@ -38,6 +38,7 @@ public class databaseHelper {
         return conexion;
     }
 
+    // metodo para cerrar la conexion y liberar recursos del servidor
     public void cerrar(Connection con) {
         try {
             if (con != null && !con.isClosed()) {

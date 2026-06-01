@@ -1,203 +1,208 @@
-
+create database if not exists DMari;
 use DMari;
 
 -- ==========================================================
--- 1. TABLAS MAESTRAS INDEPENDIENTES
+-- 1. TABLAS DE CATÁLOGOS Y ROLES (Tablas Maestras)
 -- ==========================================================
 
--- tabla rol (Ahora incluye explicitamente al proveedor en el ENUM)
+-- Roles del sistema
 create table rol(
     id_rol_pk int auto_increment primary key,
     tipo_rol enum('cliente','administrador','proveedor') not null default 'cliente'
 );
 
--- tabla de categoria
+-- Categorías de los productos
 create table categoria(
     id_categoria_pk int auto_increment primary key,
-    nombre varchar(50),
+    nombre varchar(50) not null,
     descripcion varchar(100),
-    estado_activo boolean
+    estado_activo boolean not null default true
 );
 
--- tabla etiqueta
+-- Etiquetas de búsqueda para los productos
 create table etiqueta(
     id_etiqueta_pk int auto_increment primary key,
-    nombre_etiqueta varchar(30)
+    nombre_etiqueta varchar(30) not null
 );
 
--- tabla metodo pago
+-- Métodos de pago
 create table metodo_pago(
     id_metodo_pago_pk int auto_increment primary key,
-    descripcion_pago varchar(255),
-    estado_activo boolean
+    descripcion_pago varchar(255) not null,
+    estado_activo boolean not null default true
 );
 
 -- ==========================================================
--- 2. TABLAS PRINCIPALES NUCLEO
+-- 2. TABLAS NÚCLEO PRINCIPALES
 -- ==========================================================
 
--- tabla de usuarios para todos los roles
+-- Usuarios generales (Soporta Soft Delete con estado_cuenta)
 create table usuario(
     id_usuario_pk int auto_increment primary key,
-    nombre varchar(50),
-    apellido varchar(50),
-    id_rol_fk int,
-    estado_cuenta boolean,
+    nombre varchar(50) not null,
+    apellido varchar(50) not null,
+    id_rol_fk int not null,
+    estado_cuenta boolean not null default true,
     foreign key (id_rol_fk) references rol(id_rol_pk)
 );
 
--- tabla producto
+-- Productos del catálogo (Soporta Soft Delete con el campo estado)
 create table producto(
     id_producto_pk int auto_increment primary key,
-    id_categoria_fk int,
+    id_categoria_fk int not null,
     nombre_producto varchar(100) not null,
     descripcion text null,
     precio decimal(10,2) not null,
-    stock int default 0,
-    estado boolean,
+    stock int not null default 0,
+    estado boolean not null default true,
     fecha_creacion timestamp default current_timestamp,
     foreign key (id_categoria_fk) references categoria(id_categoria_pk)
 );
 
 -- ==========================================================
--- 3. TABLAS SATELITE E HIJAS (CONEXION DIRECTA A USUARIO Y PRODUCTO)
+-- 3. TABLAS DETALLADAS E HIJAS (Extensiones de datos)
 -- ==========================================================
 
--- direccion tabla
+-- Direcciones asociadas a los usuarios
 create table direccion(
     id_direccion_pk int auto_increment primary key,
-    id_usuario_fk int,
+    id_usuario_fk int not null,
     direccion text not null,
     direccion_detallada text,
-    direccion_primario boolean,
+    direccion_primario boolean not null default false,
     foreign key (id_usuario_fk) references usuario(id_usuario_pk)
 );
 
--- telefono de la tabla usuario
+-- Teléfonos asociados a los usuarios
 create table telefono(
     id_telefono_pk int auto_increment primary key,
-    id_usuario_fk int,
+    id_usuario_fk int not null,
     numero_telefonico varchar(20) not null unique,
     foreign key (id_usuario_fk) references usuario(id_usuario_pk)
 );
 
--- correo de la tabla usuario
+-- Correos electrónicos asociados a los usuarios
 create table correo(
     id_correo_pk int auto_increment primary key,
-    id_usuario_fk int,
+    id_usuario_fk int not null,
     correo varchar(100) not null unique,
-    correo_primario boolean,
+    correo_primario boolean not null default false,
     foreign key (id_usuario_fk) references usuario(id_usuario_pk)
 );
 
--- tabla credenciales
+-- Credenciales de acceso
 create table credenciales(
     id_usuario int primary key,
-    passwd_encript blob,
+    passwd_encript varchar(255) not null,
     foreign key (id_usuario) references usuario(id_usuario_pk)
 );
 
--- tabla proveedor unificada (Maneja relacion 1:1 limpia con usuario)
+-- Datos específicos si el usuario es un proveedor
 create table proveedor(
     id_proveedor_pk int primary key,
-    nit_empresa varchar(20),
-    nombre_marca varchar(100),
+    nit_empresa varchar(20) not null,
+    nombre_marca varchar(100) not null,
     cuenta_bancaria varchar(30),
     banco_nombre varchar(50),
     tipo_cuenta enum('Ahorros','Corriente'),
     foreign key (id_proveedor_pk) references usuario(id_usuario_pk)
 );
 
--- tabla cliente
+-- Datos específicos si el usuario es un cliente
 create table cliente(
     id_cliente_pk int primary key,
-    direccion_envio varchar(255) not null,
-    telefono_secundario varchar(20),
-    referencia_ubicacion text,
+    referencia_ubicacion text null,
     foreign key (id_cliente_pk) references usuario(id_usuario_pk)
 );
 
--- tabla imagenes
+-- Galería de imágenes de los productos
 create table imagenes(
     id_imagen_pk int auto_increment primary key,
-    id_producto_fk int,
-    url_ruta varchar(255),
-    imagen_principal boolean,
+    id_producto_fk int not null,
+    url_ruta varchar(255) not null,
+    imagen_principal boolean not null default false,
     foreign key (id_producto_fk) references producto(id_producto_pk)
 );
 
--- tabla producto etiqueta
+-- Relación de muchos a muchos: Productos y sus Etiquetas
 create table producto_etiqueta(
     id_producto_etiqueta_pk int auto_increment primary key,
-    id_producto int,
-    id_etiqueta int,
+    id_producto int not null,
+    id_etiqueta int not null,
     foreign key (id_producto) references producto(id_producto_pk),
     foreign key (id_etiqueta) references etiqueta(id_etiqueta_pk),
     unique (id_producto, id_etiqueta)
 );
 
--- tabla proveedor producto (Conectada a la nueva estructura de proveedor unificada)
+-- Relación de muchos a muchos: Proveedores y los Productos que surten
 create table proveedor_producto(
     id_proveedor_producto_pk int auto_increment primary key,
-    id_proveedor_fk int,
-    id_producto_fk int,
+    id_proveedor_fk int not null,
+    id_producto_fk int not null,
     foreign key (id_proveedor_fk) references proveedor(id_proveedor_pk),
     foreign key (id_producto_fk) references producto(id_producto_pk)
 );
 
 -- ==========================================================
--- 4. TABLAS TRANSACCIONALES (VENTAS, CARRITO Y LOGISTICA)
+-- 4. TABLAS TRANSACCIONALES (Flujo de Compras Conectado)
 -- ==========================================================
 
--- tabla carrito
+-- Carrito de compras (Historial cíclico basado en estados)
 create table carrito(
     id_carrito_pk int auto_increment primary key,
-    id_cliente_fk int,
+    id_cliente_fk int not null,
+    estado enum('Activo', 'Procesado') default 'Activo', -- Controla si ya cerró la compra o sigue abierto
+    fecha_actualizacion timestamp default current_timestamp on update current_timestamp,
     foreign key (id_cliente_fk) references cliente(id_cliente_pk)
 );
 
--- tabla detalle carrito
+-- Productos dentro del carrito
 create table detalle_carrito(
     id_detalle_carrito int auto_increment primary key,
-    id_carrito_fk int,
-    id_producto_fk int,
-    cantidad int not null,
+    id_carrito_fk int not null,
+    id_producto_fk int not null,
+    cantidad int not null check (cantidad > 0),
+    seleccionado boolean not null default true, -- Para compras parciales
     foreign key (id_carrito_fk) references carrito(id_carrito_pk),
-    foreign key (id_producto_fk) references producto(id_producto_pk)
+    foreign key (id_producto_fk) references producto(id_producto_pk),
+    unique(id_carrito_fk, id_producto_fk)
 );
 
--- tabla pedido (Apunta directamente a las tablas hijas cliente y repartidor)
+-- Cabecera del Pedido (Conexión física y directa con el carrito de origen)
 create table pedido(
     id_pedido_pk int auto_increment primary key,
-    id_cliente_fk int,
+    id_cliente_fk int not null,
+    id_carrito_fk int not null, -- ¡CONEXIÓN EXPLICÍTADA!
+    id_direccion_fk int not null,
     fecha timestamp default current_timestamp,
     total_pagar decimal(10,2) not null,
     estado_pedido enum('Pendiente', 'Preparando', 'En Camino', 'Entregado', 'Cancelado') default 'Pendiente',
-    foreign key (id_cliente_fk) references cliente(id_cliente_pk)
+    foreign key (id_cliente_fk) references cliente(id_cliente_pk),
+    foreign key (id_carrito_fk) references carrito(id_carrito_pk), -- Restricción de integridad referencial
+    foreign key (id_direccion_fk) references direccion(id_direccion_pk)
 );
 
--- tabla detalle pedido
+-- Detalle del Pedido (Copia de seguridad inmutable de los precios de venta)
 create table detalle_pedido(
     id_detalle_pedido int auto_increment primary key,
-    id_producto_fk int,
-    id_pedido_fk int,
+    id_pedido_fk int not null,
+    id_producto_fk int not null,
     cantidad int not null,
     precio_unitario decimal(10,2) not null,
     subtotal decimal(10,2) not null,
-    foreign key (id_producto_fk) references producto(id_producto_pk),
-    foreign key (id_pedido_fk) references pedido(id_pedido_pk)
+    foreign key (id_pedido_fk) references pedido(id_pedido_pk),
+    foreign key (id_producto_fk) references producto(id_producto_pk)
 );
 
--- tabla pago
+-- Registro financiero del pago asociado al pedido
 create table pago(
     id_pago_pk int auto_increment primary key,
-    id_pedido_fk int,
-    id_metodo_pago_fk int,
-    numero_cuenta_ahorro varchar(30) not null,
+    id_pedido_fk int not null,
+    id_metodo_pago_fk int not null,
+    referencia_transaccion varchar(100) null,
     fecha_pago timestamp default current_timestamp,
     comision_dmari decimal(10,2) not null,
     monto_total decimal(10,2) not null,
-    estado_activo boolean,
     estado_pago enum('Pendiente','Aprobado','Rechazado') default 'Pendiente',
     foreign key (id_pedido_fk) references pedido(id_pedido_pk),
     foreign key (id_metodo_pago_fk) references metodo_pago(id_metodo_pago_pk)

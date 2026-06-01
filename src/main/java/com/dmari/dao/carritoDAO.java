@@ -26,15 +26,19 @@ public class carritoDAO {
      * 
      * @param idCliente int: el id unico del usuario logueado.
      * @return int: el id (llave primaria) del carrito de ese cliente, o -1 si ocurrio un error en sql.
+     * @return int: el id (llave primaria) del carrito 'Activo' de ese cliente, o -1 si ocurrio un error.
      */
     public int obtenerOCrearCarrito(int idCliente) {
         int idCarrito = -1;
         // Consulta para buscar si el cliente ya tiene una canasta asignada
         String sqlSelect = "SELECT id_carrito_pk FROM carrito WHERE id_cliente_fk = ?";
+        // Ahora filtramos estrictamente por estado 'Activo'
+        String sqlSelect = "SELECT id_carrito_pk FROM carrito WHERE id_cliente_fk = ? AND estado = 'Activo'";
         // Consulta para crearle una nueva canasta si la busqueda anterior no arroja resultados
         String sqlInsert = "INSERT INTO carrito (id_cliente_fk) VALUES (?)";
         // salvavidas: asegura que el cliente exista en su tabla hija para que la llave foranea no explote
         String sqlAsegurarCliente = "INSERT INTO cliente (id_cliente_pk, direccion_envio) VALUES (?, 'sin registrar') ON DUPLICATE KEY UPDATE direccion_envio = direccion_envio";
+        String sqlInsert = "INSERT INTO carrito (id_cliente_fk, estado) VALUES (?, 'Activo')";
 
         try (Connection con = db.conectar()) {
             // PASO A: Intentamos leer la base de datos
@@ -94,6 +98,7 @@ public class carritoDAO {
                      "INNER JOIN producto p ON dc.id_producto_fk = p.id_producto_pk " + // Trae el nombre y precio
                      "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk AND i.imagen_principal = 1 " + // Trae la foto (si tiene)
                      "WHERE c.id_cliente_fk = ?";
+                     "WHERE c.id_cliente_fk = ? AND c.estado = 'Activo'";
         
         try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idCliente);
