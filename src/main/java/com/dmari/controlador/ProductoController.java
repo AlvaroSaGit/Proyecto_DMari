@@ -2,8 +2,7 @@
     objetivo de este archivo:
     este archivo es un controlador (servlet) que sirve como puente de comunicacion
     entre el frontend (javascript) y la base de datos (dao) para la gestion de productos.
-    se encarga de recibir las peticiones web (crear, leer, actualizar, borrar y cambiar estado),
-    procesar los datos y devolver las respuestas correspondientes en formato json al navegador.
+    se encarga de procesar los datos y devolver las respuestas en formato json.
  */
 package com.dmari.controlador;
 
@@ -34,35 +33,24 @@ import jakarta.servlet.http.Part;
 
 
 /*
-    @multipartconfig: 
-    esta etiqueta es un "permiso especial" que le damos al servlet.
-    sin ella, java no sabria como leer archivos fisicos (como fotos) enviados desde html.
-    le indica a tomcat que este controlador recibira paquetes de tipo "multipart/form-data".
+    @multipartconfig: permiso especial que le damos al servlet para leer archivos fisicos (fotos).
+    le indica a tomcat que este controlador recibira paquetes de tipo multipart/form-data.
 */
 @MultipartConfig(
-    // filesizethreshold: el limite de memoria ram que usara tomcat antes de guardar el archivo temporalmente en el disco duro.
-    // 1024 bytes * 1024 bytes = 1 mb. si la foto pesa menos de 1mb, se procesa super rapido en la memoria ram.
-    // si pesa mas, la guarda en un archivo temporal para no quemar la memoria del servidor.
+    // limite de memoria ram antes de guardar el archivo temporalmente en disco duro (1mb).
     fileSizeThreshold = 1024 * 1024,
-    
-    // maxfilesize: el peso maximo que puede tener una sola foto.
-    // 1 mb * 10 = 10 mb. si un usuario intenta subir una imagen gigante de 12mb, el servidor bloquea la subida por seguridad.
+    // peso maximo permitido para una sola foto (10mb).
     maxFileSize = 1024 * 1024 * 10,
-    
-    // maxrequestsize: el peso maximo de toda la peticion completa (todas las fotos a la vez + todos los textos del formulario).
-    // 1 mb * 50 = 50 mb en total permitidos por cada clic en "guardar".
+    // peso maximo de toda la peticion completa (50mb).
     maxRequestSize = 1024 * 1024 * 50
 )
 /*
-    @webservlet - mapea este servlet a las direcciones (url) relacionadas con productos.
+    @webservlet - mapea este servlet a las direcciones url relacionadas con productos.
 */
 @WebServlet(name = "ProductoController", urlPatterns = {"/listar","/insertar","/actualizar","/eliminar","/cambiar-estado"})
 public class ProductoController extends HttpServlet {
-    /*
-    doget: responde a peticiones de tipo lectura.
-    aqui es donde pedimos la lista a la base de datos para mostrarla
-    en el frontend.
-    */
+
+    // doget: responde a peticiones de tipo lectura para mostrar la lista en el frontend.
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException
@@ -287,15 +275,16 @@ public class ProductoController extends HttpServlet {
                     System.out.println("FOTO TEMPORAL (TOMCAT): " + targetFile.getAbsolutePath());
                 }
                 
-                // Ruta que va a la base de datos (SIEMPRE con diagonales normales '/' para la web)
+                // ruta que va a la base de datos (siempre con diagonales normales '/' para la web).
                 String rutaRelativa = "src/img/productos/" + idProducto + "_" + fileName;
                 
                 imagenesDAO imgDao = new imagenesDAO();
-                imgDao.borrarImagenesDeProducto(idProducto); // Borramos las fotos viejas si es una actualizacion
+                // borramos las fotos viejas si es una actualizacion.
+                imgDao.borrarImagenesDeProducto(idProducto);
                 imgDao.insertarImagen(idProducto, rutaRelativa, 1);
             }
         } catch (Exception e) {
-            System.out.println("ERROR CRITICO AL SUBIR LA FOTO: " + e.getMessage());
+            System.out.println("error critico al subir la foto: " + e.getMessage());
             e.printStackTrace();
         }
     }

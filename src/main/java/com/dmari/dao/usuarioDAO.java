@@ -20,7 +20,7 @@ public class usuarioDAO {
     
     databaseHelper db = new databaseHelper();
     
-    // llave secreta que mysql utilizara como algoritmo para mezclar la contrasena
+    // llave secreta para que mysql mezcle la contrasena y sea ilegible
     private static final String LLAVE_SECRETA = "llave_dmari";
 
     /**
@@ -31,8 +31,13 @@ public class usuarioDAO {
      * @return boolean: true si las 3 inserciones tuvieron exito, false si fallo.
      */
     public boolean registrarUsuario(usuario nuevoUsuario) {
-        
+        // consulta para la tabla principal de usuario.
+        // usamos un select anidado para buscar el id del rol cliente automaticamente.
         String sqlUsuario = "INSERT INTO usuario (nombre, id_rol_fk, estado_cuenta) VALUES (?, (SELECT id_rol_pk FROM rol WHERE tipo_rol = 'cliente' LIMIT 1), 1)";
+        
+        // consulta para la tabla principal de usuario
+        String sqlUsuario = "INSERT INTO usuario (nombre, id_rol_fk, estado_cuenta) VALUES (?, (SELECT id_rol_pk FROM rol WHERE tipo_rol = 'cliente' LIMIT 1), 1)";
+        // consulta para enlazar el correo electronico
         String sqlCorreo = "INSERT INTO correo (id_usuario_fk, correo, correo_primario) VALUES (?, ?, 1)";
         
         // aes_encrypt es un comando nativo de mysql que convierte el texto en codigo ilegible (formato binario blob). 
@@ -44,28 +49,41 @@ public class usuarioDAO {
             con = db.conectar();
             // setautocommit(false) pausa el guardado automatico de mysql. inicia una "transaccion".
             // esto es vital: si la tabla 'correo' falla, podemos cancelar la tabla 'usuario' para no dejar registros huerfanos.
+            // apagamos el autoguardado para iniciar una transaccion manual
+            // desactivamos el autoguardado para iniciar una transaccion manual.
+            // esto es vital: si la tabla correo falla, podemos cancelar la tabla usuario para no dejar registros huerfanos.
             con.setAutoCommit(false);
             
             int idGenerado = 0;
             
             // return_generated_keys le ordena a mysql que, despues de insertar el usuario, nos devuelva el numero de id autoincrementable que acaba de crear.
+            // insertamos el usuario y pedimos que nos devuelva el id creado por mysql
+            // insertamos el usuario y pedimos que nos devuelva el id autoincrementable que acaba de crear.
             try (PreparedStatement psUsuario = con.prepareStatement(sqlUsuario, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 psUsuario.setString(1, nuevoUsuario.getNombre());
                 psUsuario.executeUpdate();
                 try (ResultSet rs = psUsuario.getGeneratedKeys()) {
                     // condicional: verifica si mysql le otorgo un id unico al usuario.
+                    // si mysql genero el id, lo guardamos para las siguientes tablas
+                    // si mysql genero el id, lo guardamos para usarlo en las siguientes tablas.
                     if (rs.next()) idGenerado = rs.getInt(1);
                 }
             }
             
             // condicional: solo continua si el usuario principal se guardo con exito.
+            // si el usuario se creo bien, procedemos con los datos secundarios
+            // solo continua si el usuario principal se guardo con exito.
             if (idGenerado > 0) {
+                // guardamos el correo vinculado al id del usuario
+                // insertamos el correo vinculado al id del usuario.
                 try (PreparedStatement psCorreo = con.prepareStatement(sqlCorreo)) {
                     psCorreo.setInt(1, idGenerado);
                     psCorreo.setString(2, nuevoUsuario.getCorreo());
                     psCorreo.executeUpdate();
                 }
                 
+                // guardamos la credencial encriptada
+                // insertamos la credencial encriptada usando la llave secreta.
                 try (PreparedStatement psCred = con.prepareStatement(sqlCredenciales)) {
                     psCred.setInt(1, idGenerado);
                     psCred.setString(2, nuevoUsuario.getPassword()); 
@@ -74,31 +92,44 @@ public class usuarioDAO {
                 }
                 
                 // commit es la orden final que le dice a mysql: "todo salio perfecto, aplica los cambios definitivamente".
+                // si llegamos aqui sin errores, confirmamos todos los cambios en la base de datos
+                // confirmamos que todo salio perfecto y aplicamos los cambios definitivamente.
                 con.commit(); 
                 return true;
             }
             
             // rollback es el boton de panico. si no se genero id, deshace cualquier insert que se haya hecho en este intento.
+            // si no hubo id, cancelamos cualquier cambio previo por seguridad
+            // si no se genero id, cancelamos cualquier cambio previo por seguridad.
             con.rollback(); 
             return false;
             
         } catch (SQLException e) {
+            // en caso de fallo, intentamos deshacer lo que se haya alcanzado a insertar
+            // en caso de fallo, deshacemos lo que se haya alcanzado a insertar.
             try { if (con != null) con.rollback(); } catch (SQLException ex) {
                 System.err.println("Fallo critico al intentar hacer rollback en registro: " + ex.getMessage());
+                System.err.println("fallo critico al intentar hacer rollback: " + ex.getMessage());
             }
             System.err.println("\n=== Error critico al registrar ===");
             System.err.println("Motivo: " + e.getMessage());
             System.err.println("==================================\n");
+            System.err.println("error al registrar: " + e.getMessage());
             return false;
         } finally {
+            // restauramos la conexion y la cerramos
+            // restauramos la conexion y la cerramos usando el databasehelper.
             try { 
                 if (con != null) {
                     // se debe restaurar el comportamiento normal de la conexion antes de devolverla a la memoria
+                    // se debe restaurar el comportamiento normal de la conexion antes de cerrarla.
                     con.setAutoCommit(true); 
                     con.close(); 
+                    db.cerrar(con); 
                 }
             } catch (SQLException e) {
                 System.err.println("Error al cerrar la conexion en registro: " + e.getMessage());
+                System.err.println("error al cerrar conexion: " + e.getMessage());
             }
         }
     }

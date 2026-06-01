@@ -8,14 +8,7 @@ package com.dmari.helper;
     el codigo de java y el servidor de la base de datos mysql.
 */
 import java.sql.Connection;
-/*
-    El drivermanager recibe como una llamada
-    el link (localhost), el usuario (root) y la clave
-*/
 import java.sql.DriverManager;
-/*
-    Esta herramienta atrapa los errores de mysql
-*/
 import java.sql.SQLException;
 
 
@@ -43,6 +36,16 @@ public class databaseHelper {
         }
         
         return conexion;
+    }
+
+    public void cerrar(Connection con) {
+        try {
+            if (con != null && !con.isClosed()) {
+                con.close();
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al cerrar conexion: " + e.getMessage());
+        }
     }
     
 }

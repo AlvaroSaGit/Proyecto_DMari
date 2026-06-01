@@ -1,17 +1,20 @@
 /*
     objetivo de este archivo:
     esta clase es un ayudante (helper) disenado para centralizar la conversion
+    esta clase es un ayudante disenado para centralizar la conversion
     de listas de objetos java a cadenas de texto en formato json.
     al modularizar esta logica aqui, evitamos repetir codigo en los controladores
     y mantenemos los servlets limpios y dedicados solo a responder peticiones.
+    al modularizar esta logica aqui, evitamos repetir codigo en los controladores.
 */
 package com.dmari.helper;
 
 import java.util.ArrayList;
-import com.dmari.modelo.producto;
+
 import com.dmari.modelo.categoria;
-import com.dmari.modelo.etiqueta;
 import com.dmari.modelo.detallePedido;
+import com.dmari.modelo.etiqueta;
+import com.dmari.modelo.producto;
 
 public class jsonHelper {
     
@@ -19,6 +22,8 @@ public class jsonHelper {
         metodo interno para limpiar textos y evitar que comillas o saltos de linea 
         rompan la estructura del json cuando el usuario escriba descripciones largas.
     */
+    // metodo interno para limpiar textos y evitar que caracteres especiales 
+    // rompan la estructura del json en descripciones largas.
     private String escaparTexto(String texto) {
         if (texto == null) return "";
         return texto.replace("\\", "\\\\")
@@ -32,6 +37,8 @@ public class jsonHelper {
         se centraliza aqui para que cualquier controlador pueda usarlo
         sin repetir codigo.
     */
+    // metodo para convertir una lista de productos a formato json.
+    // se centraliza aqui para que cualquier controlador pueda usarlo sin repetir codigo.
     public String productosAJson(ArrayList<producto> lista) {
         StringBuilder json = new StringBuilder();
         json.append("["); 
