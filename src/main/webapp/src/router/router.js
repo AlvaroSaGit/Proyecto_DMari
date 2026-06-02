@@ -14,6 +14,10 @@ import { cargarVistaAdminUsuarios } from '../views/Administrador/usuarios/adminu
 import { cargarVistaAdminPedidos } from '../views/Administrador/adminPedido/adminPedidosController.js';
 import { cargarVistaPerfil } from '../views/Cliente/perfil/perfilController.js';
 
+// importamos las nuevas vistas de estadistica para administrador y proveedor
+import { cargarVistaAdminEstadistica } from '../views/Administrador/estadistica/adminEstadisticaController.js';
+import { cargarVistaProveedorEstadistica } from '../views/Proveedor/estadistica/proveedorEstadisticaController.js';
+
 // Importamos el servicio de interfaz para poder inyectar la sidebar
 import { cargarComponente } from '../services/uiService.js';
 
@@ -78,6 +82,13 @@ async function manejarRuta() {
         cargarVistaAdminUsuarios();
     } else if (vista === 'admin-pedidos') {
         cargarVistaAdminPedidos();
+    } else if (vista === 'dashboard') {
+        // decidimos que controlador de estadistica cargar segun el rol del usuario
+        if (rolUsuario === '1') {
+            cargarVistaAdminEstadistica();
+        } else if (rolUsuario === '4') {
+            cargarVistaProveedorEstadistica();
+        }
     } else if (vista === 'admin-solicitudes') {
         // Vista temporal para Solicitudes hasta que crees su Controller
         const main = document.getElementById('component-main');

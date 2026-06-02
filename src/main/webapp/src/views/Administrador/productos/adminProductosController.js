@@ -43,6 +43,30 @@ function prepararVistaAdminProductos() {
     const previewContenedor = document.getElementById('contenedor-preview');
     const previewImg = document.getElementById('prod-imagen-preview');
 
+
+    const inputNombre = document.getElementById('prod-nombre');
+    const inputPrecio = document.getElementById('prod-precio');
+    const inputStock = document.getElementById('prod-stock');
+
+    // impide que el usuario escriba numeros en el nombre del producto
+    if (inputNombre) {
+        inputNombre.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[0-9]/g, '');
+        });
+    }
+
+    // impide que el usuario escriba letras en el precio y el stock
+    if (inputPrecio) {
+        inputPrecio.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9.]/g, '');
+        });
+    }
+    if (inputStock) {
+        inputStock.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+    }
+
     // evento: mostrar la foto temporalmente cuando el usuario selecciona un archivo de su pc
     if (inputImagen) {
         inputImagen.onchange = function() {
@@ -110,16 +134,36 @@ function prepararVistaAdminProductos() {
                 guardandoProducto = false;
                 return;
             }
-            if (precio <= 0) {
-                alert('Error: El precio debe ser mayor a 0.');
+            // validacion de tipo: el nombre no debe contener numeros
+            const regexLetras = /^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+$/;
+            if (!regexLetras.test(nombre)) {
+                alert('error: el nombre del producto solo puede contener letras y espacios.');
                 guardandoProducto = false;
                 return;
             }
-            if (stock < 0) {
-                alert('Error: El stock no puede ser un numero negativo.');
+
+            // validacion de numeros: el precio debe ser un numero positivo
+            if (isNaN(precio) || precio <= 0) {
+                alert('error: el precio debe ser un numero mayor a 0.');
                 guardandoProducto = false;
                 return;
             }
+
+            // validacion de numeros: el stock no puede ser negativo
+            if (isNaN(stock) || stock < 0) {
+                alert('error: el stock no puede ser un numero negativo.');
+                guardandoProducto = false;
+                return;
+            }
+
+            // validacion de etiquetas: evitar caracteres especiales raros
+            const regexEtiquetas = /^[a-zA-Z0-9ñÑáéíóúÁÉÍÓÚ\s,]*$/;
+            if (!regexEtiquetas.test(etiquetas)) {
+                alert('error: las etiquetas solo pueden contener letras, numeros y comas.');
+                guardandoProducto = false;
+                return;
+            }
+
             if (!idCategoria) {
                 alert('Error: Debes seleccionar una categoria obligatoriamente.');
                 guardandoProducto = false;

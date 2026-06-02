@@ -1,0 +1,30 @@
+<!-- vista de estadisticas globales para el administrador -->
+<section class="admin-vista-productos">
+    <div class="admin-header-seccion">
+        <h2>dashboard de ventas globales</h2>
+    </div>
+    
+    <!-- contenedores de tarjetas informativas -->
+    <div class="admin-tabla-contenedor" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 20px; background: transparent; border: none;">
+        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center;">
+            <i class='bx bx-money' style="font-size: 2.5rem; color: #d4a373;"></i>
+            <h3 style="margin: 10px 0; font-size: 1rem; color: #666;">ventas brutas</h3>
+            <p id="stat-ingresos" style="font-size: 1.5rem; font-weight: bold; color: #333;">$0.00</p>
+        </div>
+        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border: 2px solid #d4a373;">
+            <i class='bx bx-badge-check' style="font-size: 2.5rem; color: #d4a373;"></i>
+            <h3 style="margin: 10px 0; font-size: 1rem; color: #666;">comisiones dmari</h3>
+            <p id="stat-comisiones" style="font-size: 1.5rem; font-weight: bold; color: #d4a373;">$0.00</p>
+        </div>
+        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center;">
+            <i class='bx bx-shopping-bag' style="font-size: 2.5rem; color: #d4a373;"></i>
+            <h3 style="margin: 10px 0; font-size: 1rem; color: #666;">pedidos</h3>
+            <p id="stat-pedidos" style="font-size: 1.5rem; font-weight: bold; color: #333;">0</p>
+        </div>
+        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center;">
+            <i class='bx bx-package' style="font-size: 2.5rem; color: #d4a373;"></i>
+            <h3 style="margin: 10px 0; font-size: 1rem; color: #666;">items</h3>
+            <p id="stat-productos" style="font-size: 1.5rem; font-weight: bold; color: #333;">0</p>
+        </div>
+    </div>
+</section>

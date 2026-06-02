@@ -100,6 +100,18 @@ export async function inicializarCarrito() {
         // Enganchamos el comportamiento de los dos botones recien creados
         document.getElementById('btn-cancelar-pago').addEventListener('click', () => modalPago.style.display = 'none');
         document.getElementById('btn-confirmar-pago').addEventListener('click', confirmarPagoSimulado);
+
+        // =========================================================================
+        // VALIDACION EN TIEMPO REAL (UX)
+        // =========================================================================
+        // este bloque impide que el usuario escriba letras en el campo de cuenta/telefono
+        const inputCuenta = document.getElementById('input-cuenta-pago');
+        if (inputCuenta) {
+            inputCuenta.addEventListener('input', (e) => {
+                // reemplazamos cualquier caracter que no sea un numero (0-9) por nada
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            });
+        }
     }
     
     // al cargar la pagina, verificamos si el usuario esta logueado para descargar su carrito de mysql.
@@ -216,6 +228,12 @@ async function procesarCompra() {
                     navegarA('perfil'); // Forzamos una redireccion SPA hacia el formulario
                     return;             // Abortamos la ejecucion para que no se abra el modal de pago
                 }
+                
+                // automatizacion: traemos el numero de telefono configurado por el usuario al campo de pago
+                const inputCuenta = document.getElementById('input-cuenta-pago');
+                if (inputCuenta) {
+                    inputCuenta.value = perfil.telefono || '';
+                }
             }
             
             // Si tiene cuenta y perfil completo, mostramos la pasarela.
@@ -247,11 +265,19 @@ async function confirmarPagoSimulado() {
     const cuenta = document.getElementById('input-cuenta-pago').value;
     const idMetodo = document.getElementById('select-metodo-pago').value;
     
+    // validacion estricta: el campo de cuenta/celular no debe estar vacio
     if (!cuenta || cuenta.trim() === '') {
         alert('Por favor ingresa un numero de cuenta o telefono valido para continuar.');
         return;
     }
-    
+
+    // validacion de formato: solo permitimos numeros en la cuenta de pago
+    const regexSoloNumeros = /^[0-9]+$/;
+    if (!regexSoloNumeros.test(cuenta)) {
+        alert('error: el numero de cuenta o celular solo debe contener digitos numericos.');
+        return;
+    }
+
     // Quitamos el modal de la pantalla para evitar dobles envios
     document.getElementById('modal-pago-simulado').style.display = 'none';
     

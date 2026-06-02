@@ -1,42 +1,51 @@
+/*
+   objetivo de este archivo:
+   centralizar las reglas de validacion del sistema para reutilizarlas en todos los servlets.
+   aplica filtros estrictos para evitar datos malformados en la base de datos.
+*/
 package com.dmari.helper;
 
-// objetivo: centralizar las reglas de validacion para asegurar datos limpios
+import java.util.regex.Pattern;
+
 public class validacionHelper {
-    
-    // verifica que el nombre solo contenga letras y espacios, rechazando numeros
-    public static boolean validarNombre(String nombre) {
-        // validamos que no sea nulo ni este vacio
-        if (nombre == null || nombre.trim().isEmpty()) {
-            return false;
-        }
-        // la expresion regular permite letras minusculas, mayusculas, enes y espacios
-        return nombre.matches("^[a-zA-ZñÑáéíóúÁÉÍÓÚ\\s]+$");
+
+    // expresiones regulares para validar formatos especificos
+    private static final String REGEX_SOLO_LETRAS = "^[a-zA-ZñÑáéíóúÁÉÍÓÚ\\s]+$";
+    private static final String REGEX_SOLO_NUMEROS = "^[0-9]+$";
+    private static final String REGEX_CORREO = "^[A-Za-z0-9+_.-]+@(.+)\\.com$";
+    private static final String REGEX_PASSWORD = "^(?=.*[0-9]).{8,}$";
+
+    // verifica que un texto contenga unicamente letras y espacios (util para nombres)
+    public static boolean validarNombre(String texto) {
+        if (texto == null || texto.trim().isEmpty()) return false;
+        return Pattern.matches(REGEX_SOLO_LETRAS, texto);
     }
 
-    // comprueba que la clave tenga al menos 8 caracteres y contenga numeros
-    public static boolean validarPassword(String password) {
-        // validamos longitud minima de seguridad
-        if (password == null || password.length() < 8) {
-            return false;
-        }
-        // verifica que exista al menos un digito numerico en la cadena
-        return password.matches(".*\\d.*");
-    }
-
-    // valida la logica del correo verificando el arroba y la terminacion punto com
+    // verifica que el correo tenga un formato institucional o comercial valido
     public static boolean validarCorreo(String correo) {
-        // validamos que el objeto no sea nulo
-        if (correo == null) {
-            return false;
-        }
-        // convertimos a minusculas para una comparacion mas segura
-        String correoMin = correo.toLowerCase().trim();
-        
-        // verificamos que contenga el simbolo arroba
-        boolean tieneArroba = correoMin.contains("@");
-        // verificamos que termine estrictamente en punto com
-        boolean terminaEnCom = correoMin.endsWith(".com");
-        
-        return tieneArroba && terminaEnCom;
+        if (correo == null) return false;
+        return Pattern.matches(REGEX_CORREO, correo);
+    }
+
+    // verifica que la clave tenga al menos 8 caracteres y un numero por seguridad
+    public static boolean validarPassword(String password) {
+        if (password == null) return false;
+        return Pattern.matches(REGEX_PASSWORD, password);
+    }
+
+    // verifica que el campo contenga solo digitos (util para telefonos o nit)
+    public static boolean validarSoloNumeros(String texto) {
+        if (texto == null) return false;
+        return Pattern.matches(REGEX_SOLO_NUMEROS, texto);
+    }
+
+    // valida que un precio sea un numero positivo mayor a cero
+    public static boolean validarPrecio(double precio) {
+        return precio > 0;
+    }
+
+    // valida que el stock no sea negativo
+    public static boolean validarStock(int stock) {
+        return stock >= 0;
     }
 }

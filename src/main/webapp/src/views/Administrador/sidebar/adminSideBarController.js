@@ -12,6 +12,7 @@ export async function inicializarAdmin() {
     await cargarComponente('contenedor-sidebar-admin', './src/views/Administrador/sidebar/adminSideBar.html?t=' + new Date().getTime());
     
     // extraemos y guardamos en variables los botones de navegacion que acabamos de inyectar en el html
+    const btnDashboard = document.getElementById('btn-nav-dashboard'); // asumiendo que el id es este en tu html
     const btnProductos = document.getElementById('btn-nav-productos');
     const btnCategorias = document.getElementById('btn-nav-categorias');
     const btnPedidos = document.getElementById('btn-nav-pedidos');
@@ -25,6 +26,12 @@ export async function inicializarAdmin() {
     // configuramos la navegacion para cada boton.
     // si el boton existe en el html, le agregamos un escuchador de eventos 'click'.
     // cuando hagan clic, le ordenamos al router que cambie la url hacia esa vista especifica.
+    if (btnDashboard) {
+        btnDashboard.addEventListener('click', () => {
+            navegarA('dashboard');
+        });
+    }
+
     if (btnProductos) {
         btnProductos.addEventListener('click', () => {
             navegarA('admin-productos');
@@ -81,7 +88,9 @@ export async function inicializarAdmin() {
         document.querySelectorAll('.admin-nav-item').forEach(btn => btn.classList.remove('activo'));
 
         // encendemos (iluminamos) unicamente el boton que coincide con la url actual
-        if (hashActual.includes('admin-productos') && btnProductos) {
+        if (hashActual.includes('dashboard') && btnDashboard) {
+            btnDashboard.classList.add('activo');
+        } else if (hashActual.includes('admin-productos') && btnProductos) {
             btnProductos.classList.add('activo');
         } else if (hashActual.includes('admin-categorias') && btnCategorias) {
             btnCategorias.classList.add('activo');
