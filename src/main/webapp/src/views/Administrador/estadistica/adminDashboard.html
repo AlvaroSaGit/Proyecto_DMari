@@ -1,0 +1,32 @@
+<!-- vista del dashboard global para el administrador modulo 1 -->
+<div class="dashboard-admin-container" style="padding: 25px; animation: fadeIn 0.4s ease-in-out;">
+    
+    <!-- encabezado del panel -->
+    <div class="dashboard-header" style="margin-bottom: 30px; border-bottom: 2px solid #f4f4f4; padding-bottom: 15px;">
+        <h2 style="color: #212529; font-size: 1.7rem; margin: 0;">
+            <i class='bx bxs-dashboard' style="margin-right: 10px;"></i>resumen de ventas globales
+        </h2>
+        <p style="color: #6c757d; margin-top: 5px;">monitoreo de ingresos y actividad comercial de toda la plataforma dmari</p>
+    </div>
+
+    <!-- contenedor de la grafica principal -->
+    <div class="card-grafica-global" style="background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #eef0f2;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 1.2rem; color: #343a40; font-weight: 600;">tendencia mensual de ingresos</h3>
+            <span style="background: #f8f9fa; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; color: #495057; border: 1px solid #dee2e6;">
+                ultimos 6 meses
+            </span>
+        </div>
+
+        <!-- espacio reservado para que chart.js dibuje la grafica -->
+        <div style="position: relative; height: 450px; width: 100%;">
+            <canvas id="graficaVentasGlobales"></canvas>
+        </div>
+    </div>
+
+    <!-- notas de auditoria -->
+    <div style="margin-top: 25px; display: flex; align-items: center; gap: 8px; color: #adb5bd; font-size: 0.85rem;">
+        <i class='bx bx-info-circle'></i>
+        <span>los valores mostrados excluyen los pedidos marcados como cancelados en el sistema.</span>
+    </div>
+</div>

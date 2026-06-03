@@ -67,3 +67,28 @@ export async function obtenerHistorialPedidos() {
         return null;
     }
 }
+
+/**
+ * modulo 2: actualiza el estado logistico de un pedido.
+ * @param {number} id - id del pedido.
+ * @param {string} nuevoEstado - estado destino (ej: Cancelado_por_Proveedor).
+ * @param {string} motivo - explicacion de la cancelacion (opcional si no es cancelado).
+ * @returns {Promise<boolean>} - true si se actualizo correctamente.
+ */
+export async function cambiarEstadoPedido(id, nuevoEstado, motivo = "") {
+    try {
+        const parametros = new URLSearchParams();
+        parametros.append('accion', 'actualizar_estado');
+        parametros.append('id', id);
+        parametros.append('estado', nuevoEstado);
+        parametros.append('motivo', motivo);
+
+        const respuesta = await fetch('pedido', { method: 'POST', body: parametros });
+        if (!respuesta.ok) throw new Error('error en el servidor');
+        
+        return true;
+    } catch (error) {
+        console.error('error al cambiar estado del pedido:', error);
+        return false;
+    }
+}

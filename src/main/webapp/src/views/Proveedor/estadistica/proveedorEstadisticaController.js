@@ -28,16 +28,16 @@ export async function inicializarGraficasProveedor() {
         
         const data = await respuesta.json();
 
-        // configuracion de chart.js
-        // nota: asegurese de tener el script de chart.js cargado en su index.html
+        // configuracion de chart.js modulo 1
+        // se asume que chart.js esta cargado globalmente en el index.html
         const ctx = canvas.getContext('2d');
         new Chart(ctx, {
-            type: 'line', // grafica de lineas para ver la tendencia
+            type: 'line', // grafica de tendencia mensual
             data: {
-                labels: data.etiquetas.reverse(), // mostramos del mas antiguo al mas reciente
+                labels: data.etiquetas, // labels ya vienen ordenados cronologicamente desde java
                 datasets: [{
-                    label: 'ventas mensuales ($)',
-                    data: data.valores.reverse(),
+                    label: 'ingresos mensuales por ventas ($)',
+                    data: data.valores,
                     borderColor: '#e91e63', // color representativo de dmari
                     backgroundColor: 'rgba(233, 30, 99, 0.1)',
                     borderWidth: 3,
@@ -56,7 +56,7 @@ export async function inicializarGraficasProveedor() {
                 },
                 scales: {
                     y: {
-                        beginAtZero: true,
+                        beginAtZero: true, // asegura que la grafica empiece en cero para evitar confusiones visuales
                         ticks: {
                             // formateo de moneda simple en el eje y
                             callback: function(value) {

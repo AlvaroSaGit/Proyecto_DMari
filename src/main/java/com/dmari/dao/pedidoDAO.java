@@ -47,8 +47,10 @@ public class pedidoDAO {
             
             // paso 1: insertamos el pedido maestro
             try (PreparedStatement psPedido = con.prepareStatement(sqlPedido, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                // configuracion de parametros para la cabecera de la factura
                 psPedido.setInt(1, idCliente);
                 psPedido.setDouble(2, totalPagar);
+                // ejecucion de la insercion maestra del pedido
                 psPedido.executeUpdate();
                 
                 try (ResultSet rs = psPedido.getGeneratedKeys()) {

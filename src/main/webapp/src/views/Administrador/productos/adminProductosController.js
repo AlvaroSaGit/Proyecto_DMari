@@ -32,8 +32,10 @@ export async function cargarVistaAdminProductos() {
  */
 function prepararVistaAdminProductos() {
     // extraccion de referencias al dom (cache local para mejorar el rendimiento)
+    // captura de botones de accion y ventana modal
     const btnAgregar = document.getElementById('btn-nuevo-producto');
     const modal = document.getElementById('modal-producto');
+    // referencias para el cierre de la interfaz de edicion
     const btnCerrar = document.getElementById('btn-cerrar-modal');
     const btnCancelar = document.getElementById('btn-cancelar-modal');
     const form = document.getElementById('form-producto');
@@ -176,9 +178,11 @@ function prepararVistaAdminProductos() {
              * es el estandar absoluto de html5 para subir imagenes al servidor de java.
              */
             const formData = new FormData();
+            // empaquetado de datos textuales del producto para envio multipart
             formData.append('nombre', nombre);
             formData.append('descripcion', descripcion);
             formData.append('precio', precio);
+            // agregamos stock y categoria al paquete de datos
             formData.append('stock', stock);
             formData.append('id_categoria', idCategoria);
             formData.append('etiquetas', etiquetas);
@@ -305,7 +309,16 @@ function prepararVistaAdminProductos() {
         };
     }
 
-    // al entrar por primera vez a la pantalla, pedimos los productos a la base de datos
+    // evento para el filtrado por proveedor en la tabla principal
+    const filtroProv = document.getElementById('filtro-proveedor-lista');
+    if (filtroProv) {
+        filtroProv.addEventListener('change', () => {
+            // llamamos a la carga de la lista pasando el id del proveedor seleccionado
+            cargarListaProductos(filtroProv.value);
+        });
+    }
+
+    // al entrar por primera vez pedimos los productos sin filtro
     cargarListaProductos();
     
     // llenamos las opciones dinamicas del formulario para que el administrador no tenga que escribirlas a mano
@@ -348,17 +361,24 @@ async function cargarProveedoresFormulario() {
         const respuesta = await fetch('proveedores');
         if (respuesta.ok) {
             const proveedores = await respuesta.json();
-            const select = document.getElementById('prod-proveedor');
-            if (!select) return;
+            const selectModal = document.getElementById('prod-proveedor');
+            const selectFiltro = document.getElementById('filtro-proveedor-lista');
             
-            select.innerHTML = '<option value="">sin proveedor (producto propio de dmari)</option>';
-            
-            // recorremos el arreglo de proveedores que nos entrego java.
-            proveedores.forEach(prov => {
-                // por cada proveedor, agregamos una opcion al menu desplegable del formulario modal.
-                // el 'value' oculto es el id numerico, y el texto visible es el nombre del proveedor.
-                select.innerHTML += `<option value="${prov.id_usuario_pk}">${prov.nombre}</option>`;
-            });
+            // llenamos el selector del modal de creacion/edicion
+            if (selectModal) {
+                selectModal.innerHTML = '<option value="">sin proveedor (producto propio de dmari)</option>';
+                proveedores.forEach(prov => {
+                    selectModal.innerHTML += `<option value="${prov.id_usuario_pk}">${prov.nombre}</option>`;
+                });
+            }
+
+            // llenamos el selector de filtro de la tabla si existe en el html
+            if (selectFiltro) {
+                selectFiltro.innerHTML = '<option value="">todos los proveedores</option>';
+                proveedores.forEach(prov => {
+                    selectFiltro.innerHTML += `<option value="${prov.id_usuario_pk}">${prov.nombre}</option>`;
+                });
+            }
         } 
     } catch (error) { console.error('error al cargar proveedores:', error); }
 }
@@ -367,13 +387,16 @@ async function cargarProveedoresFormulario() {
  * se comunica con el servicio web para traer todos los productos de la tienda
  * y construye dinamicamente una por una las filas visuales de la tabla del administrador.
  */
-async function cargarListaProductos() {
+async function cargarListaProductos(idProveedor = '') {
     const tbody = document.getElementById('tabla-productos-body');
-    if (!tbody) return; // proteccion: si no existe la tabla en el html, abortamos para no causar errores
+    if (!tbody) return; // proteccion: si no existe la tabla, abortamos
 
     try {
-        // pedimos la lista al backend usando el servicio dedicado
-        const productosBD = await obtenerProductos();
+        // construimos los parametros de busqueda si se selecciono un proveedor
+        const parametros = idProveedor ? `?id_proveedor=${idProveedor}` : '';
+        
+        // pedimos la lista filtrada o completa al backend
+        const productosBD = await obtenerProductos(parametros);
         
         // si el servicio nos devuelve null (por fallo de red), disparamos un error intencional para caer en el catch
         if (!productosBD) throw new Error('no se pudieron obtener los productos desde java');

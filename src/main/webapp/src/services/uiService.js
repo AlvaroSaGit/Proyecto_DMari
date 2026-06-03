@@ -35,3 +35,47 @@ export async function cargarComponente(id, ruta) {
         console.error("Error al traer el componente de: " + ruta, error);
     }
 }
+
+/**
+ * modulo 4: gestion dinamica de modales para facturacion y auditoria.
+ * inyecta contenido html en un contenedor global y lo hace visible.
+ * @param {string} html - contenido estructurado de la factura o formulario.
+ */
+window.mostrarModal = function(html) {
+    // buscamos el contenedor del modal en el index.html
+    let contenedorModal = document.getElementById('modal-general');
+    
+    // si no existe, lo creamos dinamicamente para evitar errores de null
+    if (!contenedorModal) {
+        // creacion del contenedor principal para ventanas emergentes
+        contenedorModal = document.createElement('div');
+        contenedorModal.id = 'modal-general';
+        // estilos basicos para centrar el contenido y oscurecer el fondo
+        Object.assign(contenedorModal.style, {
+            position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
+            backgroundColor: 'rgba(0,0,0,0.7)', display: 'none', justifyContent: 'center',
+            alignItems: 'center', zIndex: '20000'
+        });
+        
+        contenedorModal.innerHTML = `
+            <div id="modal-contenido" style="background: white; padding: 20px; border-radius: 8px; max-width: 600px; width: 90%; position: relative;">
+                <button onclick="this.parentElement.parentElement.style.display='none'" style="position: absolute; top: 10px; right: 10px; border: none; background: none; cursor: pointer; font-size: 20px;">&times;</button>
+                <div id="modal-body"></div>
+            </div>
+        `;
+        document.body.appendChild(contenedorModal);
+    }
+
+    const cuerpo = document.getElementById('modal-body');
+    if (cuerpo) {
+        // inyectamos el html (puede ser la factura del modulo 4 o el motivo de cancelacion del modulo 2)
+        cuerpo.innerHTML = html;
+        contenedorModal.style.display = 'flex';
+    }
+};
+
+// funcion auxiliar para cerrar modales desde cualquier controlador
+export function cerrarModalGeneral() {
+    const modal = document.getElementById('modal-general');
+    if (modal) modal.style.display = 'none';
+}

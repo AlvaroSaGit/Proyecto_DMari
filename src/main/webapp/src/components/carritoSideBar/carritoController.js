@@ -3,7 +3,7 @@ import { cargarComponente } from '../../services/uiService.js';
 // importamos el enrutador para la navegacion
 import { navegarA } from '../../router/router.js';
 // importamos el servicio encargado de los pedidos
-import { enviarPedido } from '../pedido/pedidoService.js';
+import { enviarPedido } from '../../services/pedidoService.js';
 
 // intentamos cargar el carrito guardado en el navegador, si no hay, iniciamos vacio
 let carrito = JSON.parse(localStorage.getItem('carritoDMari')) || [];
@@ -31,8 +31,10 @@ export async function inicializarCarrito() {
     }
 
     // preparamos los elementos para poder cerrar el carrito
+    // captura de botones de interaccion de la barra lateral
     const btnCerrar = document.getElementById('btn-cerrar-carrito');
     const overlay = document.getElementById('overlay-carrito');
+    // referencia al disparador del proceso de pago
     const btnComprar = document.getElementById('btn-comprar-carrito'); // Buscamos el boton de pagar
     
     // si el usuario da clic en la x o en el fondo oscuro, se oculta el menu

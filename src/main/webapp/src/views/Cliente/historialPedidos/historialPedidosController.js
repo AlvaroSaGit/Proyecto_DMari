@@ -3,7 +3,7 @@
  * permite listar pedidos y ver el detalle de la factura con datos del proveedor.
  */
 import { cargarComponente } from '../../../services/uiService.js';
-import { obtenerHistorialPedidos } from '../../../components/pedido/pedidoService.js';
+import { obtenerHistorialPedidos } from '../../../services/pedidoService.js';
 import { crearBloquePedido } from '../../../components/pedido/historialPedidoComponent.js';
 import { navegarA } from '../../../router/router.js';
 

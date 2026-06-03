@@ -6,15 +6,14 @@ let categoriaEditandoId = null;
 
 /**
  * funcion principal de inicializacion para la vista de gestion de categorias.
- * actua como el punto de entrada (entry point) cuando el enrutador detecta la url '#admin-categorias'.
+ * actua como el punto de entrada cuando el enrutador detecta la url '#admin-categorias'.
  * se encarga de:
  * 1. inyectar el html en el espacio principal.
  * 2. solicitar al backend la lista de categorias.
- * 3. preparar la ventana emergente (modal) para escuchar los clics.
+ * 3. preparar la ventana emergente para escuchar los clics.
  */
 export async function cargarVistaAdminCategorias() {
-    // usamos '?t=' + gettime() para destruir la cache del navegador. 
-    // esto obliga al navegador a descargar la ultima version del html, resolviendo el problema de carga.
+    // usamos un timestamp para evitar la cache del navegador y forzar la carga del html mas reciente
     await cargarComponente('component-main', './src/views/Administrador/categorias/adminCategorias.html?t=' + new Date().getTime());
     
     cargarListaCategorias();
@@ -22,39 +21,38 @@ export async function cargarVistaAdminCategorias() {
 }
 
 /**
- * se comunica con el backend de java (servlet 'categorias') para obtener la lista
- * de categorias maestras y las dibuja una por una en la tabla html dinamicamente.
+ * se comunica con el backend para obtener la lista de categorias y las dibuja en la tabla.
  */
 async function cargarListaCategorias() {
     const tbody = document.getElementById('tabla-categorias-body');
-    // Proteccion: Si la tabla no existe en el DOM, abortamos la ejecucion para no generar errores.
+    // proteccion: si la tabla no existe en el dom, abortamos la ejecucion.
     if (!tbody) return;
 
     try {
         // usamos el servicio para traer los datos limpios
         const categorias = await obtenerCategorias(true);
 
-        // Vaciamos el mensaje temporal de "cargando..."
+        // vaciamos el mensaje temporal de carga
         tbody.innerHTML = '';
         
-        // Validacion: Si la base de datos responde pero esta vacia, mostramos un aviso amigable
+        // validacion: si no hay categorias registradas, mostramos un aviso al usuario.
         if(categorias.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay categorias registradas en el sistema</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">no hay categorias registradas en el sistema</td></tr>';
             return;
         }
 
-        // Recorremos el arreglo (Array) que nos mando Java y creamos una fila (tr) por cada categoria
+        // recorremos el arreglo que nos mando java y creamos una fila por cada categoria
         categorias.forEach(cat => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>#00${cat.id || cat.id_categoria_pk}</td>
+                <td>#00${cat.id_categoria_pk}</td>
                 <td><strong>${cat.nombre}</strong></td>
-                <td>${cat.descripcion || 'Sin descripcion'}</td>
+                <td>${cat.descripcion || 'sin descripcion'}</td>
                 <td><span class="badge-estado ${cat.estado_activo !== false ? 'badge-activo' : 'badge-inactivo'}">${cat.estado_activo !== false ? 'ACTIVO' : 'INACTIVO'}</span></td>
                 <td>
-                    <!-- Guardamos los atributos en el boton (data-) para facilitar una futura edicion -->
-                    <button class="btn-editar" data-id="${cat.id || cat.id_categoria_pk}" data-nombre="${cat.nombre}" data-descripcion="${cat.descripcion || ''}"><i class='bx bx-edit'></i> Editar</button>
-                    <button class="btn-estado" data-id="${cat.id || cat.id_categoria_pk}" data-estado="${cat.estado_activo !== false}"><i class='bx bx-refresh'></i> ${cat.estado_activo !== false ? 'Pausar' : 'Activar'}</button>
+                    <!-- guardamos los atributos en el boton para facilitar una futura edicion -->
+                    <button class="btn-editar" data-id="${cat.id_categoria_pk}" data-nombre="${cat.nombre}" data-descripcion="${cat.descripcion || ''}"><i class='bx bx-edit'></i> editar</button>
+                    <button class="btn-estado" data-id="${cat.id_categoria_pk}" data-estado="${cat.estado_activo !== false}"><i class='bx bx-refresh'></i> ${cat.estado_activo !== false ? 'pausar' : 'activar'}</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -67,12 +65,13 @@ async function cargarListaCategorias() {
 }
 
 /**
- * Mapea el DOM (Document Object Model) para enlazar los botones fisicos del HTML
- * con funciones de JavaScript, otorgandoles el poder de abrir, cerrar y guardar en el formulario (Modal).
+ * mapea el dom para enlazar los botones con las funciones de abrir, cerrar y guardar en el modal.
  */
 function configurarModalCategorias() {
+    // captura de elementos de control del dom para la gestion de categorias
     const btnNueva = document.getElementById('btn-nueva-categoria');
     const modal = document.getElementById('modal-categoria');
+    // referencias a botones de cierre y cancelacion del modal
     const btnCerrar = document.getElementById('btn-cerrar-modal-cat');
     const btnCancelar = document.getElementById('btn-cancelar-modal-cat');
     const formCategoria = document.getElementById('form-categoria');
@@ -88,9 +87,9 @@ function configurarModalCategorias() {
         });
     }
     
-    // funcion auxiliar: agrega la clase css que vuelve invisible la ventana
+    // funcion auxiliar para cerrar el modal
     const cerrarModal = () => modal.classList.add('oculto');
-    // asignamos esta funcion a los botones de salir (la x y cancelar)
+    // asignamos el cierre a los botones de salida
     if (btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
     if (btnCancelar) btnCancelar.addEventListener('click', cerrarModal);
 
