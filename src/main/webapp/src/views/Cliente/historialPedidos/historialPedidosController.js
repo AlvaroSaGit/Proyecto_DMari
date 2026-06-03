@@ -1,76 +1,61 @@
-/*
-    objetivo de este archivo:
-    controlador encargado de gestionar la vista del historial de pedidos del cliente.
-    se encarga de solicitar los datos al servidor, procesar la lista plana para agruparla 
-    por numero de recibo y dibujar la interfaz correspondiente en la pantalla.
-*/
-
+/**
+ * controlador para el historial de compras del cliente.
+ * permite listar pedidos y ver el detalle de la factura con datos del proveedor.
+ */
 import { cargarComponente } from '../../../services/uiService.js';
 import { obtenerHistorialPedidos } from '../../../components/pedido/pedidoService.js';
 import { crearBloquePedido } from '../../../components/pedido/historialPedidoComponent.js';
 import { navegarA } from '../../../router/router.js';
 
-/*
-    funcion de arranque de la vista.
-    primero inyecta el html base en el contenedor principal y luego 
-    desencadena el proceso de carga de datos desde el backend.
-*/
+// funcion de arranque de la vista de historial.
 export async function cargarVistaHistorialPedidos() {
     await cargarComponente('component-main', './src/views/Cliente/historialPedidos/historialPedidos.html');
-    
-
     prepararVistaHistorial();
 }
 
-/*
-    extrae la informacion del servidor, evalua posibles errores 
-    (fallos de red o cuenta sin compras previas) y, si todo esta bien,
-    manda a agrupar y dibujar la informacion en la pantalla.
-*/
+// coordina la peticion de datos y el manejo de estados de la interfaz.
 async function prepararVistaHistorial() {
     const contenedor = document.getElementById('contenedor-lista-historial');
     if (!contenedor) return;
 
-    // se muestra un mensaje temporal mientras el servidor responde
-    contenedor.innerHTML = '<p style="text-align:center; padding: 20px;">cargando historial de compras...</p>';
+    // mensaje de espera para el usuario
+    contenedor.innerHTML = '<p style="text-align:center; padding: 20px;">cargando sus pedidos...</p>';
+    
+    try {
+        // peticion al backend usando el servicio centralizado
+        const listaPlana = await obtenerHistorialPedidos();
+        
+        if (!listaPlana) {
+            contenedor.innerHTML = '<p style="text-align:center; color:red;">error al conectar con el servidor.</p>';
+            return;
+        }
 
-    // peticion al backend a traves del servicio modularizado
-    const listaPlana = await obtenerHistorialPedidos();
+        if (listaPlana.length === 0) {
+            contenedor.innerHTML = '<p style="text-align:center; color:#666;">no tienes pedidos registrados.</p>';
+            return;
+        }
 
-    // validacion de seguridad por si falla la conexion o el usuario perdio la sesion
-    if (!listaPlana) {
-        contenedor.innerHTML = '<p style="text-align:center; color:red; padding: 20px;">error de conexion al cargar el historial.</p>';
-        return;
+        // mantenemos la logica de agrupamiento necesaria para los bloques
+        const pedidosAgrupados = agruparPorPedido(listaPlana);
+        renderizarHistorial(pedidosAgrupados, contenedor);
+        
+    } catch (error) {
+        console.error('fallo la carga del historial:', error);
+        contenedor.innerHTML = '<p style="text-align:center; color:red;">error interno al procesar el historial.</p>';
     }
-
-    // si el arreglo viene vacio, significa que el cliente jamas ha realizado un pedido
-    if (listaPlana.length === 0) {
-        contenedor.innerHTML = '<p style="text-align:center; padding: 20px; color:#666;">aun no has realizado ninguna compra en el sistema.</p>';
-        return;
-    }
-
-    // en la base de datos cada producto es una fila separada. 
-    // se agrupan por identificador de pedido para mostrarlos juntos en un solo bloque visual.
-    const pedidosAgrupados = agruparPorPedido(listaPlana);
-    renderizarHistorial(pedidosAgrupados, contenedor);
 }
 
-/*
-    transforma la lista plana que llega de la base de datos en un arreglo de pedidos unificados.
-    ejemplo: si el pedido #5 tiene 3 productos, se crea un solo objeto para el pedido #5 
-    y adentro se guardan los 3 productos en un sub-arreglo, sumando sus costos.
-*/
+// transforma las filas de mysql en objetos agrupados por id de factura.
 function agruparPorPedido(listaPlana) {
     const agrupado = {};
-    
     listaPlana.forEach(item => {
         // si el identificador del pedido no existe aun en el nuevo objeto, se crea su estructura base
         if (!agrupado[item.idPedidoFk]) {
             agrupado[item.idPedidoFk] = {
                 id: item.idPedidoFk,
-                fecha: item.fechaPedido || item.fecha || 'Fecha desconocida', 
-                estado: item.estadoPedido || item.estado || 'Pendiente', 
-                // capturamos la info de entrega si el servidor la envio (solo para admin/proveedor)
+                fecha: item.fechaPedido || 'fecha no disponible',
+                estado: item.estadoPedido || 'pendiente',
+                // capturamos la informacion de entrega para cuando la vista sea usada por admin/proveedor
                 cliente: item.nombreCliente || null,
                 total: 0,
                 productos: []
@@ -99,3 +84,44 @@ function renderizarHistorial(pedidosAgrupados, contenedor) {
         contenedor.appendChild(crearBloquePedido(pedido));
     });
 }
+
+// funcion global para el modulo 4: detalle de factura en modal.
+window.verDetalleFactura = async function(id) {
+    try {
+        // pedimos el detalle individual al controlador
+        const respuesta = await fetch(`pedido?id=${id}`);
+        const detalle = await respuesta.json();
+        if (detalle.length === 0) return;
+
+        const principal = detalle[0]; // datos de cabecera
+
+        // construccion de la estructura de la factura (modulo 4)
+        let html = `<div class="factura-header">
+                        <h3>Detalle de Pedido #FAC-${id}</h3>
+                        <p><strong>Estado:</strong> ${principal.estado}</p>
+                        ${principal.motivo ? `<p style="color: #d32f2f;"><strong>Motivo cancelacion:</strong> ${principal.motivo}</p>` : ''}
+                    </div>
+                    <hr>
+                    <table class="tabla-factura" style="width:100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f4f4f4;"><th>Producto</th><th>Vendedor</th><th>Cant.</th><th>Subtotal</th></tr>
+                        </thead>
+                        <tbody>`;
+        
+        detalle.forEach(item => {
+            html += `<tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding:8px;">${item.producto}</td>
+                        <td style="padding:8px;">${item.proveedor}</td>
+                        <td style="padding:8px; text-align:center;">${item.cantidad}</td>
+                        <td style="padding:8px;">$${item.subtotal.toFixed(2)}</td>
+                    </tr>`;
+        });
+        
+        html += `</tbody></table>`;
+        
+        // aqui debes inyectar 'html' en tu sistema de modales existente
+        console.log('Factura generada para el modal:', html);
+        alert("Abriendo detalle de factura... (Revisa la consola para ver el contenido)");
+
+    } catch (e) { console.error('error al ver factura:', e); }
+};
