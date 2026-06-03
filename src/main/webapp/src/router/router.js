@@ -80,6 +80,8 @@ async function manejarRuta() {
         cargarVistaAdminCategorias();
     } else if (vista === 'admin-usuarios') {
         cargarVistaAdminUsuarios();
+    } else if (vista === 'proveedor-categorias') {
+        cargarVistaAdminCategorias(); // reutilizamos la vista de gestion de categorias
     } else if (vista === 'admin-pedidos') {
         cargarVistaAdminPedidos();
     } else if (vista === 'dashboard') {

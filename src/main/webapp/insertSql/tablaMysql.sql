@@ -176,10 +176,13 @@ create table pedido(
     id_direccion_fk int not null,
     fecha timestamp default current_timestamp,
     total_pagar decimal(10,2) not null,
-    estado_pedido enum('Pendiente', 'Preparando', 'En Camino', 'Entregado', 'Cancelado') default 'Pendiente',
+    estado_pedido enum('Pendiente', 'Preparando', 'En Camino', 'Entregado', 'Cancelado_por_Proveedor', 'Cancelado_por_Cliente', 'Reembolso_Solicitado', 'Devuelto') default 'Pendiente',
+    motivo_cancelacion text null,
+    cancelado_por_id_fk int null,
     foreign key (id_cliente_fk) references cliente(id_cliente_pk),
     foreign key (id_carrito_fk) references carrito(id_carrito_pk), -- Restricción de integridad referencial
-    foreign key (id_direccion_fk) references direccion(id_direccion_pk)
+    foreign key (id_direccion_fk) references direccion(id_direccion_pk),
+    foreign key (cancelado_por_id_fk) references usuario(id_usuario_pk)
 );
 
 -- Detalle del Pedido (Copia de seguridad inmutable de los precios de venta)

@@ -31,6 +31,9 @@ public class detallePedido {
     private String nombreCliente;
     private String fechaPedido;
     private String estadoPedido;
+    private String nombreProveedor;
+    private String metodoPago;
+    private String referenciaPago;
 
     // constructores vacios por defecto
     public detallePedido() {
@@ -91,4 +94,13 @@ public class detallePedido {
 
     public String getEstadoPedido() { return estadoPedido; }
     public void setEstadoPedido(String estadoPedido) { this.estadoPedido = estadoPedido; }
+
+    public String getNombreProveedor() { return nombreProveedor; }
+    public void setNombreProveedor(String nombreProveedor) { this.nombreProveedor = nombreProveedor; }
+
+    public String getMetodoPago() { return metodoPago; }
+    public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
+
+    public String getReferenciaPago() { return referenciaPago; }
+    public void setReferenciaPago(String referenciaPago) { this.referenciaPago = referenciaPago; }
 }

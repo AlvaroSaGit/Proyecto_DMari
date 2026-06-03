@@ -42,10 +42,10 @@ public class productoDAO {
              "i.url_ruta, " +
              // extraemos el texto de la categoria para que el usuario no vea solo un numero
              "c.nombre AS nombre_categoria, " +
-             // creamos una mini subconsulta que busca en la tabla puente todas las etiquetas,
-             // cruza con el nombre de la etiqueta y junta los textos separados por coma (ej: dulce,regalo)
-             "(SELECT GROUP_CONCAT(e.nombre_etiqueta SEPARATOR ',') FROM producto_etiqueta pe INNER JOIN etiqueta e ON pe.id_etiqueta = e.id_etiqueta_pk WHERE pe.id_producto = p.id_producto_pk) AS etiquetas_str " +
-             // tabla principal desde donde partimos
+             "(SELECT GROUP_CONCAT(e.nombre_etiqueta SEPARATOR ',') FROM producto_etiqueta pe INNER JOIN etiqueta e ON pe.id_etiqueta = e.id_etiqueta_pk WHERE pe.id_producto = p.id_producto_pk) AS etiquetas_str, " +
+             "prov.nombre_marca, " +
+             "tel.numero_telefonico AS contacto_tel, " +
+             "cor.correo AS contacto_correo " +
              "FROM producto p " +
              // uso de left join: traemos el producto incluso si no tiene imagen asignada
              "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk AND i.imagen_principal = 1 " +
@@ -53,7 +53,10 @@ public class productoDAO {
              "LEFT JOIN categoria c ON p.id_categoria_fk = c.id_categoria_pk " +
              // nuevos left joins: traemos al proveedor (si tiene) para validar si su cuenta sigue activa
              "LEFT JOIN proveedor_producto pp ON p.id_producto_pk = pp.id_producto_fk " +
-             "LEFT JOIN usuario u ON pp.id_proveedor_fk = u.id_usuario_pk";
+             "LEFT JOIN usuario u ON pp.id_proveedor_fk = u.id_usuario_pk " +
+             "LEFT JOIN proveedor prov ON u.id_usuario_pk = prov.id_proveedor_pk " +
+             "LEFT JOIN telefono tel ON u.id_usuario_pk = tel.id_usuario_fk " +
+             "LEFT JOIN correo cor ON u.id_usuario_pk = cor.id_usuario_fk AND cor.correo_primario = 1";
         
         // condicional: anexa exigencias estrictas al motor de base de datos
         if (soloActivos) {
@@ -78,6 +81,11 @@ public class productoDAO {
                 
                 prod.setIdCategoriaFk(rs.getInt("id_categoria_fk"));
                 prod.setCategoria(rs.getString("nombre_categoria"));
+                
+                // extraemos los datos de contacto y marca del proveedor vinculados
+                prod.setProveedorMarca(rs.getString("nombre_marca"));
+                prod.setProveedorTelefono(rs.getString("contacto_tel"));
+                prod.setProveedorCorreo(rs.getString("contacto_correo"));
                 
                 // extraemos la cadena de multiples etiquetas y la convertimos en un arreglo (lista)
                 String etiquetasStr = rs.getString("etiquetas_str");

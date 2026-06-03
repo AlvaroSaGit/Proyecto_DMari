@@ -51,6 +51,7 @@ public class PedidoController extends HttpServlet {
             return;
         }
         
+        // extraemos el usuario para validar niveles de acceso
         usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
         
         // =========================================================================
@@ -69,9 +70,11 @@ public class PedidoController extends HttpServlet {
             
             int idPedido = Integer.parseInt(request.getParameter("id_pedido"));
             String nuevoEstado = request.getParameter("estado");
+            String motivo = request.getParameter("motivo"); // capturamos la razon enviada desde el modal
             
             pedidoDAO dao = new pedidoDAO();
-            boolean exito = dao.actualizarEstadoPedido(idPedido, nuevoEstado);
+            // pasamos todos los parametros necesarios para la auditoria
+            boolean exito = dao.actualizarEstadoPedido(idPedido, nuevoEstado, motivo, user.getIdUsuario());
             
             // condicional de respuesta: si el dao devulve true responde 200, sino error 500.
             if (exito) {

@@ -43,6 +43,10 @@ public class producto {
     // absorbe la marca del proveedor desde la base de datos
     private String proveedorMarca;
     
+    // datos de contacto del proveedor para visibilidad del cliente
+    private String proveedorTelefono;
+    private String proveedorCorreo;
+    
     // constructor vacio para poder instanciar objetos en blanco desde los daos
     public producto(){}
 
@@ -142,4 +146,10 @@ public class producto {
     public void setProveedorMarca(String proveedorMarca) {
         this.proveedorMarca = proveedorMarca;
     }
+
+    public String getProveedorTelefono() { return proveedorTelefono; }
+    public void setProveedorTelefono(String proveedorTelefono) { this.proveedorTelefono = proveedorTelefono; }
+
+    public String getProveedorCorreo() { return proveedorCorreo; }
+    public void setProveedorCorreo(String proveedorCorreo) { this.proveedorCorreo = proveedorCorreo; }
 }

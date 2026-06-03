@@ -96,10 +96,10 @@ public class AuthController extends HttpServlet {
                 response.getWriter().print("el nombre solo puede contener letras y espacios");
                 return;
             }
-            // validamos el correo buscando el arroba y el punto com
+            // validamos el correo buscando el @ y el punto com
             if (!validacionHelper.validarCorreo(correo)) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().print("el correo debe tener arroba y terminar en .com");
+                response.getWriter().print("el correo debe tener @ y terminar en .com");
                 return;
             }
             // validamos que la contrasena sea segura segun nuestras reglas

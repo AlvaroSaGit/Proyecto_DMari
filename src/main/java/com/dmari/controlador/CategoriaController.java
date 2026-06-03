@@ -6,12 +6,14 @@ import java.util.ArrayList;
 
 import com.dmari.dao.categoriaDAO;
 import com.dmari.modelo.categoria;
+import com.dmari.modelo.usuario;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 /*
     objetivo de este archivo:
@@ -70,7 +72,20 @@ public class CategoriaController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
+        // capa de seguridad: validamos sesion y roles permitidos (admin y proveedor)
+        HttpSession sesion = request.getSession(false);
+        if (sesion == null || sesion.getAttribute("usuarioLogueado") == null) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
+        usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
+        if (user.getIdRol() != 1 && user.getIdRol() != 4) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+
         categoriaDAO dao = new categoriaDAO();
         // buscamos si javascript nos envio una "accion" especifica
         String accion = request.getParameter("accion");

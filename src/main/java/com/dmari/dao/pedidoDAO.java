@@ -332,18 +332,21 @@ public class pedidoDAO {
      * las unidades al mostrador (tabla producto), para no perder dinero ni inventario.
      * 
      * @param idPedido int: identificador de la factura.
-     * @param nuevoEstado string: palabra exacta indicando la fase logistica (ej: "en camino", "cancelado").
+     * @param nuevoEstado string: fase logistica.
+     * @param motivo string: explicacion de la cancelacion.
+     * @param idUsuarioAccion int: id del usuario que opera.
      * @return boolean: true si pudo actualizarse la tabla.
      */
-    public boolean actualizarEstadoPedido(int idPedido, String nuevoEstado) {
-        String sql = "UPDATE pedido SET estado_pedido = ? WHERE id_pedido_pk = ?";
+    public boolean actualizarEstadoPedido(int idPedido, String nuevoEstado, String motivo, int idUsuarioAccion) {
+        // sql actualizado para registrar la auditoria completa (quien y por que)
+        String sql = "UPDATE pedido SET estado_pedido = ?, motivo_cancelacion = ?, cancelado_por_id_fk = ? WHERE id_pedido_pk = ?";
         Connection con = null;
         try {
             con = db.conectar();
-            // apagamos el autocommit para proteger la logica de devolucion de inventario
+            // apagamos el autocommit para proteger la integridad del stock
             con.setAutoCommit(false);
             
-            // 1. Averiguamos el estado actual antes de cambiarlo para evitar devolver stock duplicado
+            // 1. averiguamos el estado actual antes de cambiarlo para evitar devolver stock duplicado
             String estadoAnterior = "";
             String sqlEstadoAnterior = "SELECT estado_pedido FROM pedido WHERE id_pedido_pk = ?";
             try (PreparedStatement psVer = con.prepareStatement(sqlEstadoAnterior)) {
@@ -356,16 +359,19 @@ public class pedidoDAO {
             
             // 2. Aplicamos el nuevo estado de envio/cancelacion
             try (PreparedStatement ps = con.prepareStatement(sql)) {
+                // inyectamos los datos en la consulta incluyendo los campos de auditoria
                 ps.setString(1, nuevoEstado);
-                ps.setInt(2, idPedido);
+                ps.setString(2, motivo);
+                // validacion: si no hay un id de usuario valido guardamos nulo en la base de datos
+                if (idUsuarioAccion > 0) ps.setInt(3, idUsuarioAccion); 
+                else ps.setNull(3, java.sql.Types.INTEGER);
+                ps.setInt(4, idPedido);
                 int afectadas = ps.executeUpdate();
                 
                 // condicional: evalua si el update realmente modifico la fila (si > 0).
                 if (afectadas > 0) {
-                    // 3. LOGICA DE STOCK: Si el pedido se marca como "Cancelado" (y antes no lo estaba), 
-                    // regresamos los productos fisicos a los mostradores de la tienda.
-                    // condicional estricto: evita devolver el stock multiples veces si ya habia sido cancelado.
-                    if ("Cancelado".equalsIgnoreCase(nuevoEstado) && !"Cancelado".equalsIgnoreCase(estadoAnterior)) {
+                    // verificamos si el nuevo estado es una variante de cancelacion para retornar inventario
+                    if (nuevoEstado.startsWith("Cancelado") && !estadoAnterior.startsWith("Cancelado")) {
                         String sqlDetalles = "SELECT id_producto_fk, cantidad FROM detalle_pedido WHERE id_pedido_fk = ?";
                         String sqlDevolverStock = "UPDATE producto SET stock = stock + ? WHERE id_producto_pk = ?";
                         
