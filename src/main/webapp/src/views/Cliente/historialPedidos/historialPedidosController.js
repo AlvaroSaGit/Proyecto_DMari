@@ -99,29 +99,33 @@ window.verDetalleFactura = async function(id) {
         let html = `<div class="factura-header">
                         <h3>Detalle de Pedido #FAC-${id}</h3>
                         <p><strong>Estado:</strong> ${principal.estado}</p>
-                        ${principal.motivo ? `<p style="color: #d32f2f;"><strong>Motivo cancelacion:</strong> ${principal.motivo}</p>` : ''}
+                        ${principal.motivo ? `<p style="color: #d32f2f;"><strong>motivo cancelacion:</strong> ${principal.motivo}</p>` : ''}
                     </div>
                     <hr>
                     <table class="tabla-factura" style="width:100%; border-collapse: collapse;">
                         <thead>
-                            <tr style="background: #f4f4f4;"><th>Producto</th><th>Vendedor</th><th>Cant.</th><th>Subtotal</th></tr>
+                            <tr style="background: #f4f4f4;"><th>producto</th><th>vendedor (proveedor)</th><th>cant.</th><th>subtotal</th></tr>
                         </thead>
                         <tbody>`;
         
         detalle.forEach(item => {
             html += `<tr style="border-bottom: 1px solid #eee;">
                         <td style="padding:8px;">${item.producto}</td>
-                        <td style="padding:8px;">${item.proveedor}</td>
+                        <td style="padding:8px;">${item.proveedor || 'dmari oficial'}</td>
                         <td style="padding:8px; text-align:center;">${item.cantidad}</td>
                         <td style="padding:8px;">$${item.subtotal.toFixed(2)}</td>
                     </tr>`;
         });
         
-        html += `</tbody></table>`;
+        html += `</tbody></table><div style="margin-top:15px; text-align:right;"><strong>total factura: $${principal.totalPagar}</strong></div>`;
         
-        // aqui debes inyectar 'html' en tu sistema de modales existente
-        console.log('Factura generada para el modal:', html);
-        alert("Abriendo detalle de factura... (Revisa la consola para ver el contenido)");
+        // aqui se debe invocar al componente global de modales para mostrar el html generado
+        console.log('factura generada exitosamente:', html);
+        if (window.mostrarModal) {
+            window.mostrarModal(html);
+        } else {
+            alert("detalle de factura listo (ver consola). configure uiService para modales.");
+        }
 
     } catch (e) { console.error('error al ver factura:', e); }
 };

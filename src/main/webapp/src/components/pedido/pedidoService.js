@@ -13,6 +13,13 @@
  * @returns {boolean} - retorna verdadero si el pedido se guardo en la base de datos, falso si ocurrio un error.
  */
 export async function enviarPedido(carrito, idMetodo, cuenta) {
+    // validacion de seguridad modulo 5: regex para asegurar que la cuenta sea numerica
+    const regexCuenta = /^[0-9]{10,15}$/;
+    if (!regexCuenta.test(cuenta)) {
+        console.error('error: el formato de la cuenta o telefono es invalido.');
+        return false;
+    }
+
     // se utiliza urlsearchparams para emular el envio de un formulario html estandar.
     // esto evita el uso de json complejo y facilita la lectura directa en el backend.
     const parametros = new URLSearchParams();
@@ -51,7 +58,7 @@ export async function enviarPedido(carrito, idMetodo, cuenta) {
  */
 export async function obtenerHistorialPedidos() {
     try {
-        // Agregamos Cache-Busting para evitar que el navegador muestre pedidos viejos o incompletos
+        // agregamos cache-busting para evitar que el navegador muestre pedidos viejos o incompletos
         const respuesta = await fetch('pedido?t=' + Date.now());
         if (!respuesta.ok) throw new Error('error al obtener historial');
         return await respuesta.json();

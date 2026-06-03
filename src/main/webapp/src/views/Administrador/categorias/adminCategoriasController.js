@@ -1,19 +1,20 @@
 import { cargarComponente } from '../../../services/uiService.js';
+import { crearCategoria, actualizarCategoria, obtenerCategorias, cambiarEstadoCategoria } from '../../../services/categoriaService.js';
 
-// Variable global para saber si estamos creando o editando
+// variable global para saber si estamos creando o editando
 let categoriaEditandoId = null;
 
 /**
- * Funcion principal de inicializacion para la vista de "Gestion de Categorias".
- * Actua como el punto de entrada (Entry Point) cuando el enrutador detecta la URL '#admin-categorias'.
- * Se encarga de:
- * 1. Inyectar el HTML en el espacio principal.
- * 2. Solicitar al backend la lista de categorias.
- * 3. Preparar la ventana emergente (Modal) para escuchar los clics.
+ * funcion principal de inicializacion para la vista de gestion de categorias.
+ * actua como el punto de entrada (entry point) cuando el enrutador detecta la url '#admin-categorias'.
+ * se encarga de:
+ * 1. inyectar el html en el espacio principal.
+ * 2. solicitar al backend la lista de categorias.
+ * 3. preparar la ventana emergente (modal) para escuchar los clics.
  */
 export async function cargarVistaAdminCategorias() {
-    // Usamos '?t=' + getTime() para destruir la cache del navegador. 
-    // Esto obliga al navegador a descargar la ultima version del HTML, resolviendo el problema de que no te cargue.
+    // usamos '?t=' + gettime() para destruir la cache del navegador. 
+    // esto obliga al navegador a descargar la ultima version del html, resolviendo el problema de carga.
     await cargarComponente('component-main', './src/views/Administrador/categorias/adminCategorias.html?t=' + new Date().getTime());
     
     cargarListaCategorias();
@@ -21,8 +22,8 @@ export async function cargarVistaAdminCategorias() {
 }
 
 /**
- * Se comunica con el backend de Java (Servlet 'categorias') para obtener la lista
- * de categorias maestras y las dibuja una por una en la tabla HTML dinamicamente.
+ * se comunica con el backend de java (servlet 'categorias') para obtener la lista
+ * de categorias maestras y las dibuja una por una en la tabla html dinamicamente.
  */
 async function cargarListaCategorias() {
     const tbody = document.getElementById('tabla-categorias-body');
@@ -30,10 +31,9 @@ async function cargarListaCategorias() {
     if (!tbody) return;
 
     try {
-        // Hacemos una peticion GET al servidor pidiendo TODAS las categorias (incluso pausadas)
-        const respuesta = await fetch('categorias?todas=true');
-        const categorias = await respuesta.json();
-        
+        // usamos el servicio para traer los datos limpios
+        const categorias = await obtenerCategorias(true);
+
         // Vaciamos el mensaje temporal de "cargando..."
         tbody.innerHTML = '';
         
@@ -78,23 +78,23 @@ function configurarModalCategorias() {
     const formCategoria = document.getElementById('form-categoria');
     const tbody = document.getElementById('tabla-categorias-body');
 
-    // EVENTO: Mostrar la ventana Modal vacia al darle "Nueva Categoria"
+    // evento: mostrar la ventana modal vacia al darle nueva categoria
     if (btnNueva) {
         btnNueva.addEventListener('click', () => { 
-            categoriaEditandoId = null; // Reseteamos la variable
+            categoriaEditandoId = null; // reseteamos la variable
             document.getElementById('modal-titulo-cat').innerText = 'Nueva Categoria';
-            if (formCategoria) formCategoria.reset(); // Limpiamos la basura de usos anteriores
+            if (formCategoria) formCategoria.reset(); // limpiamos la basura de usos anteriores
             modal.classList.remove('oculto'); 
         });
     }
     
-    // FUNCION AUXILIAR: Agrega la clase CSS que vuelve invisible la ventana
+    // funcion auxiliar: agrega la clase css que vuelve invisible la ventana
     const cerrarModal = () => modal.classList.add('oculto');
-    // Asignamos esta funcion a los botones de Salir (La "X" y "Cancelar")
+    // asignamos esta funcion a los botones de salir (la x y cancelar)
     if (btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
     if (btnCancelar) btnCancelar.addEventListener('click', cerrarModal);
 
-    // DELEGACION DE EVENTOS: Escuchar clics en los botones "Editar" de la tabla
+    // delegacion de eventos: escuchar clics en los botones editar y estado de la tabla
     if (tbody) {
         tbody.addEventListener('click', async (evento) => {
             const btnClic = evento.target.closest('button');
@@ -103,7 +103,7 @@ function configurarModalCategorias() {
             if (btnClic.classList.contains('btn-editar')) {
                 categoriaEditandoId = btnClic.getAttribute('data-id');
                 
-                // Rellenamos el formulario con los datos guardados en el boton
+                // rellenamos el formulario con los datos guardados en el boton
                 document.getElementById('cat-nombre').value = btnClic.getAttribute('data-nombre');
                 document.getElementById('cat-descripcion').value = btnClic.getAttribute('data-descripcion');
                 
@@ -111,58 +111,59 @@ function configurarModalCategorias() {
                 modal.classList.remove('oculto');
                 
             } else if (btnClic.classList.contains('btn-estado')) {
-                // LOGICA PARA CAMBIAR EL ESTADO (ACTIVAR / INACTIVAR)
+                // logica para cambiar el estado (activar / inactivar)
                 const id = btnClic.getAttribute('data-id');
                 const estadoActual = btnClic.getAttribute('data-estado') === 'true';
                 
-                if (confirm(`¿Seguro que deseas ${estadoActual ? 'inactivar' : 'activar'} esta categoria?`)) {
-                    const parametros = new URLSearchParams();
-                    parametros.append('accion', 'cambiar_estado'); // Bandera para que Java lo identifique
-                    parametros.append('id', id);
-                    parametros.append('estado', (!estadoActual).toString()); // Invertimos el estado actual
-
-                    try {
-                        const respuesta = await fetch('categorias', { method: 'POST', body: parametros });
-                        if (respuesta.ok) {
-                            cargarListaCategorias(); // Recargamos la tabla visualmente
-                        } else {
-                            alert('Error al intentar cambiar el estado en el servidor.');
-                        }
-                    } catch (error) { console.error('Error de red:', error); }
+                if (confirm(`¿seguro que deseas ${estadoActual ? 'inactivar' : 'activar'} esta categoria?`)) {
+                    // ejecutamos el cambio mediante el servicio
+                    const exito = await cambiarEstadoCategoria(id, !estadoActual);
+                    if (exito) {
+                        cargarListaCategorias(); // recargamos la tabla
+                    } else {
+                        alert('error al intentar cambiar el estado en el servidor.');
+                    }
                 }
             }
         });
     }
 
-    // EVENTO PRINCIPAL: Que pasa cuando el admin presiona el boton verde de "Guardar Categoria"
+    // evento principal: que pasa cuando el admin presiona el boton verde de guardar categoria
     if (formCategoria) {
         formCategoria.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Detenemos la recarga automatica de la pagina
+            e.preventDefault(); // detenemos la recarga automatica de la pagina
 
-            // 1. Extraemos los textos que escribio el usuario
+            // 1. capturamos los textos que escribio el usuario
             const nombre = document.getElementById('cat-nombre').value;
             const descripcion = document.getElementById('cat-descripcion').value;
 
-            // 2. Empacamos los datos en formato estandar de formulario
-            const parametros = new URLSearchParams();
-            parametros.append('nombre', nombre);
-            parametros.append('descripcion', descripcion);
-            
-            // Si estamos editando, mandamos el ID para que Java sepa que debe hacer un UPDATE
-            if (categoriaEditandoId) {
-                parametros.append('id', categoriaEditandoId);
+            // validacion de seguridad modulo 5: regex para texto sin simbolos
+            const regexTexto = /^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]{3,40}$/;
+            if (!regexTexto.test(nombre)) {
+                alert('error: el nombre de la categoria debe tener entre 3 y 40 caracteres (solo letras).');
+                return;
             }
 
             try {
-                // 3. Enviamos los datos al mismo Servlet pero usando POST (crear)
-                const respuesta = await fetch('categorias', { method: 'POST', body: parametros });
+                let exito = false;
 
-                if (respuesta.ok) {
-                    alert('¡Categoria creada con exito!');
-                    cerrarModal(); // Ocultamos la ventana
-                    cargarListaCategorias(); // Volvemos a consultar la Base de Datos para ver la nueva fila
-                } else { alert('Error del servidor al intentar guardar.'); }
-            } catch (error) { console.error('Error de peticion POST:', error); }
+                // 2. usamos los servicios inyectados segun el modo
+                if (categoriaEditandoId) {
+                    exito = await actualizarCategoria(categoriaEditandoId, nombre, descripcion);
+                } else {
+                    exito = await crearCategoria(nombre, descripcion);
+                }
+
+                if (exito) {
+                    alert('¡categoria guardada con exito!');
+                    cerrarModal(); // ocultamos la ventana
+                    cargarListaCategorias(); // refrescamos la tabla
+                } else { 
+                    alert('error del servidor al intentar guardar.'); 
+                }
+            } catch (error) { 
+                console.error('error en la operacion de categorias:', error); 
+            }
         });
     }
 }
