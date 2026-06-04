@@ -5,11 +5,15 @@
 package com.dmari.modelo;
 
 public class DashboardEstadistica {
+    // suma total de dinero por ventas brutas
     private double totalIngresos;
+    // conteo de ordenes procesadas exitosamente
     private int cantidadPedidos;
+    // suma de unidades fisicas entregadas
     private int totalProductosVendidos;
     private double totalComisiones; // nuevo campo para rastrear la ganancia de la empresa
 
+    // inicializador vacio para reportes
     public DashboardEstadistica() {}
 
     // getters y setters siguiendo el estilo del proyecto

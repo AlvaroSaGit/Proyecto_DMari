@@ -8,13 +8,16 @@ import { cargarComponente } from '../../../services/uiService.js';
 
 // funcion de arranque, llamada por el enrutador
 export async function cargarVistaPerfil() {
+    // inyeccion del html de la vista de perfil en el contenedor spa
     await cargarComponente('component-main', './src/views/Cliente/perfil/perfilCliente.html');
+    // configuracion de eventos y carga de datos iniciales
     prepararFormularioPerfil();
 }
 
 async function prepararFormularioPerfil() {
     const formulario = document.getElementById('form-perfil-cliente');
     
+    // verificacion de integridad de la vista cargada
     if (!formulario) {
         console.warn('Advertencia: no se encontro el <form id="form-perfil-cliente"> en el html. Revisa el nombre.');
     }
@@ -25,6 +28,7 @@ async function prepararFormularioPerfil() {
         // usamos cache-busting estricto para evitar datos de usuarios viejos
         const respuesta = await fetch('perfil-cliente?t=' + Date.now(), { cache: 'no-store' });
         
+        // procesamiento de la respuesta exitosa del servidor
         if (respuesta.ok) {
             const perfil = await respuesta.json();
             
@@ -56,9 +60,11 @@ async function prepararFormularioPerfil() {
 
     // 2. escuchar cuando el usuario intente guardar los datos nuevos
     if (formulario) {
+        // interceptor del evento de guardado
         formulario.addEventListener('submit', async (e) => {
             e.preventDefault(); // evitamos que la pagina parpadee o recargue
             
+            // bloqueo de interfaz para evitar peticiones concurrentes
             const btnGuardar = document.getElementById('btn-guardar-perfil');
             if(btnGuardar) {
                 btnGuardar.innerText = 'Guardando...';
@@ -82,12 +88,14 @@ async function prepararFormularioPerfil() {
                 });
                 
                 if (res.ok) {
+                    // confirmacion al usuario y redireccion al catalogo
                     alert('¡Tus datos de envio se han guardado con exito!');
                     window.location.hash = 'catalogo';
                 } else {
                     alert('Hubo un error al intentar guardar tu perfil. Revisa tu conexion.');
                 }
             } catch (error) {
+                // captura de errores de comunicacion
                 console.error('Fallo de red al guardar perfil', error);
             } finally {
                 if(btnGuardar) {

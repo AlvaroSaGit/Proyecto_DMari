@@ -17,13 +17,21 @@ public class producto {
     // ==========================================
     // bloque 1: columnas originales de la tabla producto
     // ==========================================
+    // identificador primario del producto
     private int idProductoPk;
+    // referencia a la categoria asignada
     private int idCategoriaFk;
+    // nombre comercial del articulo
     private String nombreProducto;
+    // texto informativo sobre el producto
     private String descripcion;
+    // valor monetario
     private double precio;
+    // unidades disponibles en almacen
     private int stock;
+    // bandera de disponibilidad (activo/pausado)
     private boolean estado;
+    // fecha de registro en el sistema
     private String fechaCreacion;
     
     // ==========================================
@@ -51,70 +59,87 @@ public class producto {
     public producto(){}
 
     // metodos de acceso (getters y setters)
+    // obtiene el id del producto
     public int getIdProductoPk() {
         return idProductoPk;
     }
 
+    // establece el id del producto
     public void setIdProductoPk(int idProductoPk) {
         this.idProductoPk = idProductoPk;
     }
 
+    // obtiene el id de la categoria
     public int getIdCategoriaFk() {
         return idCategoriaFk;
     }
 
+    // establece el id de la categoria
     public void setIdCategoriaFk(int idCategoriaFk) {
         this.idCategoriaFk = idCategoriaFk;
     }
 
+    // obtiene el nombre del producto
     public String getNombreProducto() {
         return nombreProducto;
     }
 
+    // establece el nombre del producto
     public void setNombreProducto(String nombreProducto) {
         this.nombreProducto = nombreProducto;
     }
 
+    // obtiene la descripcion
     public String getDescripcion() {
         return descripcion;
     }
 
+    // establece la descripcion
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
     }
 
+    // obtiene el precio
     public double getPrecio() {
         return precio;
     }
 
+    // establece el precio
     public void setPrecio(double precio) {
         this.precio = precio;
     }
 
+    // obtiene el stock
     public int getStock() {
         return stock;
     }
 
+    // establece el stock
     public void setStock(int stock) {
         this.stock = stock;
     }
 
+    // verifica si el producto esta activo
     public boolean isEstado() {
         return estado;
     }
 
+    // cambia el estado del producto
     public void setEstado(boolean estado) {
         this.estado = estado;
     }
 
+    // obtiene la fecha de creacion
     public String getFechaCreacion() {
         return fechaCreacion;
     }
 
+    // establece la fecha de creacion
     public void setFechaCreacion(String fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
     }
 
+    // obtiene la ruta de la imagen
     public String getUrlRuta() {
         return urlRuta;
     }

@@ -1,56 +1,55 @@
-/**
- * controlador para el dashboard principal del administrador.
- * modulo 1: visualizacion de la suma global de ventas de la plataforma.
- */
+// controlador para el dashboard global del administrador modulo 1
 import { cargarComponente } from '../../../services/uiService.js';
 
+/**
+ * inicializa la vista del dashboard global inyectando el html y cargando la grafica.
+ */
 export async function cargarVistaAdminDashboard() {
-    // cargamos el contenedor visual del dashboard desde la nueva ruta de estadistica
+    // inyeccion del componente visual en el contenedor principal
     await cargarComponente('component-main', './src/views/Administrador/estadistica/adminDashboard.html');
-    inicializarGraficaGlobal();
+    
+    // renderizado de la grafica de tendencia utilizando chart.js
+    inicializarGraficaVentas();
 }
 
-async function inicializarGraficaGlobal() {
+/**
+ * consulta los datos al servidor y genera la representacion visual de ingresos globales.
+ */
+async function inicializarGraficaVentas() {
     const canvas = document.getElementById('graficaVentasGlobales');
     if (!canvas) return;
 
     try {
-        // el servlet estadisticas detecta el rol 1 y devuelve el total global
-        const respuesta = await fetch('estadisticas');
-        if (!respuesta.ok) throw new Error('error al obtener estadisticas globales');
-
-        const data = await respuesta.json();
-        const ctx = canvas.getContext('2d');
-
-        new Chart(ctx, {
-            type: 'bar', // para el admin usamos barras para resaltar el volumen total
+        // peticion al servlet de estadisticas (el backend segmenta por id_rol de la sesion)
+        const respuesta = await fetch('estadisticas?global=true');
+        if (!respuesta.ok) throw new Error('no se pudo obtener la informacion de ventas');
+        
+        const datos = await respuesta.json();
+        
+        // creacion de la instancia de chart.js siguiendo la identidad visual de dmari
+        new Chart(canvas, {
+            type: 'line',
             data: {
-                labels: data.etiquetas,
+                labels: datos.meses, // ej: ['Enero', 'Febrero', 'Marzo']
                 datasets: [{
-                    label: 'ventas globales de la plataforma ($)',
-                    data: data.valores,
-                    backgroundColor: '#212529', // color oscuro institucional para el admin
-                    borderRadius: 5
+                    label: 'Ingresos Mensuales',
+                    data: datos.valores,
+                    borderColor: '#d4a373', // color cafe artesanal de la marca
+                    backgroundColor: 'rgba(212, 163, 115, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: (value) => '$' + value.toLocaleString()
-                        }
-                    }
+                    y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                    x: { grid: { display: false } }
                 }
             }
         });
-    } catch (error) {
-        console.error('error al renderizar dashboard de administrador:', error);
-        const contenedor = canvas.parentElement;
-        if (contenedor) {
-            contenedor.innerHTML = '<p style="color:red; text-align:center;">error al cargar resumen de ventas globales.</p>';
-        }
-    }
+    } catch (error) { console.error('error al cargar la grafica del dashboard:', error); }
 }
