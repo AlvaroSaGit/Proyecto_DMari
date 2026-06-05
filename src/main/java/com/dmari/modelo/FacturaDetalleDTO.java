@@ -1,5 +1,5 @@
 // dto para representar cada linea de producto en la factura modulo 4
-package com.dmari.dto;
+package com.dmari.modelo;
 
 public class FacturaDetalleDTO {
     // nombre descriptivo del producto artesanal

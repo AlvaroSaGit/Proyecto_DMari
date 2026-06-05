@@ -1,17 +1,19 @@
 package com.dmari.controlador;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+
 import com.dmari.dao.pedidoDAO;
 import com.dmari.modelo.VentaEstadisticaDTO;
 import com.dmari.modelo.usuario;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
 
 @WebServlet(name = "EstadisticaController", urlPatterns = {"/estadisticas"})
 public class EstadisticaController extends HttpServlet {
@@ -22,6 +24,7 @@ public class EstadisticaController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
+        // seteamos el formato de salida como un objeto json
         response.setContentType("application/json;charset=UTF-8");
         HttpSession sesion = request.getSession(false);
         
@@ -31,6 +34,7 @@ public class EstadisticaController extends HttpServlet {
             return;
         }
 
+        // segmentamos las estadisticas segun el tipo de usuario logueado
         // recuperamos el objeto de usuario de la sesion para segmentar datos
         usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
         ArrayList<VentaEstadisticaDTO> datos = new ArrayList<>();
@@ -50,7 +54,7 @@ public class EstadisticaController extends HttpServlet {
             StringBuilder valores = new StringBuilder("[");
             
             for (int i = 0; i < datos.size(); i++) {
-                // usamos getEtiqueta() que corresponde al DTO definido en el modelo
+                // usamos getetiqueta() que corresponde al dto definido en el modelo
                 etiquetas.append("\"").append(datos.get(i).getEtiqueta()).append("\"");
                 valores.append(datos.get(i).getTotal());
                 

@@ -3,8 +3,8 @@ package com.dmari.controlador;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.dmari.dao.pedidoDAO;
 import com.dmari.dao.carritoDAO;
+import com.dmari.dao.pedidoDAO;
 import com.dmari.helper.jsonHelper;
 import com.dmari.modelo.detallePedido;
 import com.dmari.modelo.usuario;
@@ -55,11 +55,11 @@ public class PedidoController extends HttpServlet {
         usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
         
         // =========================================================================
-        // ruta a: cambio de estado logistico (exclusivo del administrador y proveedor)
+        // ruta a: cambio de estado logistico (exclusivo de administrador y proveedor)
         // =========================================================================
         String accion = request.getParameter("accion");
-        // condicional de bifurcacion: decide si entra al bloque de logistica o de nueva compra.
-        if ("cambiar_estado".equals(accion)) {
+        // validacion de accion: ahora coincide con el nombre enviado desde pedidoservice.js
+        if ("actualizar_estado".equals(accion)) {
             
             // barrera de privilegios: evitamos que un cliente curioso cancele su propio pedido por la url
             // condicional logico: si tu rol no es 1 (admin) ni 4 (proveedor), eres bloqueado.
@@ -68,7 +68,8 @@ public class PedidoController extends HttpServlet {
                 return;
             }
             
-            int idPedido = Integer.parseInt(request.getParameter("id_pedido"));
+            // extraemos el id usando el nombre de parametro correcto enviado por el frontend
+            int idPedido = Integer.parseInt(request.getParameter("id"));
             String nuevoEstado = request.getParameter("estado");
             String motivo = request.getParameter("motivo"); // capturamos la razon enviada desde el modal
             
@@ -97,9 +98,9 @@ public class PedidoController extends HttpServlet {
         String idMetodoStr = request.getParameter("idMetodo");
         String cuenta = request.getParameter("cuenta");
         
-        // si el carrito llego vacio o corrupto, o si faltan los datos de pago, rechazamos la peticion
-        // condicional de validacion de datos vitales para evitar fallos de codigo java por "nullpointerexception".
-        if (idsProductos == null || idsProductos.length == 0 || idMetodoStr == null || cuenta == null) {
+        // validacion de seguridad modulo 5: evitamos nulos y verificamos formato numerico de la cuenta
+        // esto previene fallos de nullpointerexception y ataques de inyeccion de texto
+        if (idsProductos == null || idsProductos.length == 0 || idMetodoStr == null || cuenta == null || !cuenta.matches("^[0-9]+$")) {
             // sc_bad_request (400): el servidor rechaza la peticion porque faltan datos clave del carrito
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;

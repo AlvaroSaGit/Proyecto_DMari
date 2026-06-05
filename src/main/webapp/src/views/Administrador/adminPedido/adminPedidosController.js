@@ -1,6 +1,9 @@
 // importamos la inyeccion html y la misma peticion fetch que usa el cliente
+// corregimos la ruta para que apunte a services y no a la carpeta de componentes
+// eliminamos obtenerhistorialpedidos ya que el administrador usa una peticion global directa
 import { cargarComponente } from '../../../services/uiService.js';
-import { obtenerHistorialPedidos } from '../../../components/pedido/pedidoService.js';
+import { cambiarEstadoPedido, obtenerHistorialPedidos } from '../../../services/pedidoService.js';
+import { verFactura } from '../../../services/facturaService.js';
 
 // arranca la vista inyectando el html en el main
 export async function cargarVistaAdminPedidos() {
@@ -38,10 +41,11 @@ async function prepararVistaPedidos() {
 function agruparPorPedido(listaPlana) {
     const agrupado = {};
     listaPlana.forEach(item => {
-        if (!agrupado[item.idPedido]) {
+        // usamos idpedidofk que es el nombre generado por el dao en java
+        if (!agrupado[item.idPedidoFk]) {
             const clienteSeguro = item.nombreCliente || item.nombre_cliente || item.cliente || 'Sin información de entrega';
-            agrupado[item.idPedido] = { 
-                id: item.idPedido, 
+            agrupado[item.idPedidoFk] = { 
+                id: item.idPedidoFk, 
                 fecha: item.fecha, 
                 estado: item.estado, 
                 cliente: clienteSeguro,
@@ -49,8 +53,8 @@ function agruparPorPedido(listaPlana) {
                 productos: [] 
             };
         }
-        agrupado[item.idPedido].productos.push(item);
-        agrupado[item.idPedido].total += item.subtotal;
+        agrupado[item.idPedidoFk].productos.push(item);
+        agrupado[item.idPedidoFk].total += item.subtotal;
     });
     return Object.values(agrupado).sort((a, b) => b.id - a.id);
 }
@@ -90,10 +94,11 @@ function crearBloquePedidoAdmin(pedido) {
     const select = div.querySelector('.select-estado-pedido');
     select.addEventListener('change', async (e) => {
         const parametros = new URLSearchParams();
-        parametros.append('accion', 'cambiar_estado');
-        parametros.append('id_pedido', pedido.id);
+        // sincronizamos con el nombre de accion que espera el pedidocontroller.java
+        parametros.append('accion', 'actualizar_estado');
+        parametros.append('id', pedido.id);
         parametros.append('estado', e.target.value);
-        try { await fetch('pedido', { method: 'POST', body: parametros }); alert('estado del paquete actualizado'); } catch(err) { alert('error al actualizar'); }
+        try { await fetch('pedido', { method: 'POST', body: parametros }); alert('estado del paquete actualizado'); } catch(err) { alert('error al actualizar estado en el servidor'); }
     });
 
     return div;

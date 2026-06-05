@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import com.dmari.helper.databaseHelper;
+import com.dmari.modelo.VentaEstadisticaDTO;
 import com.dmari.modelo.detallePedido;
 
 public class pedidoDAO {
@@ -16,7 +17,7 @@ public class pedidoDAO {
     /**
      * 1. registrar pedido (checkout)
      * metodo transaccional critico para guardar la compra completa.
-     * opera bajo la regla "todo o nada": guarda la cabecera del pedido,
+     * opera bajo la regla todo o nada: guarda la cabecera del pedido,
      * los detalles de cada producto, descuenta el inventario y registra el pago.
      * 
      * @param idCliente int: identificador numerico del comprador.
@@ -27,14 +28,21 @@ public class pedidoDAO {
      * @return boolean: true si el commit general se ejecuta sin errores, false si hubo un rollback.
      */
     public boolean registrarPedido(int idCliente, double totalPagar, ArrayList<detallePedido> carrito, int idMetodoPago, String numeroCuenta) {
-        // preparamos la instruccion sql para insertar la cabecera del pedido (el recibo principal)
+        // sql para insertar la cabecera del pedido.
+        // guarda la relacion con el cliente y el monto total de la venta.
+        // el estado inicial se establece como pendiente.
         String sqlPedido = "INSERT INTO pedido (id_cliente_fk, total_pagar, estado_pedido) VALUES (?, ?, 'Pendiente')";
-        // preparamos la instruccion sql para insertar cada producto comprado en el detalle del pedido
+        // sql para registrar cada producto comprado.
+        // vincula el item al pedido principal usando su id.
+        // guarda la cantidad, el precio capturado y el subtotal calculado.
         String sqlDetalle = "INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)";
-        // instruccion para restar permanentemente el stock del producto de inmediato al comprar
-        // el tercer parametro asegura que mysql jamas permita que el inventario quede en negativo
+        // sql para descontar unidades del inventario.
+        // resta la cantidad del stock disponible del producto.
+        // la clausula stock >= cantidad evita que el inventario sea negativo.
         String sqlDescontarStock = "UPDATE producto SET stock = stock - ? WHERE id_producto_pk = ? AND stock >= ?";
-        // instruccion para guardar el comprobante financiero en la tabla pago
+        // sql para registrar el comprobante de pago simulado.
+        // amarra el pago al pedido generado.
+        // registra la comision de dmari y el monto neto para el proveedor.
         String sqlPago = "INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, numero_cuenta_ahorro, comision_dmari, monto_total, estado_activo, estado_pago) VALUES (?, ?, ?, ?, ?, 1, 'Aprobado')";
         
         Connection con = null;
@@ -47,31 +55,36 @@ public class pedidoDAO {
             
             // paso 1: insertamos el pedido maestro
             try (PreparedStatement psPedido = con.prepareStatement(sqlPedido, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                // asignamos los parametros del cliente y monto a la consulta
                 // configuracion de parametros para la cabecera de la factura
                 psPedido.setInt(1, idCliente);
                 psPedido.setDouble(2, totalPagar);
+                // enviamos el comando de insercion a la base de datos
                 // ejecucion de la insercion maestra del pedido
                 psPedido.executeUpdate();
                 
                 try (ResultSet rs = psPedido.getGeneratedKeys()) {
+                    // verificamos si mysql genero una nueva llave primaria
                     // condicional: si mysql pudo generar el id, lo capturamos para amarrarlo a los productos.
                     if (rs.next()) idPedidoGenerado = rs.getInt(1);
                 }
             }
             
-            // condicional: verifica si el id maestro es valido antes de intentar guardar productos huérfanos.
+            // condicional: verifica si el id maestro es valido antes de intentar guardar productos huerfanos.
             if (idPedidoGenerado > 0) {
                 try (PreparedStatement psDetalle = con.prepareStatement(sqlDetalle);
                      PreparedStatement psStock = con.prepareStatement(sqlDescontarStock)) {
                     
                     // iteracion: recorre todos los elementos comprados para encolar sus inserciones (batch).
                     for (detallePedido item : carrito) {
+                        // configuramos el detalle amarrado al id del pedido principal
                         psDetalle.setInt(1, idPedidoGenerado);
                         psDetalle.setInt(2, item.getIdProductoFk());
                         psDetalle.setInt(3, item.getCantidad());
                         psDetalle.setDouble(4, item.getPrecioUnitario());
                         psDetalle.setDouble(5, item.getSubtotal());
                         
+                        // agregamos la operacion al lote de ejecucion masiva
                         // addbatch encola las instrucciones para ejecutarlas todas de golpe (mejor rendimiento)
                         psDetalle.addBatch(); 
                         
@@ -99,6 +112,7 @@ public class pedidoDAO {
                     
                     // paso 3: registramos el comprobante de pago asociado a la factura
                     try (PreparedStatement psPago = con.prepareStatement(sqlPago)) {
+                        // vinculamos el pago con el pedido recien creado
                         psPago.setInt(1, idPedidoGenerado);
                         psPago.setInt(2, idMetodoPago);
                         psPago.setString(3, numeroCuenta);
@@ -106,6 +120,7 @@ public class pedidoDAO {
                         double comision = totalPagar * 0.05;
                         double totalProveedor = totalPagar - comision;
                         psPago.setDouble(4, comision);
+                        // el monto total representa lo que recibe el proveedor tras la comision
                         psPago.setDouble(5, totalProveedor);
                         psPago.executeUpdate();
                     }
@@ -148,7 +163,14 @@ public class pedidoDAO {
     public ArrayList<detallePedido> listarPedidosPorProveedor(int idUsuarioProveedor) {
         ArrayList<detallePedido> lista = new ArrayList<>();
         
-        // preparamos la consulta uniendo 6 tablas para revelar el camino de datos desde el pedido hasta el proveedor
+        // consulta para el panel del proveedor. 
+        // 1. selecciona datos del pedido (id, fecha, estado).
+        // 2. une usuario para saber quien compra.
+        // 3. left joins con cliente y direccion para datos logisticos (direccion y telefono).
+        // 4. inner join con detalle_pedido para ver productos.
+        // 5. inner join con producto para el nombre comercial.
+        // 6. cruce con proveedor_producto para filtrar solo lo que le pertenece al artesano.
+        // 7. ordena por fecha mas reciente.
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, u.nombre AS nombre_cliente, " +
                      // traemos la direccion de la tabla satelite para que el proveedor sepa a donde enviar
                      "d.direccion, d.direccion_detallada, c.telefono_secundario, c.referencia_ubicacion, t.numero_telefonico, prod.nombre_producto, dp.cantidad, dp.subtotal " +
@@ -219,7 +241,10 @@ public class pedidoDAO {
      */
     public ArrayList<detallePedido> listarPedidosPorCliente(int idCliente) {
         ArrayList<detallePedido> lista = new ArrayList<>();
-        // preparamos la consulta sql para traer el historial completo de un cliente
+        // consulta para el historial del cliente.
+        // une pedido con detalle y producto para mostrar que compro.
+        // usa left joins con pago y metodo para ver la forma de pago.
+        // filtra por el id del cliente logueado.
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, " +
                      // traemos el nombre del producto, sus datos monetarios y el metodo de pago
                      "prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal, mp.descripcion_pago " +
@@ -270,6 +295,10 @@ public class pedidoDAO {
      */
     public ArrayList<detallePedido> listarTodosLosPedidos() {
         ArrayList<detallePedido> lista = new ArrayList<>();
+        // consulta global para administracion (8 tablas).
+        // extrae la trazabilidad completa: comprador, producto, montos, destino y pagos.
+        // los left joins en perfil y direccion evitan que la lista falle si el perfil esta incompleto.
+        // ordena por el id del pedido de forma descendente para ver lo mas reciente.
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, u.nombre AS nombre_cliente, " +
                      "d.direccion, d.direccion_detallada, c.telefono_secundario, c.referencia_ubicacion, t.numero_telefonico, prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal, mp.descripcion_pago " +
                      "FROM pedido p " +
@@ -282,6 +311,7 @@ public class pedidoDAO {
                      "LEFT JOIN pago pg ON p.id_pedido_pk = pg.id_pedido_fk " +
                      "LEFT JOIN metodo_pago mp ON pg.id_metodo_pago_fk = mp.id_metodo_pago_pk " +
                      "ORDER BY p.id_pedido_pk DESC";
+                     // nota: esta consulta no tiene where porque es global para el administrador
                      
         try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
              // iteracion: recorre absolutamente todas las filas de ventas generadas.
@@ -340,7 +370,9 @@ public class pedidoDAO {
      * @return boolean: true si pudo actualizarse la tabla.
      */
     public boolean actualizarEstadoPedido(int idPedido, String nuevoEstado, String motivo, int idUsuarioAccion) {
-        // sql actualizado para registrar la auditoria completa (quien y por que)
+        // sql para actualizar la fase logistica del pedido.
+        // guarda el nuevo estado, el motivo de cancelacion y el id de quien opera.
+        // permite auditar quien cancelo o entrego cada factura.
         String sql = "UPDATE pedido SET estado_pedido = ?, motivo_cancelacion = ?, cancelado_por_id_fk = ? WHERE id_pedido_pk = ?";
         Connection con = null;
         try {
@@ -350,7 +382,9 @@ public class pedidoDAO {
             
             // 1. averiguamos el estado actual antes de cambiarlo para evitar devolver stock duplicado
             String estadoAnterior = "";
+            // consulta el estado previo para saber si hay que revertir inventario.
             String sqlEstadoAnterior = "SELECT estado_pedido FROM pedido WHERE id_pedido_pk = ?";
+            // abrimos una consulta rapida para validar el estado previo
             try (PreparedStatement psVer = con.prepareStatement(sqlEstadoAnterior)) {
                 psVer.setInt(1, idPedido);
                 try (ResultSet rs = psVer.executeQuery()) {
@@ -359,7 +393,7 @@ public class pedidoDAO {
                 }
             }
             
-            // 2. Aplicamos el nuevo estado de envio/cancelacion
+            // 2. aplicamos el nuevo estado de envio/cancelacion
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 // inyectamos los datos en la consulta incluyendo los campos de auditoria
                 ps.setString(1, nuevoEstado);
@@ -374,7 +408,9 @@ public class pedidoDAO {
                 if (afectadas > 0) {
                     // verificamos si el nuevo estado es una variante de cancelacion para retornar inventario
                     if (nuevoEstado.startsWith("Cancelado") && !estadoAnterior.startsWith("Cancelado")) {
+                        // sql para identificar que productos y cantidades devolver.
                         String sqlDetalles = "SELECT id_producto_fk, cantidad FROM detalle_pedido WHERE id_pedido_fk = ?";
+                        // sql para reponer las unidades al inventario principal.
                         String sqlDevolverStock = "UPDATE producto SET stock = stock + ? WHERE id_producto_pk = ?";
                         
                         try (PreparedStatement psDetalles = con.prepareStatement(sqlDetalles);
@@ -410,5 +446,157 @@ public class pedidoDAO {
                 System.err.println("Error al cerrar la conexion en actualizacion de estado: " + e.getMessage());
             }
         }
+    }
+
+    /**
+     * 6. obtener estadisticas de ventas (dashboard)
+     * permite extraer el rendimiento financiero.
+     * si el idproveedor es 0, actua como administrador (vista global).
+     * si el idproveedor > 0, filtra solo los productos de ese dueno.
+     * 
+     * @param idproveedor int: id del usuario proveedor o 0 para admin.
+     * @return double[]: arreglo con [total_ventas, cantidad_pedidos, comisiones_generadas]
+     */
+    public double[] obtenerEstadisticasVentas(int idProveedor) {
+        double[] stats = new double[3];
+        String sql;
+        
+        if (idProveedor == 0) {
+            // estadisticas globales para administrador.
+            // sum(total_pagar): volumen de ventas bruto.
+            // count: numero de transacciones exitosas.
+            // sum(* 0.05): calculo de ingresos por comision para la plataforma.
+            sql = "SELECT SUM(total_pagar) as total, COUNT(id_pedido_pk) as conteo, SUM(total_pagar * 0.05) as comision " +
+                  "FROM pedido WHERE estado_pedido = 'Entregado'";
+        } else {
+            // estadisticas privadas para el proveedor.
+            // sum(dp.subtotal): suma solo el dinero de sus propios productos.
+            // inner join con proveedor_producto: garantiza el aislamiento de datos.
+            // distinct: evita duplicar el conteo de pedidos con multiples items del mismo dueno.
+            sql = "SELECT SUM(dp.subtotal) as total, COUNT(DISTINCT p.id_pedido_pk) as conteo, SUM(dp.subtotal * 0.05) as comision " +
+                  "FROM pedido p " +
+                  "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
+                  "INNER JOIN proveedor_producto pp ON dp.id_producto_fk = pp.id_producto_fk " +
+                  "WHERE pp.id_proveedor_fk = ? AND p.estado_pedido = 'Entregado'";
+        }
+
+        try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
+            // inyectamos el parametro solo si no es una consulta de administrador
+            if (idProveedor > 0) ps.setInt(1, idProveedor);
+            try (ResultSet rs = ps.executeQuery()) {
+                // mapeamos los resultados numericos al arreglo de retorno
+                if (rs.next()) {
+                    stats[0] = rs.getDouble("total");
+                    stats[1] = rs.getDouble("conteo");
+                    stats[2] = rs.getDouble("comision");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("error al obtener estadisticas: " + e.getMessage());
+        }
+        return stats;
+    }
+
+    /**
+     * 7. generar datos para factura
+     * extrae la informacion necesaria para armar un pdf.
+     * cruza datos de cliente, pago y detalles de productos.
+     */
+    public ResultSet obtenerDatosFactura(int idPedido) throws SQLException {
+        Connection con = db.conectar();
+        // consulta para reporte de facturacion (pdf).
+        // une usuario, correo, direccion, detalle, producto y pago.
+        // extrae toda la informacion necesaria para reconstruir el recibo fisico.
+        String sql = "SELECT p.id_pedido_pk, p.fecha, u.nombre, u.apellido, c.correo, " +
+                     "d.direccion, dp.cantidad, prod.nombre_producto, dp.precio_unitario, " +
+                     "dp.subtotal, pg.monto_total, mp.descripcion_pago " +
+                     "FROM pedido p " +
+                     "INNER JOIN usuario u ON p.id_cliente_fk = u.id_usuario_pk " +
+                     "INNER JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk " +
+                     "INNER JOIN direccion d ON u.id_usuario_pk = d.id_usuario_fk AND d.direccion_primario = 1 " +
+                     "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
+                     "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
+                     "INNER JOIN pago pg ON p.id_pedido_pk = pg.id_pedido_fk " +
+                     "INNER JOIN metodo_pago mp ON pg.id_metodo_pago_fk = mp.id_metodo_pago_pk " +
+                     "WHERE p.id_pedido_pk = ?";
+        // ejecutamos la extraccion de datos para el reporte pdf
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setInt(1, idPedido);
+        return ps.executeQuery();
+        // nota: el llamador debe cerrar la conexion al terminar de procesar el resultset
+    }
+
+    /**
+     * 8. obtener ventas mensuales globales (admin)
+     * extrae el total de dinero de pedidos entregados agrupados por mes.
+     * 
+     * @return arraylist<ventaestadisticadto>: lista de meses y montos.
+     */
+    public ArrayList<VentaEstadisticaDTO> obtenerVentasMensualesGlobales() {
+        ArrayList<VentaEstadisticaDTO> lista = new ArrayList<>();
+        // consulta de ventas mensuales (global).
+        // date_format: agrupa las fechas por año y mes (ej: 2024-05).
+        // sum: totaliza los ingresos de cada mes.
+        // order by: mantiene la linea de tiempo cronologica para la grafica.
+        String sql = "SELECT DATE_FORMAT(fecha, '%Y-%m') as mes, SUM(total_pagar) as total " +
+                     "FROM pedido WHERE estado_pedido = 'Entregado' " +
+                     "GROUP BY mes ORDER BY mes ASC";
+
+        try (Connection con = db.conectar(); 
+             PreparedStatement ps = con.prepareStatement(sql); 
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                VentaEstadisticaDTO v = new VentaEstadisticaDTO();
+                // asignamos el nombre del mes como etiqueta
+                v.setEtiqueta(rs.getString("mes"));
+                // asignamos el monto sumado
+                v.setTotal(rs.getDouble("total"));
+                lista.add(v);
+            }
+        } catch (SQLException e) {
+            System.out.println("error en obtener ventas mensuales globales: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    /**
+     * 9. obtener ventas mensuales por proveedor
+     * extrae la sumatoria de subtotales de productos que pertenecen al proveedor logueado.
+     * cruza pedido con detalle_pedido y la tabla puente de proveedor_producto.
+     * 
+     * @param idproveedor int: id del usuario con rol proveedor.
+     * @return arraylist<ventaestadisticadto>: lista de meses y sus ventas privadas.
+     */
+    public ArrayList<VentaEstadisticaDTO> obtenerVentasMensualesProveedor(int idProveedor) {
+        ArrayList<VentaEstadisticaDTO> lista = new ArrayList<>();
+        // consulta de ventas mensuales (por proveedor).
+        // sum(dp.subtotal): totaliza ingresos privados del artesano.
+        // joins: vincula el pedido con el dueno del producto.
+        // date_format: segmenta los ingresos por mes para alimentar chart.js.
+        // where: asegura que solo se sumen facturas entregadas del proveedor logueado.
+        String sql = "SELECT DATE_FORMAT(p.fecha, '%Y-%m') as mes, SUM(dp.subtotal) as total " +
+                     "FROM pedido p " +
+                     "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
+                     "INNER JOIN proveedor_producto pp ON dp.id_producto_fk = pp.id_producto_fk " +
+                     "WHERE pp.id_proveedor_fk = ? AND p.estado_pedido = 'Entregado' " +
+                     "GROUP BY mes ORDER BY mes ASC";
+
+        try (Connection con = db.conectar(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, idProveedor);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    VentaEstadisticaDTO v = new VentaEstadisticaDTO();
+                    v.setEtiqueta(rs.getString("mes"));
+                    v.setTotal(rs.getDouble("total"));
+                    lista.add(v);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("error en obtener ventas mensuales proveedor: " + e.getMessage());
+        }
+        return lista;
     }
 }

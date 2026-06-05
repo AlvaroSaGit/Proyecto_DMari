@@ -1,7 +1,7 @@
 USE DMari;
 
 -- ==========================================================
--- 1. POBLACIÓN DE ROLES
+-- 1. poblacion de roles
 -- ==========================================================
 INSERT INTO rol (id_rol_pk, tipo_rol) VALUES 
 (1, 'administrador'),
@@ -9,35 +9,35 @@ INSERT INTO rol (id_rol_pk, tipo_rol) VALUES
 (4, 'proveedor');
 
 -- ==========================================================
--- 2. POBLACIÓN DE CATEGORÍAS
+-- 2. poblacion de categorias
 -- ==========================================================
 INSERT INTO categoria (nombre, descripcion, estado_activo) VALUES 
-('Reposteria', 'Postres, donas y dulces artesanales', true),   -- ID 1
-('Decoracion', 'Velas y articulos decorativos para el hogar', true), -- ID 2
-('Floristeria', 'Arreglos florales hermosos para toda ocasion', true); -- ID 3
+('Reposteria', 'Postres, donas y dulces artesanales', true),   -- id 1
+('Decoracion', 'Velas y articulos decorativos para el hogar', true), -- id 2
+('Floristeria', 'Arreglos florales hermosos para toda ocasion', true); -- id 3
 
 -- ==========================================================
--- 3. REGISTRO DE USUARIOS BASE (15 Registros para SENA)
+-- 3. registro de usuarios base (15 registros para sena)
 -- ==========================================================
 INSERT INTO usuario (nombre, apellido, id_rol_fk, estado_cuenta) VALUES 
-('Alvaro', 'Jefe', 1, true),       -- ID 1: Administrador
-('Maria', 'Gomez', 2, true),       -- ID 2: Cliente VIP
-('Carlos', 'Suministros', 4, true), -- ID 3: Proveedor Ceras
-('Ana', 'Repostera', 4, true),     -- ID 4: Proveedor Postres
-('Luis', 'Flores', 4, true),       -- ID 5: Proveedor Vivero
-('Pedro', 'Moto', 2, true),        -- ID 6: Cliente
-('Laura', 'Perez', 2, true),       -- ID 7: Cliente
-('Jorge', 'Diaz', 2, true),        -- ID 8: Cliente
-('Diana', 'Rojas', 2, true),       -- ID 9: Cliente
-('Camilo', 'Mendez', 2, true),     -- ID 10: Cliente
-('Sofia', 'Vargas', 2, true),      -- ID 11: Cliente
-('Andres', 'Castillo', 2, true),   -- ID 12: Cliente
-('Valentina', 'Ortiz', 2, true),   -- ID 13: Cliente
-('Diego', 'Ramirez', 2, true),     -- ID 14: Cliente
-('Miguel', 'Reparte', 2, true);    -- ID 15: Cliente
+('Alvaro', 'Jefe', 1, true),       -- id 1: administrador
+('Maria', 'Gomez', 2, true),       -- id 2: cliente vip
+('Carlos', 'Suministros', 4, true), -- id 3: proveedor ceras
+('Ana', 'Repostera', 4, true),     -- id 4: proveedor postres
+('Luis', 'Flores', 4, true),       -- id 5: proveedor vivero
+('Pedro', 'Moto', 2, true),        -- id 6: cliente
+('Laura', 'Perez', 2, true),       -- id 7: cliente
+('Jorge', 'Diaz', 2, true),        -- id 8: cliente
+('Diana', 'Rojas', 2, true),       -- id 9: cliente
+('Camilo', 'Mendez', 2, true),     -- id 10: cliente
+('Sofia', 'Vargas', 2, true),      -- id 11: cliente
+('Andres', 'Castillo', 2, true),   -- id 12: cliente
+('Valentina', 'Ortiz', 2, true),   -- id 13: cliente
+('Diego', 'Ramirez', 2, true),     -- id 14: cliente
+('Miguel', 'Reparte', 2, true);    -- id 15: cliente
 
 -- ==========================================================
--- 4. REGISTRO DE CORREOS SATÉLITE
+-- 4. registro de correos satelite
 -- ==========================================================
 INSERT INTO correo (id_usuario_fk, correo, correo_primario) VALUES 
 (1, 'alvaro@dmari.com', true),
@@ -57,7 +57,8 @@ INSERT INTO correo (id_usuario_fk, correo, correo_primario) VALUES
 (15, 'miguel.entregas@envios.com', true);
 
 -- ==========================================================
--- 5. ENCRIPTACIÓN DE CONTRASEÑAS
+-- 5. encriptacion de contrasenas
+-- los valores se insertan usando aes_encrypt, lo cual requiere que la columna sea de tipo varbinary
 -- ==========================================================
 INSERT INTO credenciales (id_usuario, passwd_encript) VALUES 
 (1, AES_ENCRYPT('admin123', 'llave_dmari')),
@@ -77,7 +78,7 @@ INSERT INTO credenciales (id_usuario, passwd_encript) VALUES
 (15, AES_ENCRYPT('reparto123', 'llave_dmari'));
 
 -- ==========================================================
--- 6. COMPLETAR PERFILES DE CLIENTES (Solo datos de extensión)
+-- 6. completar perfiles de clientes (solo datos de extension)
 -- ==========================================================
 INSERT INTO cliente (id_cliente_pk, referencia_ubicacion) VALUES 
 (2, 'Casa blanca esquinera'),
@@ -93,7 +94,7 @@ INSERT INTO cliente (id_cliente_pk, referencia_ubicacion) VALUES
 (15, 'Conjunto residencial bloques del norte');
 
 -- ==========================================================
--- 7. COMPLETAR PERFILES DE PROVEEDORES
+-- 7. completar perfiles de proveedores
 -- ==========================================================
 INSERT INTO proveedor (id_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta) VALUES
 (3, '900123456-1', 'Ceras Giron', '123456789', 'Bancolombia', 'Ahorros'),
@@ -101,27 +102,27 @@ INSERT INTO proveedor (id_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancar
 (5, '900555666-3', 'Vivero San Luis', '555666777', 'Nequi', 'Ahorros');
 
 -- ==========================================================
--- 8. REGISTRO DE PRODUCTOS (15 Registros para SENA)
+-- 8. registro de productos (15 registros para sena)
 -- ==========================================================
 INSERT INTO producto (id_categoria_fk, nombre_producto, descripcion, precio, stock, estado) VALUES 
-(2, 'Vela de Vainilla y Canela', 'Aroma dulce ideal para relajacion', 18000, 15, true),     -- ID 1
-(1, 'Dona Glaseada Especial', 'Clasica con glaseado de azucar', 4500, 30, true),           -- ID 2
-(2, 'Vela Decorativa de Flores', 'Vela artesanal con petalos secos', 22000, 10, true),    -- ID 3
-(3, 'Ramo de Rosas Rojas', 'Hermoso arreglo floral para regalar a mama', 65000, 5, true), -- ID 4
-(1, 'Dona Rellena de Arequipe', 'Masa suave con relleno tradicional', 5500, 25, true),    -- ID 5
-(1, 'Caja de Mini Donas', 'Set de 6 mini donas surtidas para regalo', 15000, 10, true),   -- ID 6
-(1, 'Desayuno Feliz', 'Bandeja con jugo, sanduche, fruta y globo', 85000, 8, true),       -- ID 7
-(2, 'Ancheta Cumpleanos', 'Dulces surtidos y cervezas', 110000, 4, true),                 -- ID 8
-(1, 'Caja de Trufas', '12 trufas de chocolate belga', 35000, 20, true),                   -- ID 9
-(2, 'Globo Helio Te Amo', 'Globo metalizado gigante', 12000, 50, true),                   -- ID 10
-(2, 'Peluche Oso Gigante', 'Oso de felpa de 1 metro de alto', 150000, 3, true),           -- ID 11
-(2, 'Vino Tinto Reserva', 'Botella de vino tinto importado', 75000, 12, true),            -- ID 12
-(2, 'Tarjeta 3D Cumpleanos', 'Tarjeta artesanal con relieve', 8000, 100, true),           -- ID 13
-(1, 'Pastel de Chocolate', 'Pastel humedo para 10 personas', 55000, 6, true),             -- ID 14
-(1, 'Cupcakes Decorados', 'Caja de 4 cupcakes personalizados', 20000, 15, true);          -- ID 15
+(2, 'Vela de Vainilla y Canela', 'Aroma dulce ideal para relajacion', 18000, 15, true),     -- id 1
+(1, 'Dona Glaseada Especial', 'Clasica con glaseado de azucar', 4500, 30, true),           -- id 2
+(2, 'Vela Decorativa de Flores', 'Vela artesanal con petalos secos', 22000, 10, true),    -- id 3
+(3, 'Ramo de Rosas Rojas', 'Hermoso arreglo floral para regalar a mama', 65000, 5, true), -- id 4
+(1, 'Dona Rellena de Arequipe', 'Masa suave con relleno tradicional', 5500, 25, true),    -- id 5
+(1, 'Caja de Mini Donas', 'Set de 6 mini donas surtidas para regalo', 15000, 10, true),   -- id 6
+(1, 'Desayuno Feliz', 'Bandeja con jugo, sanduche, fruta y globo', 85000, 8, true),       -- id 7
+(2, 'Ancheta Cumpleanos', 'Dulces surtidos y cervezas', 110000, 4, true),                 -- id 8
+(1, 'Caja de Trufas', '12 trufas de chocolate belga', 35000, 20, true),                   -- id 9
+(2, 'Globo Helio Te Amo', 'Globo metalizado gigante', 12000, 50, true),                   -- id 10
+(2, 'Peluche Oso Gigante', 'Oso de felpa de 1 metro de alto', 150000, 3, true),           -- id 11
+(2, 'Vino Tinto Reserva', 'Botella de vino tinto importado', 75000, 12, true),            -- id 12
+(2, 'Tarjeta 3D Cumpleanos', 'Tarjeta artesanal con relieve', 8000, 100, true),           -- id 13
+(1, 'Pastel de Chocolate', 'Pastel humedo para 10 personas', 55000, 6, true),             -- id 14
+(1, 'Cupcakes Decorados', 'Caja de 4 cupcakes personalizados', 20000, 15, true);          -- id 15
 
 -- ==========================================================
--- 9. REGISTRO DE IMÁGENES RELACIONADAS
+-- 9. registro de imagenes relacionadas
 -- ==========================================================
 INSERT INTO imagenes (id_producto_fk, url_ruta, imagen_principal) VALUES 
 (1, 'src/img/productos/default/gato_programador.jpg', 1),
@@ -141,7 +142,7 @@ INSERT INTO imagenes (id_producto_fk, url_ruta, imagen_principal) VALUES
 (15, 'src/img/productos/default/gato_programador.jpg', 1);
 
 -- ==========================================================
--- 10. POBLACIÓN DE ETIQUETAS (15 Registros)
+-- 10. poblacion de etiquetas (15 registros)
 -- ==========================================================
 INSERT INTO etiqueta (nombre_etiqueta) VALUES 
 ('Aromaterapia'), ('Relajacion'), ('Dulce'), ('Decoracion'), ('Arequipe'), 
@@ -149,7 +150,7 @@ INSERT INTO etiqueta (nombre_etiqueta) VALUES
 ('Chocolate'), ('Premium'), ('Infantil'), ('Para Ella'), ('Para El');
 
 -- ==========================================================
--- 11. ASIGNACIÓN DE ETIQUETAS A PRODUCTOS
+-- 11. asignacion de etiquetas a productos
 -- ==========================================================
 INSERT INTO producto_etiqueta (id_producto, id_etiqueta) VALUES 
 (1, 1), (1, 2), (1, 14),
@@ -169,13 +170,13 @@ INSERT INTO producto_etiqueta (id_producto, id_etiqueta) VALUES
 (15, 3), (15, 9), (15, 13);
 
 -- ==========================================================
--- 12. RELACIÓN PROVEEDOR - PRODUCTO
+-- 12. relacion proveedor - producto
 -- ==========================================================
 INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) VALUES 
 (3, 1), (3, 3), (4, 2), (4, 5), (4, 6), (4, 14), (4, 15), (5, 4);
 
 -- ==========================================================
--- 13. POBLACIÓN DE MÉTODOS DE PAGO
+-- 13. poblacion de metodos de pago
 -- ==========================================================
 INSERT INTO metodo_pago (descripcion_pago, estado_activo) VALUES 
 ('Nequi', true),
@@ -185,34 +186,34 @@ INSERT INTO metodo_pago (descripcion_pago, estado_activo) VALUES
 ('PSE', true);
 
 -- ==========================================================
--- 14. DIRECCIONES Y TELÉFONOS DE CLIENTES (Unificados de Secc. 6 y 15)
+-- 14. direcciones y telefonos de clientes (unificados de secc. 6 y 15)
 -- ==========================================================
 INSERT INTO telefono (id_usuario_fk, numero_telefonico) VALUES 
-(2, '3101234567'), (2, '3100000000'), -- Teléfono base y secundario de Maria
-(7, '3119876543'), (7, '3111111111'), -- Laura
-(8, '3124567890'), (8, '3122222222'), -- Jorge
-(10, '3144444444');                   -- Camilo
+(2, '3101234567'), (2, '3100000000'), -- telefono base y secundario de maria
+(7, '3119876543'), (7, '3111111111'), -- laura
+(8, '3124567890'), (8, '3122222222'), -- jorge
+(10, '3144444444');                   -- camilo
 
 INSERT INTO direccion (id_usuario_fk, direccion, direccion_detallada, direccion_primario) VALUES 
-(2, 'Calle 10 # 5-20, Giron', 'Casa blanca esquinera, timbre 2', true),            -- ID Direccion: 1
-(7, 'Carrera 15 # 22-10, Bucaramanga', 'Apto 402', true),                           -- ID Direccion: 2
-(8, 'Calle 45 # 9-50, Floridablanca', 'Casa 3', true),                              -- ID Direccion: 3
-(9, 'Avenida 33 # 10-12, Piedecuesta', 'Conjunto cerrado', true),                   -- ID Direccion: 4
-(10, 'Calle 50 # 14-20, Bucaramanga', 'Casa rejas negras', true);                   -- ID Direccion: 5
+(2, 'Calle 10 # 5-20, Giron', 'Casa blanca esquinera, timbre 2', true),            -- id direccion: 1
+(7, 'Carrera 15 # 22-10, Bucaramanga', 'Apto 402', true),                           -- id direccion: 2
+(8, 'Calle 45 # 9-50, Floridablanca', 'Casa 3', true),                              -- id direccion: 3
+(9, 'Avenida 33 # 10-12, Piedecuesta', 'Conjunto cerrado', true),                   -- id direccion: 4
+(10, 'Calle 50 # 14-20, Bucaramanga', 'Casa rejas negras', true);                   -- id direccion: 5
 
 -- ==========================================================
--- 15. SIMULACIÓN DE HISTORIAL DE CARRITOS Y PEDIDOS (Transacciones Conectadas)
+-- 15. simulacion de historial de carritos y pedidos (transacciones conectadas)
 -- ==========================================================
 
--- === TRANSACCIÓN 1: Maria (ID Cliente: 2) ===
--- El carrito nace, se llena y se cierra como Procesado al pagar
-INSERT INTO carrito (id_cliente_fk, estado) VALUES (2, 'Procesado'); -- Genera ID Carrito: 1
+-- === transaccion 1: maria (id cliente: 2) ===
+-- el carrito nace, se llena y se cierra como procesado al pagar
+INSERT INTO carrito (id_cliente_fk, estado) VALUES (2, 'Procesado'); -- genera id carrito: 1
 INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES 
 (1, 1, 2, true), 
 (1, 2, 1, true);
 
 INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES 
-(2, 1, 1, 40500.00, 'Pendiente'); -- ID Pedido: 1
+(2, 1, 1, 40500.00, 'Pendiente'); -- id pedido: 1
 INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES 
 (1, 1, 2, 18000.00, 36000.00), 
 (1, 2, 1, 4500.00, 4500.00);
@@ -221,13 +222,13 @@ INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comis
 (1, 1, 'Celular Nequi: 3101234567', 2025.00, 38475.00, 'Aprobado');
 
 
--- === TRANSACCIÓN 2: Laura (ID Cliente: 7) ===
-INSERT INTO carrito (id_cliente_fk, estado) VALUES (7, 'Procesado'); -- Genera ID Carrito: 2
+-- === transaccion 2: laura (id cliente: 7) ===
+INSERT INTO carrito (id_cliente_fk, estado) VALUES (7, 'Procesado'); -- genera id carrito: 2
 INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES 
 (2, 11, 1, true);
 
 INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES 
-(7, 2, 2, 150000.00, 'Entregado'); -- ID Pedido: 2
+(7, 2, 2, 150000.00, 'Entregado'); -- id pedido: 2
 INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES 
 (2, 11, 1, 150000.00, 150000.00);
 
@@ -235,13 +236,13 @@ INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comis
 (2, 3, 'Voucher Tarjeta: 444455556666', 7500.00, 142500.00, 'Aprobado');
 
 
--- === TRANSACCIÓN 3: Jorge (ID Cliente: 8) ===
-INSERT INTO carrito (id_cliente_fk, estado) VALUES (8, 'Procesado'); -- Genera ID Carrito: 3
+-- === transaccion 3: jorge (id cliente: 8) ===
+INSERT INTO carrito (id_cliente_fk, estado) VALUES (8, 'Procesado'); -- genera id carrito: 3
 INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES 
 (3, 7, 1, true);
 
 INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES 
-(8, 3, 3, 85000.00, 'En Camino'); -- ID Pedido: 3
+(8, 3, 3, 85000.00, 'En Camino'); -- id pedido: 3
 INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES 
 (3, 7, 1, 85000.00, 85000.00);
 

@@ -33,13 +33,16 @@ public class usuarioDAO {
     public boolean registrarUsuario(usuario nuevoUsuario) {
         // consulta para la tabla principal de usuario.
         // usamos un select anidado para buscar el id del rol cliente automaticamente.
+        // esto evita tener que conocer el id numerico del rol desde el codigo java
         String sqlUsuario = "INSERT INTO usuario (nombre, id_rol_fk, estado_cuenta) VALUES (?, (SELECT id_rol_pk FROM rol WHERE tipo_rol = 'cliente' LIMIT 1), 1)";
         
         // consulta para insertar el correo vinculado al usuario
+        // vincula el id del usuario recien creado con su direccion de email principal
         String sqlCorreo = "INSERT INTO correo (id_usuario_fk, correo, correo_primario) VALUES (?, ?, 1)";
         
         // aes_encrypt es un comando nativo de mysql que convierte el texto en codigo ilegible (formato binario blob). 
         // sin la llave secreta, es matematicamente imposible revertirlo a texto plano.
+        // guarda la contraseña de forma segura en la tabla credenciales
         String sqlCredenciales = "INSERT INTO credenciales (id_usuario, passwd_encript) VALUES (?, AES_ENCRYPT(?, ?))";
         
         Connection con = null;
@@ -140,6 +143,9 @@ public class usuarioDAO {
         
         // aes_decrypt hace el proceso inverso: usa la llave secreta para destrabar el blob y lo compara con el texto digitado.
         // traemos tambien el estado_cuenta para validarlo desde java y poder darle un mensaje especifico al usuario
+        // el inner join con correo permite buscar por email (que es unico)
+        // el inner join con credenciales permite acceder al blob encriptado para compararlo
+        // la condicion aes_decrypt(..., llave) = ? es la que valida la contraseña en el motor de la base de datos
         String sql = "SELECT u.id_usuario_pk, u.nombre, u.apellido, u.id_rol_fk, c.correo, u.estado_cuenta " +
                      "FROM usuario u " +
                      "INNER JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk " +
@@ -184,6 +190,8 @@ public class usuarioDAO {
     public ArrayList<usuario> listarUsuarios() {
         ArrayList<usuario> lista = new ArrayList<>();
         // cruzamos la tabla usuario con el correo usando left join (por si algun usuario no tiene correo registrado)
+        // selecciona los datos basicos de identidad y el estado de la cuenta (activo/bloqueado)
+        // el left join asegura que el usuario aparezca en la lista incluso si hubo un error al guardar su correo
         String sql = "SELECT u.id_usuario_pk, u.nombre, u.apellido, u.id_rol_fk, u.estado_cuenta, c.correo " +
                      "FROM usuario u " +
                      "LEFT JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk";
@@ -217,6 +225,8 @@ public class usuarioDAO {
      * @return boolean: true si el cambio se guardo con exito.
      */
     public boolean actualizarPermisos(int idUsuario, int idRol, boolean estadoCuenta) {
+        // actualiza el nivel de acceso (rol) y la bandera de estado de cuenta
+        // permite al admin habilitar o suspender el acceso de cualquier usuario
         String sql = "UPDATE usuario SET id_rol_fk = ?, estado_cuenta = ? WHERE id_usuario_pk = ?";
         Connection con = null;
         try {
@@ -234,6 +244,7 @@ public class usuarioDAO {
             // ARREGLO: Si el usuario es ascendido a Proveedor (rol 4), inicializamos su perfil comercial
             // Esto garantiza que proveedor_producto funcione perfectamente cuando intente crear un producto.
             // condicional: evalua si el nuevo rol otorgado es especificamente "proveedor".
+            // insert ignore evita errores si el usuario ya tenia un perfil de proveedor previo
             if (idRol == 4) {
                 String sqlProv = "INSERT IGNORE INTO proveedor (id_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta) VALUES (?, '000000000', 'Mi Tienda', '0000', 'Banco', 'Ahorros')";
                 try (PreparedStatement psProv = con.prepareStatement(sqlProv)) {
@@ -267,6 +278,8 @@ public class usuarioDAO {
      */
     public boolean cambiarPassword(int idUsuario, String passwordActual, String nuevaPassword) {
         // la instruccion update solo hara el cambio si desencriptar (aes_decrypt) la clave actual coincide con la que digito el usuario
+        // usa aes_encrypt para sobreescribir la contraseña nueva con la llave de seguridad
+        // la clausula where incluye la validacion de la contraseña anterior para mayor seguridad
         String sql = "UPDATE credenciales SET passwd_encript = AES_ENCRYPT(?, ?) WHERE id_usuario = ? AND AES_DECRYPT(passwd_encript, ?) = ?";
         
         try (Connection con = db.conectar();

@@ -5,8 +5,8 @@ package com.dmari.modelo;
  * agrupa el total de ventas por un periodo de tiempo.
  */
 public class VentaEstadisticaDTO {
-    private String etiqueta; // nombre del mes o categoria
-    private double total;    // suma de dinero recaudado
+    private String etiqueta;
+    private double total;
 
     // constructor vacio para inicializacion
     public VentaEstadisticaDTO() {}
@@ -17,11 +17,21 @@ public class VentaEstadisticaDTO {
         this.total = total;
     }
 
-    // metodos de acceso para etiqueta
-    public String getEtiqueta() { return etiqueta; }
-    public void setEtiqueta(String etiqueta) { this.etiqueta = etiqueta; }
+    // obtiene el nombre del periodo o categoria
+    public String getEtiqueta() {
+        return etiqueta;
+    }
 
-    // metodos de acceso para el valor total
-    public double getTotal() { return total; }
-    public void setTotal(double total) { this.total = total; }
+    // establece el nombre del periodo o categoria
+    public void setEtiqueta(String etiqueta) {
+        this.etiqueta = etiqueta;
+    }
+
+    public double getTotal() {
+        return total;
+    }
+
+    public void setTotal(double total) {
+        this.total = total;
+    }
 }

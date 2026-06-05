@@ -1,53 +1,56 @@
-/*
-    objetivo de este archivo:
-    este servicio actua como un puente de comunicacion entre el frontend y el backend.
-    su responsabilidad exclusiva es gestionar el envio de pedidos y compras,
-    asegurando que los datos viajen correctamente hacia el servidor.
-*/
+/**
+ * objetivo de este archivo:
+ * servicio encargado de la comunicacion entre el frontend y el backend
+ * para todo lo relacionado con el procesamiento de pedidos y facturacion.
+ */
 
 /**
- * empaqueta los items del carrito y los envia al servidor para procesar la venta.
- * @param {Array} carrito - el arreglo de productos que el usuario desea comprar.
- * @param {number} idMetodo - el id del metodo de pago seleccionado.
- * @param {string} cuenta - el numero de cuenta o telefono del cliente.
- * @returns {boolean} - retorna verdadero si el pedido se guardo en la base de datos, falso si ocurrio un error.
+ * envia la informacion de la compra al servidor java para registrar el pedido.
+ * 
+ * @param {Array} carrito - lista de productos en la canasta [{id, cantidad, precio}, ...]
+ * @param {string} idMetodo - identificador del medio de pago seleccionado.
+ * @param {string} cuenta - numero de cuenta o comprobante ingresado.
+ * @returns {Promise<boolean>} - true si el pedido se proceso con exito en mysql.
  */
 export async function enviarPedido(carrito, idMetodo, cuenta) {
-    // validacion de seguridad modulo 5: regex para asegurar que la cuenta sea numerica
+    // validacion de seguridad modulo 5: expresion regular para asegurar que la cuenta sea numerica.
+    // permite longitudes de 10 a 15 digitos comunes en cuentas y celulares.
     const regexCuenta = /^[0-9]{10,15}$/;
     if (!regexCuenta.test(cuenta)) {
-        console.error('error: el formato de la cuenta o telefono es invalido.');
+        console.error('error: el formato de la cuenta o telefono es invalido en el frontend.');
         return false;
     }
 
-    // se utiliza urlsearchparams para emular el envio de un formulario html estandar.
-    // esto evita el uso de json complejo y facilita la lectura directa en el backend.
+    // preparamos los parametros de la peticion usando urlsearchparams.
+    // se utiliza para emular el envio de un formulario html estandar x-www-form-urlencoded.
     const parametros = new URLSearchParams();
-    
-    // se recorre cada producto dentro del arreglo del carrito.
-    // al enviar multiples campos con el mismo nombre ('id_producto', 'cantidad', etc.),
-    // el servidor los recibira e interpretara automaticamente como arreglos.
+
+    // documentacion de los datos enviados a java (servlet pedido):
+    // 1. id_producto: identificador unico del articulo en la tabla producto.
+    // 2. cantidad: numero de unidades que el cliente desea adquirir.
+    // 3. precio: valor unitario capturado para validar integridad en el backend.
     carrito.forEach(item => {
         parametros.append('id_producto', item.id);
         parametros.append('cantidad', item.cantidad);
         parametros.append('precio', item.precio);
     });
     
-    // inyectamos los datos financieros
+    // inyectamos los datos financieros finales.
+    // idmetodo: llave foranea hacia la tabla metodo_pago.
+    // cuenta: el numero validado anteriormente para la tabla pago.
     parametros.append('idMetodo', idMetodo);
     parametros.append('cuenta', cuenta);
     
     try {
-        // se realiza la peticion asincrona al endpoint '/pedido' usando el metodo post.
-        // la ejecucion se pausa (await) hasta que el servidor emita una respuesta.
+        // disparamos la peticion post hacia el endpoint /pedido definido en el controlador java.
+        // usamos fetch para una comunicacion asincrona sin recargar la pagina.
         const respuesta = await fetch('pedido', { method: 'POST', body: parametros });
         
-        // si el codigo de estado http es 200 (ok), la compra se registro con exito.
+        // si el servidor responde con un codigo ok (200), la compra fue exitosa.
         return respuesta.ok; 
     } catch (error) {
-        // se captura cualquier falla de conexion (ej. servidor caido o sin internet)
-        // para evitar que la aplicacion colapse repentinamente.
-        console.error('error de red al intentar enviar el pedido:', error);
+        // capturamos errores de red o caidas del servidor netbeans.
+        console.error('error de red al intentar enviar el pedido al servidor:', error);
         return false;
     }
 }
@@ -58,18 +61,26 @@ export async function enviarPedido(carrito, idMetodo, cuenta) {
  */
 export async function obtenerHistorialPedidos() {
     try {
-        // agregamos cache-busting para evitar que el navegador muestre pedidos viejos o incompletos
+        // agregamos cache-busting con un timestamp para evitar pedidos viejos en el navegador.
         const respuesta = await fetch('pedido?t=' + Date.now());
         if (!respuesta.ok) throw new Error('error al obtener historial');
         return await respuesta.json();
     } catch (error) {
-        console.error('falla de conexion al solicitar el historial:', error);
+        console.error('falla de conexion al solicitar el historial al servidor:', error);
         return null;
     }
 }
 
 /**
  * modulo 2: actualiza el estado logistico de un pedido.
+ * permite cancelar pedidos o marcarlos como entregados.
+ * 
+ * documentacion de parametros para java:
+ * - accion: define que el servlet debe ejecutar la rama de actualizacion.
+ * - id: id_pedido_pk en la base de datos.
+ * - estado: el nuevo valor para el enum estado_pedido.
+ * - motivo: texto que se guardara en motivo_cancelacion si aplica.
+ * 
  * @param {number} id - id del pedido.
  * @param {string} nuevoEstado - estado destino (ej: Cancelado_por_Proveedor).
  * @param {string} motivo - explicacion de la cancelacion (opcional si no es cancelado).
@@ -84,11 +95,11 @@ export async function cambiarEstadoPedido(id, nuevoEstado, motivo = "") {
         parametros.append('motivo', motivo);
 
         const respuesta = await fetch('pedido', { method: 'POST', body: parametros });
-        if (!respuesta.ok) throw new Error('error en el servidor');
+        if (!respuesta.ok) throw new Error('error en el servidor al actualizar estado');
         
-        return true;
+        return respuesta.ok;
     } catch (error) {
-        console.error('error al cambiar estado del pedido:', error);
+        console.error('error fatal al cambiar estado del pedido:', error);
         return false;
     }
 }

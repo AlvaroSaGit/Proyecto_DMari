@@ -1,9 +1,8 @@
-/**
- * controlador para la gestion logistica de pedidos (modulo 2).
- * permite al administrador ver todas las ventas y gestionar cancelaciones con auditoria.
- */
-import { cargarComponente, cerrarModalGeneral } from '../../../services/uiService.js';
-import { cambiarEstadoPedido } from '../../services/pedidoService.js';
+// importamos los servicios necesarios para la gestion de la interfaz y los datos de pedidos.
+// corregimos las rutas de importacion usando rutas relativas solidas para evitar el error 404.
+import { cargarComponente, cerrarModalGeneral } from "../../services/uiService.js";
+import { cambiarEstadoPedido } from "../../services/pedidoService.js";
+import { verFactura } from "../../services/facturaService.js";
 
 export async function cargarVistaAdminPedidos() {
     await cargarComponente('component-main', './src/views/Administrador/pedidos/adminPedidos.html');
@@ -23,26 +22,37 @@ async function listarPedidosGlobales() {
         pedidos.forEach(p => {
             const tr = document.createElement('tr');
             // construccion dinamica de la fila con el selector de estados
+            // corregimos los nombres de las propiedades (p.idpedido y p.cliente) para que coincidan con el jsonhelper.java
             tr.innerHTML = `
-                <td>#FAC-${p.idPedidoFk}</td>
-                <td>${p.nombreCliente}</td>
-                <td>$${p.subtotal.toFixed(2)}</td>
+                <td>#FAC-${p.idPedido}</td>
+                <td>${p.cliente || 'sin nombre'}</td>
+                <td>$${parseFloat(p.subtotal).toFixed(2)}</td>
                 <td>
-                    <select class="select-estado-pedido" data-id="${p.idPedidoFk}" data-actual="${p.estadoPedido}">
-                        <option value="Pendiente" ${p.estadoPedido === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                        <option value="Preparando" ${p.estadoPedido === 'Preparando' ? 'selected' : ''}>Preparando</option>
-                        <option value="En Camino" ${p.estadoPedido === 'En Camino' ? 'selected' : ''}>En Camino</option>
-                        <option value="Entregado" ${p.estadoPedido === 'Entregado' ? 'selected' : ''}>Entregado</option>
-                        <option value="Cancelado_por_Proveedor" ${p.estadoPedido === 'Cancelado_por_Proveedor' ? 'selected' : ''}>Cancelar (Prov)</option>
-                        <option value="Devuelto" ${p.estadoPedido === 'Devuelto' ? 'selected' : ''}>Devuelto</option>
+                    <select class="select-estado-pedido" data-id="${p.idPedido}" data-actual="${p.estado}">
+                        <option value="Pendiente" ${p.estado.includes('Pendiente') ? 'selected' : ''}>Pendiente</option>
+                        <option value="Preparando" ${p.estado.includes('Preparando') ? 'selected' : ''}>Preparando</option>
+                        <option value="En Camino" ${p.estado.includes('En Camino') ? 'selected' : ''}>En Camino</option>
+                        <option value="Entregado" ${p.estado.includes('Entregado') ? 'selected' : ''}>Entregado</option>
+                        <option value="Cancelado_por_Proveedor" ${p.estado.includes('Cancelado') ? 'selected' : ''}>Cancelar (Prov)</option>
+                        <option value="Devuelto" ${p.estado.includes('Devuelto') ? 'selected' : ''}>Devuelto</option>
                     </select>
                 </td>
-                <td><button onclick="verDetalleFactura(${p.idPedidoFk})" class="btn-ver-detalle">ver mas</button></td>
+                <td><button class="btn-ver-factura" data-id="${p.idPedido}">ver factura</button></td>
             `;
             tbody.appendChild(tr);
         });
 
-        // escuchamos cambios en los selectores de estado
+        // delegacion de eventos para los botones de ver factura
+        // este bloque es vital para que verdetallefactura funcione, ya que los modales no ven funciones globales.
+        document.querySelectorAll('.btn-ver-factura').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.currentTarget.getAttribute('data-id');
+                // llamamos al servicio de factura para mostrar el detalle importante.
+                verFactura(id);
+            });
+        });
+
+        // escuchamos cambios en los selectores de estado para activar la logica de auditoria
         document.querySelectorAll('.select-estado-pedido').forEach(select => {
             select.addEventListener('change', (e) => manejarCambioEstado(e.target));
         });
