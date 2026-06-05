@@ -8,11 +8,14 @@
  * envia la informacion de la compra al servidor java para registrar el pedido.
  * 
  * @param {Array} carrito - lista de productos en la canasta [{id, cantidad, precio}, ...]
+ * @param {number} idCarrito - id del carrito activo en mysql.
+ * @param {number} idDireccion - id de la direccion seleccionada.
  * @param {string} idMetodo - identificador del medio de pago seleccionado.
  * @param {string} cuenta - numero de cuenta o comprobante ingresado.
  * @returns {Promise<boolean>} - true si el pedido se proceso con exito en mysql.
  */
 export async function enviarPedido(carrito, idMetodo, cuenta) {
+export async function enviarPedido(carrito, idCarrito, idDireccion, idMetodo, cuenta) {
     // validacion de seguridad modulo 5: expresion regular para asegurar que la cuenta sea numerica.
     // permite longitudes de 10 a 15 digitos comunes en cuentas y celulares.
     const regexCuenta = /^[0-9]{10,15}$/;
