@@ -145,6 +145,7 @@ public class jsonHelper {
             json.append("\"idPedido\":").append(dp.getIdPedidoFk()).append(",");
             json.append("\"fecha\":\"").append(dp.getFechaPedido() != null ? dp.getFechaPedido() : "").append("\",");
             json.append("\"estado\":\"").append(dp.getEstadoPedido() != null ? dp.getEstadoPedido() : "").append("\",");
+            json.append("\"motivo_cancelacion\":\"").append(dp.getMotivoCancelacion() != null ? escaparTexto(dp.getMotivoCancelacion()) : "").append("\",");
             json.append("\"producto\":\"").append(dp.getNombreProducto() != null ? dp.getNombreProducto() : "").append("\",");
             json.append("\"cantidad\":").append(dp.getCantidad()).append(",");
             json.append("\"precio\":").append(dp.getPrecioUnitario()).append(",");

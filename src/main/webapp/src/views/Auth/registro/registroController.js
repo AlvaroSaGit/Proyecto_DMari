@@ -2,6 +2,7 @@
 import { cargarComponente } from '../../../services/uiService.js';
 // importamos el enrutador
 import { navegarA } from '../../../router/router.js';
+import { validarNombre, validarPassword, validarCorreo, mostrarErrorCampo, limpiarErrorCampo } from '../../../services/validacionHelper.js';
 
 // funcion principal encargada de mostrar el formulario de registro en pantalla
 export async function cargarVistaRegistro() {
@@ -41,14 +42,52 @@ function prepararFormularioRegistro() {
         
         // extraemos los valores exactos que ingreso el usuario en ese momento
         const nombre = document.getElementById('reg-nombre').value;
+        const apellido = document.getElementById('reg-apellido').value;
         const correo = document.getElementById('reg-correo').value;
         const password = document.getElementById('reg-password').value;
+        const confirmPassword = document.getElementById('reg-confirm-password').value;
         
         // Usamos URLSearchParams para enviar los datos como formulario (facilita la lectura en Java sin librerías extra)
         const parametros = new URLSearchParams();
         parametros.append('nombre', nombre);
         parametros.append('correo', correo);
         parametros.append('password', password);
+        
+        // validación avanzada usando el helper
+        let esValido = true;
+
+        // Limpiar errores previos
+        limpiarErrorCampo('reg-nombre');
+        limpiarErrorCampo('reg-apellido');
+        limpiarErrorCampo('reg-correo');
+        limpiarErrorCampo('reg-password');
+        limpiarErrorCampo('reg-confirm-password');
+
+        if (!validarNombre(nombre)) {
+            mostrarErrorCampo('reg-nombre', 'El nombre debe contener al menos 3 letras.');
+            esValido = false;
+        }
+        if (!validarNombre(apellido)) {
+            mostrarErrorCampo('reg-apellido', 'El apellido debe contener al menos 3 letras.');
+            esValido = false;
+        }
+        if (!validarCorreo(correo)) {
+            mostrarErrorCampo('reg-correo', 'El formato del correo es inválido.');
+            esValido = false;
+        }
+        if (!validarPassword(password)) {
+            mostrarErrorCampo('reg-password', 'La contraseña debe tener al menos 8 caracteres, una mayúscula y un número.');
+            esValido = false;
+        }
+
+        if (password !== confirmPassword) {
+            mostrarErrorCampo('reg-confirm-password', 'Las contraseñas no coinciden');
+            esValido = false;
+        }
+
+        if (!esValido) {
+            return;
+        }
         
         // envolvemos en un trycatch para atajar problemas de internet o de base de datos
         try {

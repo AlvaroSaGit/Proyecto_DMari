@@ -64,6 +64,7 @@ public class PedidoController extends HttpServlet {
             // barrera de privilegios: evitamos que un cliente curioso cancele su propio pedido por la url
             // condicional logico: si tu rol no es 1 (admin) ni 4 (proveedor), eres bloqueado.
             if (user.getIdRol() != 1 && user.getIdRol() != 4) {
+            if (user.getIdRol() != 1 && user.getIdRol() != 4 && user.getIdRol() != 2) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403: usted no tiene nivel jerarquico
                 return;
             }
@@ -72,6 +73,12 @@ public class PedidoController extends HttpServlet {
             int idPedido = Integer.parseInt(request.getParameter("id"));
             String nuevoEstado = request.getParameter("estado");
             String motivo = request.getParameter("motivo"); // capturamos la razon enviada desde el modal
+            
+            // validación de seguridad: cliente solo puede cancelar
+            if (user.getIdRol() == 2 && !"Cancelado_por_Cliente".equals(nuevoEstado)) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
             
             pedidoDAO dao = new pedidoDAO();
             // pasamos todos los parametros necesarios para la auditoria

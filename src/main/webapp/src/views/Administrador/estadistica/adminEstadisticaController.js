@@ -23,8 +23,54 @@ async function renderizarEstadisticas() {
         document.getElementById('stat-comisiones').innerText = `$${data.total_comisiones.toFixed(2)}`;
         document.getElementById('stat-pedidos').innerText = data.cantidad_pedidos;
         document.getElementById('stat-productos').innerText = data.total_productos_vendidos;
+
+        // Renderizar gráfica si hay datos mensuales
+        if (data.ventas_mensuales && data.ventas_mensuales.length > 0) {
+            renderizarGrafica(data.ventas_mensuales);
+        }
         
     } catch (error) {
         console.error('fallo la carga de estadisticas:', error);
     }
+}
+
+function renderizarGrafica(ventasMensuales) {
+    const ctx = document.getElementById('graficaVentasGlobales').getContext('2d');
+    
+    const etiquetas = ventasMensuales.map(v => v.etiqueta);
+    const montos = ventasMensuales.map(v => v.total);
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: etiquetas,
+            datasets: [{
+                label: 'Ventas Brutas ($)',
+                data: montos,
+                borderColor: '#d4a373',
+                backgroundColor: 'rgba(212, 163, 115, 0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
 }

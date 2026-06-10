@@ -171,7 +171,7 @@ public class pedidoDAO {
         // 5. inner join con producto para el nombre comercial.
         // 6. cruce con proveedor_producto para filtrar solo lo que le pertenece al artesano.
         // 7. ordena por fecha mas reciente.
-        String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, u.nombre AS nombre_cliente, " +
+        String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, p.motivo_cancelacion, u.nombre AS nombre_cliente, " +
                      // traemos la direccion de la tabla satelite para que el proveedor sepa a donde enviar
                      "d.direccion, d.direccion_detallada, c.telefono_secundario, c.referencia_ubicacion, t.numero_telefonico, prod.nombre_producto, dp.cantidad, dp.subtotal " +
                      // tabla principal de la consulta: el pedido maestro
@@ -201,6 +201,7 @@ public class pedidoDAO {
                      dp.setIdPedidoFk(rs.getInt("id_pedido_pk"));
                      dp.setFechaPedido(rs.getString("fecha"));
                      dp.setEstadoPedido(rs.getString("estado_pedido"));
+                     dp.setMotivoCancelacion(rs.getString("motivo_cancelacion"));
                      
                      // armamos un texto completo con todos los datos de envio para inyectarlo en el nombre
                      String dir = rs.getString("direccion");
@@ -245,7 +246,7 @@ public class pedidoDAO {
         // une pedido con detalle y producto para mostrar que compro.
         // usa left joins con pago y metodo para ver la forma de pago.
         // filtra por el id del cliente logueado.
-        String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, " +
+        String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, p.motivo_cancelacion, " +
                      // traemos el nombre del producto, sus datos monetarios y el metodo de pago
                      "prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal, mp.descripcion_pago " +
                      // comenzamos desde la tabla maestra de pedidos
@@ -273,6 +274,7 @@ public class pedidoDAO {
                      // condicional en linea (operador ternario): si el metodo no es nulo, lo envuelve en parentesis.
                      String estado = rs.getString("estado_pedido") + (metodoPago != null ? " (" + metodoPago + ")" : "");
                      dp.setEstadoPedido(estado);
+                     dp.setMotivoCancelacion(rs.getString("motivo_cancelacion"));
                      
                      dp.setNombreProducto(rs.getString("nombre_producto"));
                      dp.setCantidad(rs.getInt("cantidad"));
@@ -299,7 +301,7 @@ public class pedidoDAO {
         // extrae la trazabilidad completa: comprador, producto, montos, destino y pagos.
         // los left joins en perfil y direccion evitan que la lista falle si el perfil esta incompleto.
         // ordena por el id del pedido de forma descendente para ver lo mas reciente.
-        String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, u.nombre AS nombre_cliente, " +
+        String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, p.motivo_cancelacion, u.nombre AS nombre_cliente, " +
                      "d.direccion, d.direccion_detallada, c.telefono_secundario, c.referencia_ubicacion, t.numero_telefonico, prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal, mp.descripcion_pago " +
                      "FROM pedido p " +
                      "INNER JOIN usuario u ON p.id_cliente_fk = u.id_usuario_pk " +
@@ -323,6 +325,7 @@ public class pedidoDAO {
                      String metodoPago = rs.getString("descripcion_pago");
                      String estado = rs.getString("estado_pedido") + (metodoPago != null ? " (" + metodoPago + ")" : "");
                      dp.setEstadoPedido(estado);
+                     dp.setMotivoCancelacion(rs.getString("motivo_cancelacion"));
                      
                  dp.setNombreCliente(rs.getString("nombre_cliente"));
                  dp.setNombreProducto(rs.getString("nombre_producto"));

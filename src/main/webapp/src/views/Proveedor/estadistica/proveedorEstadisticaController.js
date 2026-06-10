@@ -22,11 +22,24 @@ export async function inicializarGraficasProveedor() {
 
     try {
         // peticion al backend para obtener los ultimos 6 meses de ventas
-        // el servlet 'estadisticas' ya filtra por rol de usuario
-        const respuesta = await fetch('estadisticas');
+        // el servlet 'api-estadisticas' ya filtra por rol de usuario
+        const respuesta = await fetch('api-estadisticas');
         if (!respuesta.ok) throw new Error('no se pudieron cargar las estadisticas');
         
         const data = await respuesta.json();
+
+        // Actualizar tarjetas de resumen
+        document.getElementById('prov-ingresos').innerText = `$${data.total_ingresos.toFixed(2)}`;
+        document.getElementById('prov-pedidos').innerText = data.cantidad_pedidos;
+        document.getElementById('prov-productos').innerText = data.total_productos_vendidos;
+
+        // Preparar datos para gráfica
+        let etiquetas = [];
+        let valores = [];
+        if (data.ventas_mensuales && data.ventas_mensuales.length > 0) {
+            etiquetas = data.ventas_mensuales.map(v => v.etiqueta);
+            valores = data.ventas_mensuales.map(v => v.total);
+        }
 
         // configuracion de chart.js modulo 1
         // se asume que chart.js esta cargado globalmente en el index.html
@@ -34,10 +47,10 @@ export async function inicializarGraficasProveedor() {
         new Chart(ctx, {
             type: 'line', // grafica de tendencia mensual
             data: {
-                labels: data.etiquetas, // labels ya vienen ordenados cronologicamente desde java
+                labels: etiquetas, // labels ya vienen ordenados cronologicamente desde java
                 datasets: [{
                     label: 'ingresos mensuales por ventas ($)',
-                    data: data.valores,
+                    data: valores,
                     borderColor: '#e91e63', // color representativo de dmari
                     backgroundColor: 'rgba(233, 30, 99, 0.1)',
                     borderWidth: 3,

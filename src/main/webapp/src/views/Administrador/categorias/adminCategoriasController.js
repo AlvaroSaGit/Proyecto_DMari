@@ -1,5 +1,6 @@
 import { cargarComponente } from '../../../services/uiService.js';
 import { crearCategoria, actualizarCategoria, obtenerCategorias, cambiarEstadoCategoria } from '../../../services/categoriaService.js';
+import { validarNombre } from '../../../services/validacionHelper.js';
 
 // variable global para saber si estamos creando o editando
 let categoriaEditandoId = null;
@@ -136,9 +137,8 @@ function configurarModalCategorias() {
             const nombre = document.getElementById('cat-nombre').value;
             const descripcion = document.getElementById('cat-descripcion').value;
 
-            // validacion de seguridad modulo 5: regex para texto sin simbolos
-            const regexTexto = /^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]{3,40}$/;
-            if (!regexTexto.test(nombre)) {
+            // validacion de seguridad modulo 5: usando helper
+            if (!validarNombre(nombre)) {
                 alert('error: el nombre de la categoria debe tener entre 3 y 40 caracteres (solo letras).');
                 return;
             }

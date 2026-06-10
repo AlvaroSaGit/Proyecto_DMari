@@ -41,6 +41,8 @@ public class detallePedido {
     private String fechaPedido;
     // situacion logistica actual del pedido
     private String estadoPedido;
+    // motivo por el cual se canceló, si aplica
+    private String motivoCancelacion;
     // nombre de la marca que vende el producto
     private String nombreProveedor;
     // forma en la que se liquido el importe
@@ -119,6 +121,9 @@ public class detallePedido {
 
     public String getEstadoPedido() { return estadoPedido; }
     public void setEstadoPedido(String estadoPedido) { this.estadoPedido = estadoPedido; }
+
+    public String getMotivoCancelacion() { return motivoCancelacion; }
+    public void setMotivoCancelacion(String motivoCancelacion) { this.motivoCancelacion = motivoCancelacion; }
 
     public String getNombreProveedor() { return nombreProveedor; }
     public void setNombreProveedor(String nombreProveedor) { this.nombreProveedor = nombreProveedor; }

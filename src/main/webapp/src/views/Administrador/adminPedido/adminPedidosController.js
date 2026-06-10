@@ -2,6 +2,7 @@
 // corregimos la ruta para que apunte a services y no a la carpeta de componentes
 // eliminamos obtenerhistorialpedidos ya que el administrador usa una peticion global directa
 import { cargarComponente } from '../../../services/uiService.js';
+import { mostrarModal, cerrarModalGeneral } from '../../../services/uiService.js';
 import { cambiarEstadoPedido, obtenerHistorialPedidos } from '../../../services/pedidoService.js';
 import { verFactura } from '../../../services/facturaService.js';
 
@@ -83,7 +84,7 @@ function crearBloquePedidoAdmin(pedido) {
                     <option value="Preparando" ${pedido.estado === 'Preparando' ? 'selected' : ''}>Preparando</option>
                     <option value="En Camino" ${pedido.estado === 'En Camino' ? 'selected' : ''}>En Camino</option>
                     <option value="Entregado" ${pedido.estado === 'Entregado' ? 'selected' : ''}>Entregado</option>
-                    <option value="Cancelado" ${pedido.estado === 'Cancelado' ? 'selected' : ''}>Cancelado</option>
+                    <option value="Cancelado_por_Proveedor" ${pedido.estado.startsWith('Cancelado') ? 'selected' : ''}>Cancelado</option>
                 </select>
             </div>
         </div>
@@ -93,13 +94,74 @@ function crearBloquePedidoAdmin(pedido) {
     // evento para cuando el admin cambie el estado en el select
     const select = div.querySelector('.select-estado-pedido');
     select.addEventListener('change', async (e) => {
-        const parametros = new URLSearchParams();
-        // sincronizamos con el nombre de accion que espera el pedidocontroller.java
-        parametros.append('accion', 'actualizar_estado');
-        parametros.append('id', pedido.id);
-        parametros.append('estado', e.target.value);
-        try { await fetch('pedido', { method: 'POST', body: parametros }); alert('estado del paquete actualizado'); } catch(err) { alert('error al actualizar estado en el servidor'); }
+        const nuevoEstado = e.target.value;
+        const idPedido = pedido.id;
+        
+        if (nuevoEstado === 'Cancelado_por_Proveedor') {
+            mostrarModalCancelacion(idPedido, nuevoEstado, e.target, pedido.estado);
+        } else {
+            await actualizarEstadoBackend(idPedido, nuevoEstado);
+        }
     });
 
     return div;
+}
+
+function mostrarModalCancelacion(idPedido, nuevoEstado, selectElement, estadoAnterior) {
+    const htmlModal = `
+        <div style="font-family: Arial, sans-serif;">
+            <h3 style="margin-top: 0; color: #dc3545; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">⚠️ Cancelar Pedido</h3>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">
+                Por favor, indica el motivo de la cancelación. Este motivo será visible para el cliente y el administrador.
+            </p>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem;">Motivo de Cancelación *</label>
+                <textarea id="motivo-cancelacion" rows="4" placeholder="Ej: Producto sin stock temporal..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; resize: vertical;"></textarea>
+            </div>
+            
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="btn-cerrar-modal" style="background: #f1f1f1; color: #333; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: bold;">Cerrar</button>
+                <button id="btn-confirmar-cancelacion" style="background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">Confirmar Cancelación</button>
+            </div>
+        </div>
+    `;
+
+    mostrarModal(htmlModal);
+
+    document.getElementById('btn-cerrar-modal').addEventListener('click', () => {
+        cerrarModalGeneral();
+        selectElement.value = estadoAnterior; // Revertir select
+    });
+
+    document.getElementById('btn-confirmar-cancelacion').addEventListener('click', async () => {
+        const motivo = document.getElementById('motivo-cancelacion').value.trim();
+        if (motivo.length < 5) {
+            alert('Por favor ingresa un motivo válido (mínimo 5 caracteres).');
+            return;
+        }
+        cerrarModalGeneral();
+        await actualizarEstadoBackend(idPedido, nuevoEstado, motivo);
+    });
+}
+
+async function actualizarEstadoBackend(idPedido, nuevoEstado, motivo = null) {
+    const parametros = new URLSearchParams();
+    parametros.append('accion', 'actualizar_estado');
+    parametros.append('id', idPedido);
+    parametros.append('estado', nuevoEstado);
+    if (motivo) {
+        parametros.append('motivo', motivo);
+    }
+    
+    try { 
+        const respuesta = await fetch('pedido', { method: 'POST', body: parametros }); 
+        if (respuesta.ok) {
+            alert('estado del paquete actualizado'); 
+        } else {
+            alert('error al actualizar estado en el servidor');
+        }
+    } catch(err) { 
+        alert('error al actualizar estado en el servidor'); 
+    }
 }

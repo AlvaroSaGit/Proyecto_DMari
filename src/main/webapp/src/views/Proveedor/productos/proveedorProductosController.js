@@ -1,5 +1,6 @@
 // importamos los servicios necesarios para manipular la interfaz y los datos
 import { cargarComponente } from '../../../services/uiService.js';
+import { cargarVistaSolicitudCategoria } from './solicitudProveedorController.js';
 import { obtenerProductos, guardarProducto, eliminarProducto, cambiarEstadoProducto } from '../../../services/productoService.js';
 
 // variable global que nos indica si estamos creando un producto nuevo (null) o editando uno existente (id)

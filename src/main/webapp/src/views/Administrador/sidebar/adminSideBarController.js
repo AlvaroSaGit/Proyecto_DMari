@@ -17,12 +17,10 @@ export async function inicializarAdmin() {
     const btnCategorias = document.getElementById('btn-nav-categorias');
     const btnPedidos = document.getElementById('btn-nav-pedidos');
     const btnSolicitudes = document.getElementById('btn-nav-solicitudes');
+    const btnDevoluciones = document.getElementById('btn-nav-devoluciones');
     const btnUsuarios = document.getElementById('btn-nav-usuarios');
     const btnSalir = document.getElementById('btn-nav-salir');
     
-    // Ocultamos temporalmente la opcion de solicitudes para la presentacion
-    if (btnSolicitudes) btnSolicitudes.style.display = 'none';
-
     // configuramos la navegacion para cada boton.
     // si el boton existe en el html, le agregamos un escuchador de eventos 'click'.
     // cuando hagan clic, le ordenamos al router que cambie la url hacia esa vista especifica.
@@ -47,6 +45,18 @@ export async function inicializarAdmin() {
     if (btnPedidos) {
         btnPedidos.addEventListener('click', () => {
             navegarA('admin-pedidos');
+        });
+    }
+
+    if (btnSolicitudes) {
+        btnSolicitudes.addEventListener('click', () => {
+            navegarA('admin-solicitudes');
+        });
+    }
+
+    if (btnDevoluciones) {
+        btnDevoluciones.addEventListener('click', () => {
+            navegarA('admin-devoluciones');
         });
     }
 
@@ -96,6 +106,10 @@ export async function inicializarAdmin() {
             btnCategorias.classList.add('activo');
         } else if (hashActual.includes('admin-pedidos') && btnPedidos) {
             btnPedidos.classList.add('activo');
+        } else if (hashActual.includes('admin-devoluciones') && btnDevoluciones) {
+            btnDevoluciones.classList.add('activo');
+        } else if (hashActual.includes('admin-solicitudes') && btnSolicitudes) {
+            btnSolicitudes.classList.add('activo');
         } else if (hashActual.includes('admin-usuarios') && btnUsuarios) {
             btnUsuarios.classList.add('activo');
         }

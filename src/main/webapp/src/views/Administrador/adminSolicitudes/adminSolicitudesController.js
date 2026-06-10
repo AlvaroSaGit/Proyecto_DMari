@@ -14,36 +14,36 @@ async function cargarListaSolicitudes() {
     if (!tbody) return;
 
     try {
-        // TODO: Implementar fetch al backend cuando se cree la tabla de solicitudes
-        console.log('Modo de diseño: Cargando datos simulados en la vista');
+        const respuesta = await fetch('solicitudes-categorias');
+        if (!respuesta.ok) throw new Error('Error al obtener solicitudes');
         
-        // Lista de ejemplos para ver cómo se comporta el diseño
-        const solicitudesMock = [
-            { id: 1, proveedor: 'Proveedor Aromas S.A', producto: 'Vela de Lavanda 500g', accion: 'NUEVO', claseCSS: 'badge-nuevo' },
-            { id: 2, proveedor: 'Ceras y Esencias', producto: 'Set Relax Menta', accion: 'EDITAR', claseCSS: 'badge-editar' },
-            { id: 3, proveedor: 'Velas del Bosque', producto: 'Vela Pino 200g', accion: 'BORRAR', claseCSS: 'badge-borrar' }
-        ];
+        const solicitudes = await respuesta.json();
         
-        tbody.innerHTML = ''; // Limpiamos el texto de "Cargando..."
+        tbody.innerHTML = ''; 
 
-        // Recorremos la lista y creamos las filas dinámicamente
-        solicitudesMock.forEach(solicitud => {
+        if (solicitudes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No hay solicitudes pendientes</td></tr>';
+            return;
+        }
+
+        solicitudes.forEach(solicitud => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>#00${solicitud.id}</td>
-                <td>${solicitud.proveedor}</td>
-                <td>${solicitud.producto}</td>
-                <td><span class="badge-accion ${solicitud.claseCSS}">${solicitud.accion}</span></td>
-                <td>PENDIENTE</td>
+                <td>#00${solicitud.id_solicitud_pk}</td>
+                <td>${solicitud.nombre_proveedor}</td>
+                <td><strong>${solicitud.nombre_sugerido}</strong></td>
+                <td><small>${solicitud.justificacion || 'Sin justificación'}</small></td>
+                <td><span class="badge-estado ${solicitud.estado_solicitud === 'PENDIENTE' ? 'badge-pendiente' : (solicitud.estado_solicitud === 'APROBADA' ? 'badge-activo' : 'badge-inactivo')}">${solicitud.estado_solicitud}</span></td>
                 <td>
-                    <button class="btn-aprobar"><i class='bx bx-check'></i> Aprobar</button>
-                    <button class="btn-rechazar"><i class='bx bx-x'></i> Rechazar</button>
+                    ${solicitud.estado_solicitud === 'PENDIENTE' ? `
+                        <button class="btn-aprobar" data-id="${solicitud.id_solicitud_pk}" data-nombre="${solicitud.nombre_sugerido}"><i class='bx bx-check'></i> Aprobar</button>
+                        <button class="btn-rechazar" data-id="${solicitud.id_solicitud_pk}"><i class='bx bx-x'></i> Rechazar</button>
+                    ` : '<span>-</span>'}
                 </td>
             `;
             tbody.appendChild(tr);
         });
 
-        // Añadimos la interactividad visual (eliminar la fila al hacer clic)
         asignarEventosBotones(tbody);
 
     } catch (error) {
@@ -52,18 +52,48 @@ async function cargarListaSolicitudes() {
     }
 }
 
-// Función que le da vida a los botones temporalmente
+// Función que le da vida a los botones
 function asignarEventosBotones(tbody) {
-    const botonesAprobar = tbody.querySelectorAll('.btn-aprobar');
-    const botonesRechazar = tbody.querySelectorAll('.btn-rechazar');
+    tbody.addEventListener('click', async (evento) => {
+        const btn = evento.target.closest('button');
+        if (!btn) return;
 
-    botonesAprobar.forEach(btn => btn.addEventListener('click', (evento) => {
-        const fila = evento.target.closest('tr');
-        fila.remove(); // Borra la fila simulando que ya se aprobó
-    }));
+        const id = btn.getAttribute('data-id');
+        const parametros = new URLSearchParams();
+        parametros.append('id', id);
 
-    botonesRechazar.forEach(btn => btn.addEventListener('click', (evento) => {
-        const fila = evento.target.closest('tr');
-        fila.remove(); // Borra la fila simulando que ya se rechazó
-    }));
+        if (btn.classList.contains('btn-aprobar')) {
+            const nombre = btn.getAttribute('data-nombre');
+            parametros.append('accion', 'aprobar');
+            parametros.append('nombre', nombre);
+            
+            if (confirm(`¿Aprobar y crear la categoría "${nombre}"?`)) {
+                await procesarSolicitud(parametros);
+            }
+        } else if (btn.classList.contains('btn-rechazar')) {
+            parametros.append('accion', 'rechazar');
+            
+            if (confirm('¿Rechazar esta solicitud?')) {
+                await procesarSolicitud(parametros);
+            }
+        }
+    });
+}
+
+async function procesarSolicitud(parametros) {
+    try {
+        const respuesta = await fetch('solicitudes-categorias', {
+            method: 'POST',
+            body: parametros
+        });
+        
+        if (respuesta.ok) {
+            cargarListaSolicitudes(); // Recargar tabla
+        } else {
+            alert('Error al procesar la solicitud en el servidor');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error de conexión');
+    }
 }

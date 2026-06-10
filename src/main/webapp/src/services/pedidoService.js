@@ -15,13 +15,25 @@
  * @returns {Promise<boolean>} - true si el pedido se proceso con exito en mysql.
  */
 export async function enviarPedido(carrito, idMetodo, cuenta) {
-export async function enviarPedido(carrito, idCarrito, idDireccion, idMetodo, cuenta) {
     // validacion de seguridad modulo 5: expresion regular para asegurar que la cuenta sea numerica.
     // permite longitudes de 10 a 15 digitos comunes en cuentas y celulares.
     const regexCuenta = /^[0-9]{10,15}$/;
     if (!regexCuenta.test(cuenta)) {
         console.error('error: el formato de la cuenta o telefono es invalido en el frontend.');
         return false;
+    }
+
+    // Validación extra para evitar enviar datos corruptos
+    if (!carrito || carrito.length === 0) {
+        console.error('error: el carrito está vacío.');
+        return false;
+    }
+
+    for (const item of carrito) {
+        if (isNaN(item.cantidad) || item.cantidad <= 0 || isNaN(item.precio) || item.precio < 0) {
+            console.error('error: cantidad o precio inválido en el carrito.');
+            return false;
+        }
     }
 
     // preparamos los parametros de la peticion usando urlsearchparams.

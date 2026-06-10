@@ -36,6 +36,7 @@ public class SolicitudCategoriaController extends HttpServlet {
                 json.append("\"id_solicitud_pk\":").append(s.getIdSolicitudPk()).append(",");
                 json.append("\"nombre_proveedor\":\"").append(s.getNombreProveedor()).append("\",");
                 json.append("\"nombre_sugerido\":\"").append(s.getNombreSugerido()).append("\",");
+                json.append("\"justificacion\":\"").append(s.getJustificacion() != null ? s.getJustificacion() : "").append("\",");
                 json.append("\"estado_solicitud\":\"").append(s.getEstadoSolicitud()).append("\",");
                 json.append("\"fecha_creacion\":\"").append(s.getFechaCreacion()).append("\"");
                 json.append("}");
