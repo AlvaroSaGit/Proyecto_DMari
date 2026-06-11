@@ -41,7 +41,7 @@ export async function cargarComponente(id, ruta) {
  * inyecta contenido html en un contenedor global y lo hace visible.
  * @param {string} html - contenido estructurado de la factura o formulario.
  */
-window.mostrarModal = function(html) {
+export function mostrarModal(html) {
     // buscamos el contenedor del modal en el index.html
     let contenedorModal = document.getElementById('modal-general');
     

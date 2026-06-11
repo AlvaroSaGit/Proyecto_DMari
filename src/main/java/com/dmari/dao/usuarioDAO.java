@@ -294,4 +294,37 @@ public class usuarioDAO {
             return ps.executeUpdate() > 0;
         } catch (SQLException e) { System.out.println("Error al cambiar password: " + e.getMessage()); return false; }
     }
+
+    /**
+     * registra una solicitud para que un usuario existente se convierta en proveedor.
+     * guarda los datos comerciales en la tabla de solicitudes sin cambiar el rol aun.
+     * 
+     * @param idUsuario int: el id del usuario que hace la peticion.
+     * @param nit String: identificacion tributaria de la empresa.
+     * @param marca String: nombre comercial.
+     * @param cuenta String: numero de cuenta bancaria.
+     * @param banco String: nombre de la entidad financiera.
+     * @param tipo String: ahorros o corriente.
+     * @return boolean: true si la solicitud se guardo correctamente.
+     */
+    public boolean registrarSolicitudProveedor(int idUsuario, String nit, String marca, String cuenta, String banco, String tipo) {
+        String sql = "insert into solicitud_proveedor (id_usuario_fk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta, estado_solicitud) values (?, ?, ?, ?, ?, ?, 'pendiente')";
+        
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            // configuracion de los parametros de la solicitud
+            ps.setInt(1, idUsuario);
+            ps.setString(2, nit);
+            ps.setString(3, marca);
+            ps.setString(4, cuenta);
+            ps.setString(5, banco);
+            ps.setString(6, tipo);
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("error al registrar solicitud de proveedor: " + e.getMessage());
+            return false;
+        }
+    }
 }

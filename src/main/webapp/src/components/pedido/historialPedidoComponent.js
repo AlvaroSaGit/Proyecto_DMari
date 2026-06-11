@@ -4,7 +4,7 @@
     recibe un objeto de pedido agrupado y retorna un elemento div listo para ser inyectado 
     en la interfaz, mejorando la legibilidad y el mantenimiento del controlador principal.
 */
-import { mostrarModal, cerrarModalGeneral } from '../../../services/uiService.js';
+import { mostrarModal, cerrarModalGeneral } from '../../services/uiService.js';
 
 export function crearBloquePedido(pedido) {
     // se define un color por defecto (gris oscuro) para estados desconocidos
