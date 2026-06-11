@@ -61,9 +61,7 @@ public class PedidoController extends HttpServlet {
         // validacion de accion: ahora coincide con el nombre enviado desde pedidoservice.js
         if ("actualizar_estado".equals(accion)) {
             
-            // barrera de privilegios: evitamos que un cliente curioso cancele su propio pedido por la url
-            // condicional logico: si tu rol no es 1 (admin) ni 4 (proveedor), eres bloqueado.
-            if (user.getIdRol() != 1 && user.getIdRol() != 4) {
+            // barrera de privilegios: solo permitimos el paso a administradores, proveedores y clientes
             if (user.getIdRol() != 1 && user.getIdRol() != 4 && user.getIdRol() != 2) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403: usted no tiene nivel jerarquico
                 return;
@@ -74,7 +72,7 @@ public class PedidoController extends HttpServlet {
             String nuevoEstado = request.getParameter("estado");
             String motivo = request.getParameter("motivo"); // capturamos la razon enviada desde el modal
             
-            // validación de seguridad: cliente solo puede cancelar
+            // validacion de seguridad: el cliente solo puede cancelar si el pedido esta pendiente
             if (user.getIdRol() == 2 && !"Cancelado_por_Cliente".equals(nuevoEstado)) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 return;

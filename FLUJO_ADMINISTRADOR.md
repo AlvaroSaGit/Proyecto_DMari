@@ -38,7 +38,9 @@ Este documento explica el comportamiento del panel de control principal, disenad
 **Objetivo:** Administrar quien entra al sistema y con que permisos.
 
 1. **Panel de Usuarios:** El administrador puede ver a todos los clientes registrados (`usuarioDAO.listarUsuarios`).
-2. **La Magia de los Ascensos:** Si un administrador decide promover a un Cliente (Rol 2) a Proveedor (Rol 4), se dispara un POST hacia Java.
-3. **Tratamiento en BD (`usuarioDAO.actualizarPermisos`):** 
-   * Java actualiza el `id_rol_fk` a 4.
-   * **Autocompletado de Perfil:** El DAO detecta que se le dio el rol 4. Automaticamente, ejecuta un `INSERT IGNORE INTO proveedor` para crearle un perfil comercial vacio (con NIT '000000000'). Esto evita que el sistema colapse cuando ese nuevo proveedor intente subir su primer producto.
+2. **Buzon de Solicitudes:** El administrador cuenta con una vista para revisar peticiones de `solicitud_proveedor`.
+3. **Aprobacion Transaccional:** Al aprobar una solicitud:
+   * El `id_rol_fk` del usuario cambia de 2 a 4.
+   * Los datos de la solicitud (NIT, Marca, Banco) se mueven permanentemente a la tabla `proveedor`.
+   * La solicitud se marca como `APROBADA`.
+4. **Rechazo:** Si el administrador rechaza, la solicitud cambia a `RECHAZADA` y el usuario permanece como cliente.

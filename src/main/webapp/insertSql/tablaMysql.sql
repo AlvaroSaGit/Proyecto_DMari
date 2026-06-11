@@ -217,28 +217,42 @@ create table pago(
 -- ==========================================================
 
 -- solicitudes de categorias sugeridas por proveedores
-CREATE TABLE solicitud_categoria (
-    id_solicitud_pk INT AUTO_INCREMENT PRIMARY KEY,
-    id_proveedor_fk INT NOT NULL,
-    nombre_sugerido VARCHAR(100) NOT NULL,
-    justificacion TEXT NOT NULL,
-    estado_solicitud ENUM('PENDIENTE', 'APROBADA', 'RECHAZADA') DEFAULT 'PENDIENTE',
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_proveedor_fk) REFERENCES proveedor(id_proveedor_pk) ON DELETE CASCADE
+create table solicitud_categoria (
+    id_solicitud_pk int auto_increment primary key,
+    id_proveedor_fk int not null,
+    nombre_sugerido varchar(100) not null,
+    justificacion text not null,
+    estado_solicitud enum('pendiente', 'aprobada', 'rechazada') default 'pendiente',
+    fecha_creacion timestamp default current_timestamp,
+    foreign key (id_proveedor_fk) references proveedor(id_proveedor_pk)
+);
+
+-- solicitudes de nuevos proveedores
+create table solicitud_proveedor (
+    id_solicitud_pk int auto_increment primary key,
+    id_usuario_fk int not null,
+    nit_empresa varchar(20) not null,
+    nombre_marca varchar(100) not null,
+    cuenta_bancaria varchar(30) not null,
+    banco_nombre varchar(50) not null,
+    tipo_cuenta enum('ahorros','corriente') not null,
+    estado_solicitud enum('pendiente', 'aprobada', 'rechazada') default 'pendiente',
+    fecha_creacion timestamp default current_timestamp,
+    foreign key (id_usuario_fk) references usuario(id_usuario_pk)
 );
 
 -- ===============================================
 -- 18. devolucion
 -- ===============================================
 -- gestiona las solicitudes de devolucion de pedidos entregados
-CREATE TABLE devolucion (
-    id_devolucion_pk INT AUTO_INCREMENT PRIMARY KEY,
-    id_pedido_fk INT NOT NULL,
-    id_cliente_fk INT NOT NULL,
-    motivo TEXT NOT NULL,
-    estado_devolucion ENUM('Solicitada', 'Aprobada', 'Rechazada') DEFAULT 'Solicitada',
-    fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_resolucion TIMESTAMP NULL,
-    FOREIGN KEY (id_pedido_fk) REFERENCES pedido(id_pedido_pk),
-    FOREIGN KEY (id_cliente_fk) REFERENCES cliente(id_cliente_pk)
+create table devolucion (
+    id_devolucion_pk int auto_increment primary key,
+    id_pedido_fk int not null,
+    id_cliente_fk int not null,
+    motivo text not null,
+    estado_devolucion enum('solicitada', 'aprobada', 'rechazada') default 'solicitada',
+    fecha_solicitud timestamp default current_timestamp,
+    fecha_resolucion timestamp null,
+    foreign key (id_pedido_fk) references pedido(id_pedido_pk),
+    foreign key (id_cliente_fk) references cliente(id_cliente_pk)
 );
