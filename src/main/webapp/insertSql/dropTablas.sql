@@ -1,35 +1,57 @@
 /*
     objetivo de este archivo:
-    Eliminar (Drop) por completo la estructura de todas las tablas de la base de datos DMari.
-    Ideal para cuando necesitas reestructurar la base de datos desde cero.
+    eliminar (drop) por completo la estructura de todas las tablas de la base de datos dmari.
+    ideal para cuando necesitas reestructurar la base de datos desde cero.
 */
 
-USE DMari;
+use dmari;
 
 -- desactivamos temporalmente las llaves foraneas para evitar bloqueos al borrar
-SET FOREIGN_KEY_CHECKS = 0;
+set foreign_key_checks = 0;
 
--- eliminamos todas las tablas si existen
-DROP TABLE IF EXISTS pago;
-DROP TABLE IF EXISTS detalle_pedido;
-DROP TABLE IF EXISTS pedido;
-DROP TABLE IF EXISTS proveedor_producto;
-DROP TABLE IF EXISTS producto_etiqueta;
-DROP TABLE IF EXISTS imagenes;
-DROP TABLE IF EXISTS producto;
-DROP TABLE IF EXISTS proveedor;
-DROP TABLE IF EXISTS cliente;
-DROP TABLE IF EXISTS credenciales;
-DROP TABLE IF EXISTS correo;
-DROP TABLE IF EXISTS telefono;
-DROP TABLE IF EXISTS direccion;
-DROP TABLE IF EXISTS usuario;
-DROP TABLE IF EXISTS rol;
-DROP TABLE IF EXISTS categoria;
-DROP TABLE IF EXISTS etiqueta;
-DROP TABLE IF EXISTS metodo_pago;
-DROP TABLE IF EXISTS carrito;
-DROP TABLE IF EXISTS detalle_carrito;
+-- ==========================================================
+-- 1. eliminacion de tablas de solicitudes y devoluciones
+-- ==========================================================
+drop table if exists devolucion;
+drop table if exists solicitud_proveedor;
+drop table if exists solicitud_categoria;
 
--- reactivamos las llaves foraneas
-SET FOREIGN_KEY_CHECKS = 1;
+-- ==========================================================
+-- 2. eliminacion de tablas transaccionales y de pago
+-- ==========================================================
+drop table if exists pago;
+drop table if exists detalle_pedido;
+drop table if exists pedido;
+drop table if exists productos_confirmados;
+drop table if exists detalle_carrito;
+drop table if exists carrito;
+
+-- ==========================================================
+-- 3. eliminacion de tablas de relaciones muchos a muchos
+-- ==========================================================
+drop table if exists proveedor_producto;
+drop table if exists producto_etiqueta;
+
+-- ==========================================================
+-- 4. eliminacion de tablas de extension e imagenes
+-- ==========================================================
+drop table if exists imagenes;
+drop table if exists producto;
+drop table if exists proveedor;
+drop table if exists cliente;
+drop table if exists credenciales;
+drop table if exists correo;
+drop table if exists telefono;
+drop table if exists direccion;
+drop table if exists usuario;
+
+-- ==========================================================
+-- 5. eliminacion de tablas maestras y catalogos
+-- ==========================================================
+drop table if exists metodo_pago;
+drop table if exists etiqueta;
+drop table if exists categoria;
+drop table if exists rol;
+
+-- reactivamos las llaves foraneas para mantener la integridad del motor
+set foreign_key_checks = 1;

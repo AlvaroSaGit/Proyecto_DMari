@@ -87,7 +87,7 @@ public class carritoDAO {
         // inner join dc une la cabecera con los items guardados
         // inner join p trae nombre y precio actual del producto
         // left join i trae la imagen principal (si el producto tiene una asignada)
-        String sql = "SELECT dc.id_producto_fk, dc.cantidad, p.precio, p.nombre_producto, p.stock, i.url_ruta " +
+        String sql = "SELECT dc.id_producto_fk, dc.cantidad, dc.seleccionado, p.precio, p.nombre_producto, p.stock, i.url_ruta " +
                      "FROM carrito c " +
                      "INNER JOIN detalle_carrito dc ON c.id_carrito_pk = dc.id_carrito_fk " +
                      "INNER JOIN producto p ON dc.id_producto_fk = p.id_producto_pk " +
@@ -108,6 +108,8 @@ public class carritoDAO {
                         .append("\"precio\":").append(rs.getDouble("precio")).append(",")
                         // agregamos la cantidad y el stock disponible para validaciones
                         .append("\"cantidad\":").append(rs.getInt("cantidad")).append(",")
+                        // incluimos el estado de seleccion para el flujo de compra parcial
+                        .append("\"seleccionado\":").append(rs.getBoolean("seleccionado")).append(",")
                         .append("\"stock\":").append(rs.getInt("stock")).append(",")
                         .append("\"imagen\":\"").append(rs.getString("url_ruta")).append("\"")
                         .append("}");
@@ -136,8 +138,8 @@ public class carritoDAO {
 
         // elimina fisicamente todos los items anteriores del carrito para reescribirlos
         String sqlDelete = "DELETE FROM detalle_carrito WHERE id_carrito_fk = ?";
-        // inserta el nuevo item (id_producto y cantidad) vinculandolo al carrito maestro
-        String sqlInsert = "INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad) VALUES (?, ?, ?)";
+        // inserta el nuevo item incluyendo su estado de seleccion
+        String sqlInsert = "INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (?, ?, ?, ?)";
 
         Connection con = null;
         try {
@@ -164,6 +166,7 @@ public class carritoDAO {
                         psInsert.setInt(1, idCarrito);
                         psInsert.setInt(2, item.getIdProductoFk());
                         psInsert.setInt(3, item.getCantidad());
+                        psInsert.setBoolean(4, item.isSeleccionado());
                         
                         // addBatch() encola las sentencias. En lugar de hacer 10 viajes a la BD, 
                         // enviaremos un solo paquete con las 10 instrucciones (optimiza velocidad y memoria)
@@ -200,5 +203,40 @@ public class carritoDAO {
         // Esto hara que sincronizarCarrito ejecute el DELETE, 
         // pero salte el INSERT, dejando la tabla limpia y lista para otra compra.
         return sincronizarCarrito(idCliente, null);
+    }
+
+    /**
+     * 5. actualizar seleccion individual
+     * permite marcar o desmarcar un producto para la compra sin afectar al resto.
+     */
+    public boolean actualizarSeleccion(int idCliente, int idProducto, boolean seleccionado) {
+        String sql = "UPDATE detalle_carrito dc " +
+                     "JOIN carrito c ON dc.id_carrito_fk = c.id_carrito_pk " +
+                     "SET dc.seleccionado = ? " +
+                     "WHERE c.id_cliente_fk = ? AND dc.id_producto_fk = ? AND c.estado = 'Activo'";
+        try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setBoolean(1, seleccionado);
+            ps.setInt(2, idCliente);
+            ps.setInt(3, idProducto);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("error al actualizar seleccion: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 6. limpiar items comprados
+     * elimina solo los productos que fueron marcados como seleccionados.
+     * se invoca despues de que productos_confirmados haya capturado los datos.
+     */
+    public void limpiarItemsComprados(int idCarrito) {
+        String sql = "DELETE FROM detalle_carrito WHERE id_carrito_fk = ? AND seleccionado = true";
+        try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idCarrito);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("error al limpiar items comprados: " + e.getMessage());
+        }
     }
 }

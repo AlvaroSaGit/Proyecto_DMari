@@ -2,7 +2,7 @@ create database if not exists DMari;
 use DMari;
 
 -- ==========================================================
--- 1. tablas de catalogos y roles (tablas maestras)
+-- 1. tablas de catalogos y roles
 -- ==========================================================
 
 -- roles del sistema
@@ -36,7 +36,7 @@ create table metodo_pago(
 -- 2. tablas nucleo principales
 -- ==========================================================
 
--- usuarios generales (soporta soft delete con estado_cuenta)
+-- usuarios generales con soporte para borrado logico
 create table usuario(
     id_usuario_pk int auto_increment primary key,
     nombre varchar(50) not null,
@@ -46,7 +46,7 @@ create table usuario(
     foreign key (id_rol_fk) references rol(id_rol_pk)
 );
 
--- productos del catalogo (soporta soft delete con el campo estado)
+-- productos del catalogo general
 create table producto(
     id_producto_pk int auto_increment primary key,
     id_categoria_fk int not null,
@@ -60,7 +60,7 @@ create table producto(
 );
 
 -- ==========================================================
--- 3. tablas detalladas e hijas (extensiones de datos)
+-- 3. tablas detalladas e hijas
 -- ==========================================================
 
 -- direcciones asociadas a los usuarios
@@ -90,15 +90,14 @@ create table correo(
     foreign key (id_usuario_fk) references usuario(id_usuario_pk)
 );
 
--- credenciales de acceso
--- cambiamos el tipo a varbinary para soportar el resultado de aes_encrypt sin errores de codificacion
+-- credenciales de acceso con formato varbinary para encriptacion
 create table credenciales(
     id_usuario int primary key,
     passwd_encript varbinary(255) not null,
     foreign key (id_usuario) references usuario(id_usuario_pk)
 );
 
--- datos especificos si el usuario es un proveedor
+-- informacion especifica de los proveedores
 create table proveedor(
     id_proveedor_pk int primary key,
     nit_empresa varchar(20) not null,
@@ -109,7 +108,7 @@ create table proveedor(
     foreign key (id_proveedor_pk) references usuario(id_usuario_pk)
 );
 
--- datos especificos si el usuario es un cliente
+-- informacion especifica de los clientes
 create table cliente(
     id_cliente_pk int primary key,
     referencia_ubicacion text null,
@@ -125,7 +124,7 @@ create table imagenes(
     foreign key (id_producto_fk) references producto(id_producto_pk)
 );
 
--- relacion de muchos a muchos: productos y sus etiquetas
+-- relacion entre productos y etiquetas
 create table producto_etiqueta(
     id_producto_etiqueta_pk int auto_increment primary key,
     id_producto int not null,
@@ -135,7 +134,7 @@ create table producto_etiqueta(
     unique (id_producto, id_etiqueta)
 );
 
--- relacion de muchos a muchos: proveedores y los productos que surten
+-- relacion entre proveedores y los productos que surten
 create table proveedor_producto(
     id_proveedor_producto_pk int auto_increment primary key,
     id_proveedor_fk int not null,
@@ -145,35 +144,46 @@ create table proveedor_producto(
 );
 
 -- ==========================================================
--- 4. tablas transaccionales (flujo de compras conectado)
+-- 4. tablas transaccionales del flujo de compras
 -- ==========================================================
 
--- carrito de compras (historial ciclico basado en estados)
+-- contenedor inicial asociado al cliente
 create table carrito(
     id_carrito_pk int auto_increment primary key,
     id_cliente_fk int not null,
-    estado enum('Activo', 'Procesado') default 'Activo', -- controla si ya cerro la compra o sigue abierto
+    estado enum('Activo', 'Procesado') default 'Activo',
+    fecha_creacion timestamp default current_timestamp,
     fecha_actualizacion timestamp default current_timestamp on update current_timestamp,
     foreign key (id_cliente_fk) references cliente(id_cliente_pk)
 );
 
--- productos dentro del carrito
+-- productos en espera dentro del carrito
 create table detalle_carrito(
     id_detalle_carrito int auto_increment primary key,
     id_carrito_fk int not null,
     id_producto_fk int not null,
     cantidad int not null check (cantidad > 0),
-    seleccionado boolean not null default true, -- para compras parciales
+    seleccionado boolean not null default false,
     foreign key (id_carrito_fk) references carrito(id_carrito_pk),
     foreign key (id_producto_fk) references producto(id_producto_pk),
     unique(id_carrito_fk, id_producto_fk)
 );
 
--- cabecera del pedido (conexion fisica y directa con el carrito de origen)
+-- historial inmutable de lo que el cliente decidio comprar
+create table productos_confirmados(
+    id_confirmado_pk int auto_increment primary key,
+    id_carrito_fk int not null,
+    id_producto_fk int not null,
+    cantidad int not null,
+    fecha_confirmacion timestamp default current_timestamp,
+    foreign key (id_carrito_fk) references carrito(id_carrito_pk),
+    foreign key (id_producto_fk) references producto(id_producto_pk)
+);
+
+-- cabecera logistica y financiera de la compra
 create table pedido(
     id_pedido_pk int auto_increment primary key,
     id_cliente_fk int not null,
-    id_carrito_fk int not null, -- conexion explicitada!
     id_direccion_fk int not null,
     fecha timestamp default current_timestamp,
     total_pagar decimal(10,2) not null,
@@ -181,24 +191,22 @@ create table pedido(
     motivo_cancelacion text null,
     cancelado_por_id_fk int null,
     foreign key (id_cliente_fk) references cliente(id_cliente_pk),
-    foreign key (id_carrito_fk) references carrito(id_carrito_pk), -- restriccion de integridad referencial
     foreign key (id_direccion_fk) references direccion(id_direccion_pk),
     foreign key (cancelado_por_id_fk) references usuario(id_usuario_pk)
 );
 
--- detalle del pedido (copia de seguridad inmutable de los precios de venta)
+-- conector final entre el pedido global y los productos confirmados
 create table detalle_pedido(
     id_detalle_pedido int auto_increment primary key,
     id_pedido_fk int not null,
-    id_producto_fk int not null,
-    cantidad int not null,
+    id_confirmado_fk int not null,
     precio_unitario decimal(10,2) not null,
     subtotal decimal(10,2) not null,
     foreign key (id_pedido_fk) references pedido(id_pedido_pk),
-    foreign key (id_producto_fk) references producto(id_producto_pk)
+    foreign key (id_confirmado_fk) references productos_confirmados(id_confirmado_pk)
 );
 
--- registro financiero del pago asociado al pedido
+-- registro financiero del pago
 create table pago(
     id_pago_pk int auto_increment primary key,
     id_pedido_fk int not null,
@@ -213,7 +221,7 @@ create table pago(
 );
 
 -- ==========================================================
--- 5. nuevas tablas de solicitudes
+-- 5. tablas de solicitudes y devoluciones
 -- ==========================================================
 
 -- solicitudes de categorias sugeridas por proveedores
@@ -241,10 +249,7 @@ create table solicitud_proveedor (
     foreign key (id_usuario_fk) references usuario(id_usuario_pk)
 );
 
--- ===============================================
--- 18. devolucion
--- ===============================================
--- gestiona las solicitudes de devolucion de pedidos entregados
+-- gestion de solicitudes de devolucion de pedidos entregados
 create table devolucion (
     id_devolucion_pk int auto_increment primary key,
     id_pedido_fk int not null,
