@@ -18,6 +18,18 @@ function prepararFormularioRegistro() {
     // buscamos el formulario (soporta busqueda por id o por clase para evitar fallos silenciosos)
     const formulario = document.getElementById('form-registro') || document.querySelector('.formulario-registro');
     const linkLogin = document.getElementById('link-ir-login');
+    const selectRol = document.getElementById('reg-rol');
+    const contenedorProveedor = document.getElementById('campos-proveedor');
+
+    if (selectRol && contenedorProveedor) {
+        selectRol.addEventListener('change', function() {
+            if (selectRol.value === '4') {
+                contenedorProveedor.style.display = 'block';
+            } else {
+                contenedorProveedor.style.display = 'none';
+            }
+        });
+    }
     
     // damos accion al boton inferior por si el usuario ya tenia cuenta
     if (linkLogin) {
@@ -47,12 +59,30 @@ function prepararFormularioRegistro() {
         const password = document.getElementById('reg-password').value;
         const confirmPassword = document.getElementById('reg-confirm-password').value;
         
-        // Usamos URLSearchParams para enviar los datos como formulario (facilita la lectura en Java sin librerías extra)
+        const campoRol = document.getElementById('reg-rol');
+        const rol = campoRol ? campoRol.value : '2';
+
         const parametros = new URLSearchParams();
         parametros.append('nombre', nombre);
         parametros.append('apellido', apellido);
         parametros.append('correo', correo);
         parametros.append('password', password);
+        parametros.append('rol', rol);
+
+        if (rol === '4') {
+            const nit = document.getElementById('reg-nit').value;
+            const marca = document.getElementById('reg-marca').value;
+            const cuenta = document.getElementById('reg-cuenta').value;
+            const banco = document.getElementById('reg-banco').value;
+            const tipoCuentaSelect = document.getElementById('reg-tipo-cuenta');
+            const tipoCuenta = tipoCuentaSelect ? tipoCuentaSelect.value : 'ahorros';
+
+            parametros.append('nit', nit);
+            parametros.append('marca', marca);
+            parametros.append('cuenta', cuenta);
+            parametros.append('banco', banco);
+            parametros.append('tipoCuenta', tipoCuenta);
+        }
         
         // validación avanzada usando el helper
         let esValido = true;
@@ -99,9 +129,10 @@ function prepararFormularioRegistro() {
             });
             
             if (respuesta.ok) {
-                alert('¡Registro exitoso! Ahora inicia sesion.');
+                const msj = rol === '4' ? 'Registro enviado con exito. Espere la aprobacion del administrador.' : '¡Registro exitoso! Ahora inicia sesion.';
+                alert(msj);
                 formulario.reset();
-                navegarA('login'); // Enviamos al usuario a la vista de login
+                navegarA('login');
             } else {
                 // capturamos el mensaje de error que viene desde el validacionhelper de java
                 const mensajeError = await respuesta.text();

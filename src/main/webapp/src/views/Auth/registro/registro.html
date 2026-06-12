@@ -28,6 +28,41 @@
             <input type="password" id="reg-confirm-password" placeholder="********">
         </div>
 
+        <div class="grupo-entrada">
+            <label>¿Que deseas ser?</label>
+            <select id="reg-rol" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                <option value="2">Quiero comprar (Cliente)</option>
+                <option value="4">Quiero vender (Proveedor)</option>
+            </select>
+        </div>
+
+        <div id="campos-proveedor" style="display: none; border-top: 1px solid #eee; margin-top: 15px; padding-top: 15px;">
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Informacion comercial para revision</p>
+            <div class="grupo-entrada">
+                <label>NIT de la empresa</label>
+                <input type="text" id="reg-nit" placeholder="Ej: 900.000.000-1">
+            </div>
+            <div class="grupo-entrada">
+                <label>Nombre de la marca</label>
+                <input type="text" id="reg-marca" placeholder="Ej: Donas Dulce Maria">
+            </div>
+            <div class="grupo-entrada">
+                <label>Banco</label>
+                <input type="text" id="reg-banco" placeholder="Ej: Bancolombia">
+            </div>
+            <div class="grupo-entrada">
+                <label>Numero de cuenta</label>
+                <input type="text" id="reg-cuenta" placeholder="Numero de ahorros o corriente">
+            </div>
+            <div class="grupo-entrada">
+                <label>Tipo de cuenta</label>
+                <select id="reg-tipo-cuenta" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    <option value="ahorros">Ahorros</option>
+                    <option value="corriente">Corriente</option>
+                </select>
+            </div>
+        </div>
+
         <button type="submit" class="btn-registro">Registrarse</button>
         
         <p class="footer-form">¿Ya tienes cuenta? <a href="#" id="link-ir-login">Inicia sesion</a></p>
