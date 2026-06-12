@@ -52,15 +52,11 @@ function prepararFormularioLogin() {
         limpiarErrorCampo('login-correo');
         limpiarErrorCampo('login-password');
 
-        if (!validarNombre(correo)) {
-            mostrarErrorCampo('login-correo', 'Ingreso un correo invalido.');
         if (!validarCorreo(correo)) {
             mostrarErrorCampo('login-correo', 'El formato del correo es invalido.');
             esValido = false;
         }
         if (!validarPassword(password)) {
-            mostrarErrorCampo('login-password', 'Ingreso una contraseña invalida.');
-            esValido = false;
             mostrarErrorCampo('login-password', 'La contrasena debe tener al menos 8 caracteres, una mayuscula y un numero.');
             esValido = true; 
         }
