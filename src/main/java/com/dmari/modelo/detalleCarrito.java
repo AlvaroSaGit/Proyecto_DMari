@@ -28,10 +28,19 @@ public class detalleCarrito {
     private double precio;
     // disponibilidad real para validaciones
     private int stock;
+    // flag booleano para el flujo de compra parcial
+    private boolean seleccionado;
 
     // constructor vacio
     public detalleCarrito() {
     }
+
+    public boolean isSeleccionado() {
+        return seleccionado;
+    }
+
+    public boolean isSeleccionado() { return seleccionado; }
+    public void setSeleccionado(boolean seleccionado) { this.seleccionado = seleccionado; }
 
     // getters y setters de los datos puros
     // obtiene el id del detalle
@@ -48,6 +57,7 @@ public class detalleCarrito {
         return idCarritoFk;
     }
     // establece el id del carrito
+
     public void setIdCarritoFk(int idCarritoFk) {
         this.idCarritoFk = idCarritoFk;
     }
@@ -57,6 +67,7 @@ public class detalleCarrito {
         return idProductoFk;
     }
     // establece el id del producto
+
     public void setIdProductoFk(int idProductoFk) {
         this.idProductoFk = idProductoFk;
     }
@@ -66,6 +77,7 @@ public class detalleCarrito {
         return cantidad;
     }
     // establece la cantidad pedida
+
     public void setCantidad(int cantidad) {
         this.cantidad = cantidad;
     }

@@ -50,6 +50,7 @@ function prepararFormularioRegistro() {
         // Usamos URLSearchParams para enviar los datos como formulario (facilita la lectura en Java sin librerías extra)
         const parametros = new URLSearchParams();
         parametros.append('nombre', nombre);
+        parametros.append('apellido', apellido);
         parametros.append('correo', correo);
         parametros.append('password', password);
         

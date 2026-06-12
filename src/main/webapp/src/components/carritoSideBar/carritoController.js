@@ -5,10 +5,10 @@ import { navegarA } from '../../router/router.js';
 // importamos el servicio encargado de los pedidos
 import { enviarPedido } from '../../services/pedidoService.js';
 
-// intentamos cargar el carrito guardado en el navegador, si no hay, iniciamos vacio
+// intentamos cargar el carrito guardado en el navegador si no hay iniciamos vacio
 let carrito = JSON.parse(localStorage.getItem('carritoDMari')) || [];
 
-// variable para evitar saturar el servidor (tecnica de "debounce")
+// variable para evitar saturar el servidor tecnica de debounce
 let temporizadorSincronizacion = null;
 
 // funcion que inyecta el html del carrito oculto en el index al cargar la pagina
@@ -16,7 +16,7 @@ export async function inicializarCarrito() {
     // esperamos a que el componente html se coloque en su contenedor
     await cargarComponente('contenedor-sidebar-carrito', './src/components/carritoSideBar/carritoSidebar.html');
     
-    // Agregamos una regla CSS dinamica para quitar las flechitas (spinners) del input en Chrome, Edge y Safari
+    // agregamos una regla css dinamica para quitar las flechitas spinners del input en chrome edge y safari
     if (!document.getElementById('estilo-carrito-input')) {
         const estilo = document.createElement('style');
         estilo.id = 'estilo-carrito-input';
@@ -35,9 +35,9 @@ export async function inicializarCarrito() {
     const btnCerrar = document.getElementById('btn-cerrar-carrito');
     const overlay = document.getElementById('overlay-carrito');
     // referencia al disparador del proceso de pago
-    const btnComprar = document.getElementById('btn-comprar-carrito'); // Buscamos el boton de pagar
+    const btnComprar = document.getElementById('btn-comprar-carrito'); // buscamos el boton de pagar
     
-    // si el usuario da clic en la x o en el fondo oscuro, se oculta el menu
+    // si el usuario da clic en la x o en el fondo oscuro se oculta el menu
     if (btnCerrar) btnCerrar.addEventListener('click', cerrarCarrito);
     if (overlay) overlay.addEventListener('click', cerrarCarrito);
 
@@ -45,28 +45,26 @@ export async function inicializarCarrito() {
     const btnCarritoHeader = document.getElementById('btn-carrito-header');
     if (btnCarritoHeader) btnCarritoHeader.addEventListener('click', abrirCarrito);
 
-    // si el usuario da clic en comprar, verificamos su sesion
+    // si el usuario da clic en comprar verificamos su sesion
     if (btnComprar) {
         btnComprar.addEventListener('click', procesarCompra);
     }
 
-    // Si hay items recuperados del localstorage, renderizarlos visualmente de una vez
+    // si hay items recuperados del localstorage renderizarlos visualmente de una vez
     if(carrito.length > 0) {
         renderizarCarrito();
     }
 
-    // =========================================================================
-    // INYECCION DINAMICA DEL MODAL DE PAGOS
-    // =========================================================================
-    // Creamos un modal de pagos usando JavaScript puro en lugar de tenerlo fijo en el HTML.
-    // Esto mantiene el DOM (la estructura de la pagina) ligero y limpio hasta que realmente
-    // el usuario este preparado para hacer una compra.
+    // inyeccion dinamica del modal de pagos
+    // creamos un modal de pagos usando javascript puro en lugar de tenerlo fijo en el html
+    // esto mantiene el dom la estructura de la pagina ligero y limpio hasta que realmente
+    // el usuario este preparado para hacer una compra
     let modalPago = document.getElementById('modal-pago-simulado');
     if (!modalPago) {
-        // Si el modal no existe, creamos un contenedor <div> en la memoria
+        // si el modal no existe creamos un contenedor div en la memoria
         modalPago = document.createElement('div');
         modalPago.id = 'modal-pago-simulado';
-        // Inyectamos la estructura interna del modal (titulos, inputs, selectores y botones)
+        // inyectamos la estructura interna del modal titulos inputs selectores y botones
         modalPago.innerHTML = `
             <div style="background: #fff; padding: 25px; border-radius: 10px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
                 <h3 style="margin-bottom: 15px; color: #212529; font-size: 1.3rem;">Pasarela de pago</h3>
@@ -91,33 +89,31 @@ export async function inicializarCarrito() {
                 </div>
             </div>
         `;
-        // Aplicamos estilos directamente usando Object.assign (Es mas seguro que usar texto en cssText).
-        // 'fixed', 'top:0', 'left:0', 'width:100%', 'height:100%' garantizan que tape toda la pantalla.
-        // 'z-index: 10000' asegura que quede por encima de todo (navbars, banners, etc).
+        // aplicamos estilos directamente usando object assign es mas seguro que usar texto en csstext
+        // fixed top0 left0 width100 height100 garantizan que tape toda la pantalla
+        // z-index 10000 asegura que quede por encima de todo navbars banners etc
         Object.assign(modalPago.style, { position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'none', justifyContent: 'center', alignItems: 'center', zIndex: '10000' });
         
-        // Empujamos el modal de la memoria hacia la pagina visible
+        // empujamos el modal de la memoria hacia la pagina visible
         document.body.appendChild(modalPago);
         
-        // Enganchamos el comportamiento de los dos botones recien creados
-        document.getElementById('btn-cancelar-pago').addEventListener('click', () => modalPago.style.display = 'none');
+        // enganchamos el comportamiento de los dos botones recien creados
+        document.getElementById('btn-cancelar-pago').addEventListener('click', function() { modalPago.style.display = 'none'; });
         document.getElementById('btn-confirmar-pago').addEventListener('click', confirmarPagoSimulado);
 
-        // =========================================================================
-        // VALIDACION EN TIEMPO REAL (UX)
-        // =========================================================================
-        // este bloque impide que el usuario escriba letras en el campo de cuenta/telefono
+        // validacion en tiempo real ux
+        // este bloque impide que el usuario escriba letras en el campo de cuenta telefono
         const inputCuenta = document.getElementById('input-cuenta-pago');
         if (inputCuenta) {
-            inputCuenta.addEventListener('input', (e) => {
-                // reemplazamos cualquier caracter que no sea un numero (0-9) por nada
+            inputCuenta.addEventListener('input', function(e) {
+                // reemplazamos cualquier caracter que no sea un numero 0-9 por nada
                 e.target.value = e.target.value.replace(/[^0-9]/g, '');
             });
         }
     }
     
-    // al cargar la pagina, verificamos si el usuario esta logueado para descargar su carrito de mysql.
-    // asi, si se paso del celular a la computadora, recupera sus donas al instante.
+    // al cargar la pagina verificamos si el usuario esta logueado para descargar su carrito de mysql
+    // asi si se paso del celular a la computadora recupera sus cosas al instante
     try {
         const resSess = await fetch('session');
         if (resSess.ok) {
@@ -127,25 +123,28 @@ export async function inicializarCarrito() {
                 if (carritoBD.length > 0) { 
                     let huboCambiosStock = false;
                     
-                    // Mapeamos el carrito para normalizar llaves (idProducto -> id) y verificar recortes de inventario
-                    carrito = carritoBD.map(item => {
+                    // mapeamos el carrito para normalizar llaves idproducto id y verificar recortes de inventario
+                    carrito = carritoBD.map(function(item) {
                         let cantidadReal = item.cantidad;
                         
-                        // Si el stock en BD es menor a la cantidad guardada por el cliente, lo topamos al máximo disponible
+                        // si el stock en bd es menor a la cantidad guardada por el cliente lo topamos al maximo disponible
                         if (item.stock != null && cantidadReal > item.stock) {
                             cantidadReal = item.stock;
                             huboCambiosStock = true;
                         }
                         
                         return {
-                            id: item.idProducto || item.id, // Normalizamos el ID para que los botones de sumar/restar funcionen
+                            id: item.idProducto || item.id, // normalizamos el id para que los botones de sumar restar funcionen
                             nombre: item.nombre,
                             precio: item.precio,
                             cantidad: cantidadReal,
                             stock: item.stock,
-                            imagen: item.imagen
+                            imagen: item.imagen,
+                            seleccionado: item.seleccionado !== undefined ? item.seleccionado : true
                         };
-                    }).filter(item => item.cantidad > 0); // Quitamos los artículos que se agotaron por completo (stock 0)
+                    }).filter(function(item) {
+                        return item.cantidad > 0;
+                    }); 
                     
                     if (carritoBD.length !== carrito.length) huboCambiosStock = true;
 
@@ -153,9 +152,9 @@ export async function inicializarCarrito() {
                     renderizarCarrito(); 
                     
                     if (huboCambiosStock) {
-                        // Retrasamos la alerta medio segundo para no trabar el renderizado visual
-                        setTimeout(() => alert('Atencion: Algunos productos de tu carrito fueron ajustados o removidos porque el inventario disponible cambio.'), 500);
-                        programarSincronizacion(); // Obligamos a MySQL a registrar el nuevo límite
+                        // retrasamos la alerta medio segundo para no trabar el renderizado visual
+                        setTimeout(function() { alert('Atencion: Algunos productos de tu carrito fueron ajustados o removidos porque el inventario disponible cambio.'); }, 500);
+                        programarSincronizacion(); // obligamos a mysql a registrar el nuevo limite
                     }
                 }
             }
@@ -164,8 +163,8 @@ export async function inicializarCarrito() {
 }
 
 /**
- * Consulta al Backend los metodos de pago disponibles (Nequi, Efectivo, etc) 
- * y llena la etiqueta <select> del modal dinamicamente.
+ * consulta al backend los metodos de pago disponibles nequi efectivo etc 
+ * y llena la etiqueta select del modal dinamicamente
  */
 async function cargarMetodosPago() {
     const select = document.getElementById('select-metodo-pago');
@@ -175,7 +174,7 @@ async function cargarMetodosPago() {
         select.innerHTML = '<option value="" disabled selected>Cargando opciones...</option>';
         const respuesta = await fetch('metodos-pago');
         if (respuesta.ok) {
-            // Desempaquetamos el JSON que trae {id, descripcion}
+            // desempaquetamos el json que trae id descripcion
             const metodos = await respuesta.json();
             
             if (metodos.length === 0) {
@@ -184,8 +183,8 @@ async function cargarMetodosPago() {
             }
             
             select.innerHTML = '<option value="" disabled selected>Elige una opcion...</option>';
-            // Recorremos el JSON inyectando una etiqueta <option> por cada metodo habilitado
-            metodos.forEach(m => {
+            // recorremos el json inyectando una etiqueta option por cada metodo habilitado
+            metodos.forEach(function(m) {
                 const opt = document.createElement('option');
                 opt.value = m.id;
                 opt.textContent = m.descripcion;
@@ -201,44 +200,50 @@ async function cargarMetodosPago() {
 }
 
 /**
- * Reacciona cuando el cliente presiona el boton principal de "Comprar".
- * Verifica la sesion y valida que su perfil logistico este completo 
- * (tenga direccion y telefono) antes de dejarlo pagar.
+ * reacciona cuando el cliente presiona el boton principal de comprar
+ * verifica la sesion y valida que su perfil logistico este completo 
+ * tenga direccion y telefono antes de dejarlo pagar
  */
 async function procesarCompra() {
-    // Regla 1: No procesar aire.
+    // regla 1 verificar que haya productos seleccionados para la compra parcial
+    const seleccionados = carrito.filter(function(item) { return item.seleccionado; });
+    
     if (carrito.length === 0) {
-        alert('Tu carrito esta vacio. ¡Agrega algunos productos primero!');
+        alert('Tu carrito esta vacio.');
         return;
     }
 
+    if (seleccionados.length === 0) {
+        alert('Por favor, selecciona al menos un producto para proceder al pago.');
+        return;
+    }
     try {
-        // Le preguntamos al backend de Java si el usuario tiene la "pulsera" de logueado
+        // le preguntamos al backend de java si el usuario tiene la pulsera de logueado
         const respuesta = await fetch('session');
 
         if (respuesta.ok) {
-            // Respondio 200 (OK): El servidor de Java confirmo que tiene sesion iniciada.
+            // respondio 200 ok el servidor de java confirmo que tiene sesion iniciada
             
-            // Validamos logisticamente al cliente: consultamos su perfil
+            // validamos logisticamente al cliente consultamos su perfil
             const resPerfil = await fetch('perfil-cliente');
             if (resPerfil.ok) {
                 const perfil = await resPerfil.json();
-                // Si los datos llegan nulos o como un string de espacios vacios, bloqueamos el proceso.
+                // si los datos llegan nulos o como un string de espacios vacios bloqueamos el proceso
                 if (!perfil.direccion || perfil.direccion.trim() === '' || !perfil.telefono || perfil.telefono.trim() === '') {
                     alert('Para poder entregar tu pedido, es obligatorio que completes tus datos de envio (direccion y telefono principal). Te llevaremos a tu perfil.');
-                    cerrarCarrito();    // Ocultamos el menu lateral
-                    navegarA('perfil'); // Forzamos una redireccion SPA hacia el formulario
-                    return;             // Abortamos la ejecucion para que no se abra el modal de pago
+                    cerrarCarrito();    // ocultamos el menu lateral
+                    navegarA('perfil'); // forzamos una redireccion spa hacia el formulario
+                    return;             // abortamos la ejecucion para que no se abra el modal de pago
                 }
                 
-                // automatizacion: traemos el numero de telefono configurado por el usuario al campo de pago
+                // automatizacion traemos el numero de telefono configurado por el usuario al campo de pago
                 const inputCuenta = document.getElementById('input-cuenta-pago');
                 if (inputCuenta) {
                     inputCuenta.value = perfil.telefono || '';
                 }
             }
             
-            // Si tiene cuenta y perfil completo, mostramos la pasarela.
+            // si tiene cuenta y perfil completo mostramos la pasarela
             const modalPago = document.getElementById('modal-pago-simulado');
             if (modalPago) {
                 await cargarMetodosPago(); // cargamos las opciones frescas justo antes de abrir el modal
@@ -246,10 +251,10 @@ async function procesarCompra() {
                 cerrarCarrito(); // ocultamos el carrito para que no estorbe la vista del pago
             }
         } else {
-            // Respondio 401 (UNAUTHORIZED): El visitante no se ha identificado.
+            // respondio 401 unauthorized el visitante no se ha identificado
             alert('Por favor, inicia sesion o registrate para poder finalizar tu compra.');
             cerrarCarrito(); 
-            navegarA('login'); // Interceptamos y lo enviamos al login
+            navegarA('login'); // interceptamos y lo enviamos al login
         }
     } catch (error) {
         console.error('Error al verificar la sesion:', error);
@@ -258,49 +263,49 @@ async function procesarCompra() {
 }
 
 /**
- * Se dispara cuando el cliente llena el modal de pago y le da a "Pagar Ahora".
- * Recolecta el estado del carrito local, el ID del pago, y delega todo al
- * servicio de pedidos (pedidoService.js) para comunicarse con Java.
+ * se dispara cuando el cliente llena el modal de pago y le da a pagar ahora
+ * recolecta el estado del carrito local el id del pago y delega todo al
+ * servicio de pedidos pedidoservicejs para comunicarse con java
  */
 async function confirmarPagoSimulado() {
-    // Extraemos los datos del formulario flotante
+    // extraemos los datos del formulario flotante
     const cuenta = document.getElementById('input-cuenta-pago').value;
     const idMetodo = document.getElementById('select-metodo-pago').value;
     
-    // validacion estricta: el campo de cuenta/celular no debe estar vacio
+    // validacion estricta el campo de cuenta celular no debe estar vacio
     if (!cuenta || cuenta.trim() === '') {
         alert('Por favor ingresa un numero de cuenta o telefono valido para continuar.');
         return;
     }
 
-    // validacion de formato: solo permitimos numeros en la cuenta de pago
+    // validacion de formato solo permitimos numeros en la cuenta de pago
     const regexSoloNumeros = /^[0-9]+$/;
     if (!regexSoloNumeros.test(cuenta)) {
         alert('error: el numero de cuenta o celular solo debe contener digitos numericos.');
         return;
     }
 
-    // Quitamos el modal de la pantalla para evitar dobles envios
+    // quitamos el modal de la pantalla para evitar dobles envios
     document.getElementById('modal-pago-simulado').style.display = 'none';
     
-    // Cambiamos el boton a estado "cargando" por si la BD es lenta
+    // cambiamos el boton a estado cargando por si la bd es lenta
     const botonConfirmar = document.getElementById('btn-confirmar-pago');
     botonConfirmar.innerText = "Procesando pago...";
     botonConfirmar.disabled = true;
     
-    // LLAMADO CENTRAL: Enviamos la informacion al controlador de Pedidos en Java
+    // llamado central enviamos la informacion al controlador de pedidos en java
     const exito = await enviarPedido(carrito, idMetodo, cuenta);
     
     if (exito) {
-        // Si Java devolvio exito, vaciamos el arreglo local de JS
+        // si java devolvio exito vaciamos el arreglo local de js
         carrito = [];
-        // Destruimos las cookies / almacenamiento local para que no reaparezcan donas fantasma
+        // destruimos las cookies almacenamiento local para que no reaparezcan cosas fantasma
         localStorage.setItem('carritoDMari', JSON.stringify(carrito));
         
-        // Le avisamos a la BD que sincronice nuestro carrito (mandara un carrito vacio que ejecutara el DELETE)
+        // le avisamos a la bd que sincronice nuestro carrito mandara un carrito vacio que ejecutara el delete
         programarSincronizacion();
         
-        renderizarCarrito(); // Redibujamos la canasta (quedara vacia en pantalla)
+        renderizarCarrito(); // redibujamos la canasta quedara vacia en pantalla
         
         window.dispatchEvent(new CustomEvent('inventarioActualizado'));
         mostrarNotificacion('¡Pago aprobado y compra realizada con exito!', 'exito');
@@ -333,23 +338,25 @@ export function cerrarCarrito() {
 }
 
 /**
- * Agrega un producto al carrito de compras o incrementa su cantidad si ya existe.
- * Tambien valida que la cantidad no supere el stock disponible (si se proporciona uno).
- * 
- * @param {number} id - Identificador unico del producto en la base de datos.
- * @param {string} nombre - Nombre descriptivo del producto.
- * @param {number} precio - Precio unitario del producto.
- * @param {number|null} stock - Inventario actual del producto. Es opcional, por defecto es null.
+ * agrega un producto al carrito de compras o incrementa su cantidad si ya existe
+ * tambien valida que la cantidad no supere el stock disponible si se proporciona uno
+ * * @param {number} id identificador unico del producto en la base de datos
+ * @param {string} nombre nombre descriptivo del producto
+ * @param {number} precio precio unitario del producto
+ * @param {number|null} stock inventario actual del producto es opcional por defecto es null
  */
 export function agregarAlCarrito(id, nombre, precio, stock = null) {
     // buscamos si el producto ya existe en nuestro arreglo en memoria
-    const productoExistente = carrito.find(item => item.id === id);
+    const productoExistente = carrito.find(function(item) { return item.id === id; });
     
     if (productoExistente) {
-        // ACTUALIZACION: Si el producto ya existia, le refrescamos el stock con el dato mas reciente
+        // actualizacion si el producto ya existia le refrescamos el stock con el dato mas reciente
         if (stock != null) {
             productoExistente.stock = stock;
         }
+
+        // al agregar un producto que ya estaba lo marcamos como seleccionado por defecto
+        productoExistente.seleccionado = true;
 
         // topamos al maximo del stock disponible y alertamos al usuario
         if (productoExistente.stock != null && productoExistente.cantidad >= productoExistente.stock) {
@@ -359,19 +366,19 @@ export function agregarAlCarrito(id, nombre, precio, stock = null) {
             productoExistente.cantidad++;
         }
     } else {
-        // validamos que si es un producto nuevo, tenga al menos 1 unidad de stock
+        // validamos que si es un producto nuevo tenga al menos 1 unidad de stock
         if (stock != null && stock <= 0) {
             alert('Este producto se encuentra agotado por el momento.');
             return;
         }
-        // si es un producto nuevo, insertamos el objeto completo al arreglo guardando su stock
-        carrito.push({ id: id, nombre: nombre, precio: precio, cantidad: 1, stock: stock });
+        // si es un producto nuevo insertamos el objeto con seleccionado true por defecto
+        carrito.push({ id: id, nombre: nombre, precio: precio, cantidad: 1, stock: stock, seleccionado: true });
     }
     
-    // Guardamos la informacion actualizada en el navegador
+    // guardamos la informacion actualizada en el navegador
     localStorage.setItem('carritoDMari', JSON.stringify(carrito));
 
-    // tras modificar los datos, redibujamos el html y forzamos a abrir el panel
+    // tras modificar los datos redibujamos el html y forzamos a abrir el panel
     renderizarCarrito();
     abrirCarrito();
     
@@ -380,15 +387,17 @@ export function agregarAlCarrito(id, nombre, precio, stock = null) {
 }
 
 /**
- * Actualiza directamente la cantidad de un producto (usado por los inputs de texto y botones +/-).
- * Fuerza un tope de stock, evitando que el usuario introduzca un numero mayor a lo permitido.
- * @param {number} id - Identificador del producto a modificar.
- * @param {number} nuevaCantidad - La cantidad requerida por el usuario.
+ * actualiza directamente la cantidad de un producto usado por los inputs de texto y botones 
+ * fuerza un tope de stock evitando que el usuario introduzca un numero mayor a lo permitido
+ * @param {number} id identificador del producto a modificar
+ * @param {number} nuevaCantidad la cantidad requerida por el usuario
  */
 export function actualizarCantidad(id, nuevaCantidad) {
-    const productoExistente = carrito.find(item => item.id === id);
+    const productoExistente = carrito.find(function(item) {
+        return item.id === id;
+    });
     if (productoExistente && nuevaCantidad > 0) {
-        // si existe un limite de stock y lo superamos, lo topamos al maximo disponible
+        // si existe un limite de stock y lo superamos lo topamos al maximo disponible
         if (productoExistente.stock != null && nuevaCantidad > productoExistente.stock) {
             alert(`¡Lo sentimos! Solo nos quedan ${productoExistente.stock} unidades disponibles.`);
             productoExistente.cantidad = productoExistente.stock;
@@ -405,11 +414,13 @@ export function actualizarCantidad(id, nuevaCantidad) {
 }
 
 /**
- * Remueve completamente un articulo del carrito basandose en su ID.
- * @param {number} id - Identificador del producto a eliminar.
+ * remueve completamente un articulo del carrito basandose en su id
+ * @param {number} id identificador del producto a eliminar
  */
 export function eliminarDelCarrito(id) {
-    carrito = carrito.filter(item => item.id !== id);
+    carrito = carrito.filter(function(item) {
+        return item.id !== id;
+    });
     localStorage.setItem('carritoDMari', JSON.stringify(carrito));
     renderizarCarrito();
     
@@ -418,27 +429,43 @@ export function eliminarDelCarrito(id) {
 }
 
 /**
- * sincroniza el carrito con mysql utilizando un "temporizador de retardo" (debounce).
- * esto evita saturar el servidor si el usuario da 20 clics rapidos al boton de '+'.
+ * cambia el flag de seleccionado para un producto compra parcial
+ */
+export function cambiarSeleccion(id, seleccionado) {
+    const item = carrito.find(function(i) {
+        return i.id === id;
+    });
+    if (item) {
+        item.seleccionado = seleccionado;
+        localStorage.setItem('carritoDMari', JSON.stringify(carrito));
+        renderizarCarrito();
+        programarSincronizacion();
+    }
+}
+
+/**
+ * sincroniza el carrito con mysql utilizando un temporizador de retardo debounce
+ * esto evita saturar el servidor si el usuario da 20 clics rapidos al boton de mas
  */
 function programarSincronizacion() {
-    // si ya habia un guardado programado en la recamara, lo cancelamos
+    // si ya habia un guardado programado en la recamara lo cancelamos
     if (temporizadorSincronizacion) clearTimeout(temporizadorSincronizacion);
     
     // programamos un nuevo envio al servidor para dentro de 1.5 segundos
-    temporizadorSincronizacion = setTimeout(async () => {
+    temporizadorSincronizacion = setTimeout(async function() {
         // empaquetamos el carrito tal cual lo hacemos para las facturas
         const parametros = new URLSearchParams();
-        carrito.forEach(item => {
+        carrito.forEach(function(item) {
             parametros.append('id_producto', item.id);
             parametros.append('cantidad', item.cantidad);
+            parametros.append('seleccionado', item.seleccionado);
         });
         
         try {
-            // enviamos la peticion en la sombra sin bloquear la pantalla.
-            // si el usuario es visitante (no esta logueado), java respondera un error 401, 
-            // pero como estamos en un setTimeout en la sombra y omitimos los alerts, 
-            // el visitante jamas se dara cuenta y su pagina seguira perfecta con el localstorage.
+            // enviamos la peticion en la sombra sin bloquear la pantalla
+            // si el usuario es visitante no esta logueado java respondera un error 401 
+            // pero como estamos en un settimeout en la sombra y omitimos los alerts 
+            // el visitante jamas se dara cuenta y su pagina seguira perfecta con el localstorage
             await fetch('carrito-db', { method: 'POST', body: parametros });
         } catch (e) {
             console.warn('Fallo la sincronizacion silenciosa del carrito. Esto es normal si el usuario no ha iniciado sesion.', e.message);
@@ -447,9 +474,9 @@ function programarSincronizacion() {
 }
 
 /**
- * Construye el HTML de los elementos del carrito leyendo los datos en memoria.
- * Inyecta este HTML en el contenedor lateral, calcula el total 
- * y vuelve a enlazar los eventos de los botones recien creados (+, -, X, input).
+ * construye el html de los elementos del carrito leyendo los datos en memoria
+ * inyecta este html en el contenedor lateral calcula el total 
+ * y vuelve a enlazar los eventos de los botones recien creados 
  */
 function renderizarCarrito() {
     const contenedor = document.getElementById('items-carrito');
@@ -459,27 +486,31 @@ function renderizarCarrito() {
     if (!contenedor || !txtTotal) return;
     
     let total = 0;
-    // variable tipo texto (string) para acumular el html sin tocar el dom repetidas veces
+    // variable tipo texto string para acumular el html sin tocar el dom repetidas veces
     let htmlCarrito = ''; 
     
     // recorremos los elementos del carrito para ir calculando precios y armar etiquetas
-    carrito.forEach(item => {
+    carrito.forEach(function(item) {
         // calculamos cuanto cuesta en total este articulo por su cantidad
         let subtotal = item.precio * item.cantidad;
-        // sumamos al monto total de la compra
-        total += subtotal;
+
+        // solo sumamos al total de la compra los items que estan seleccionados
+        if (item.seleccionado) {
+            total += subtotal;
+        }
         
-        // si el producto tiene stock, preparamos el atributo max para el input
+        // si el producto tiene stock preparamos el atributo max para el input
         const maxAttr = item.stock ? `max="${item.stock}"` : '';
         // preparamos un texto visual para que el usuario sepa cuanto stock le queda disponible
         const textoStock = item.stock != null ? `<span class="badge-stock">Stock: ${item.stock}</span>` : '';
 
-        // concatenamos el texto con el bloque html de este articulo, ahora mucho mas estilizado
+        // concatenamos el texto con el bloque html de este articulo ahora mucho mas estilizado
         htmlCarrito += `
-            <div class="item-carrito-producto" style="display: flex; flex-direction: column; padding: 10px; border-bottom: 1px solid #eee; margin-bottom: 5px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span style="font-weight: 600; color: #333;">${item.nombre}</span>
+            <div class="item-carrito-producto" style="display: flex; flex-direction: column; padding: 10px; border-bottom: 1px solid #eee; margin-bottom: 5px; opacity: ${item.seleccionado ? '1' : '0.6'}">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <input type="checkbox" class="check-seleccion" data-id="${item.id}" ${item.seleccionado ? 'checked' : ''} style="cursor: pointer; width: 18px; height: 18px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;">
+                        <span style="font-weight: 600; color: #333; text-decoration: ${item.seleccionado ? 'none' : 'line-through'};">${item.nombre}</span>
                         ${textoStock}
                     </div>
                     <button class="btn-eliminar-item" data-id="${item.id}" style="color: #ff4d4d; background: none; border: none; cursor: pointer; font-weight: bold; font-size: 1.2rem; line-height: 1; padding: 0 5px;" title="Eliminar">✕</button>
@@ -495,48 +526,55 @@ function renderizarCarrito() {
             </div>`;
     });
     
-    // inyectamos de golpe todo el texto armado en el contenedor principal (mejor rendimiento)
+    // inyectamos de golpe todo el texto armado en el contenedor principal mejor rendimiento
     contenedor.innerHTML = htmlCarrito;
     
     // actualizamos el texto del total a pagar
-    txtTotal.innerText = '$' + total.toFixed(2); // Aseguramos que solo muestre 2 decimales
+    txtTotal.innerText = '$' + total.toFixed(2); // aseguramos que solo muestre 2 decimales
 
-    // Comportamiento del boton de restar "-"
-    document.querySelectorAll('.btn-restar').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+    // comportamiento del checkbox de seleccion parcial
+    document.querySelectorAll('.check-seleccion').forEach(function(check) {
+        check.addEventListener('change', function(e) {
+            cambiarSeleccion(parseInt(e.target.dataset.id), e.target.checked);
+        });
+    });
+
+    // comportamiento del boton de restar
+    document.querySelectorAll('.btn-restar').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
             const id = parseInt(e.target.dataset.id);
-            const item = carrito.find(i => i.id === id);
+            const item = carrito.find(function(i) { return i.id === id; });
             if (item && item.cantidad > 1) actualizarCantidad(id, item.cantidad - 1);
         });
     });
 
-    // Comportamiento del boton de sumar "+"
-    document.querySelectorAll('.btn-sumar').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+    // comportamiento del boton de sumar
+    document.querySelectorAll('.btn-sumar').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
             const id = parseInt(e.target.dataset.id);
-            const item = carrito.find(i => i.id === id);
+            const item = carrito.find(function(i) { return i.id === id; });
             if (item) actualizarCantidad(id, item.cantidad + 1);
         });
     });
 
-    // Agregamos el comportamiento a los nuevos inputs de cantidad
-    document.querySelectorAll('.input-cantidad').forEach(input => {
-        input.addEventListener('change', (e) => {
+    // agregamos el comportamiento a los nuevos inputs de cantidad
+    document.querySelectorAll('.input-cantidad').forEach(function(input) {
+        input.addEventListener('change', function(e) {
             actualizarCantidad(parseInt(e.target.dataset.id), parseInt(e.target.value));
         });
     });
 
-    // Agregamos el comportamiento a los botones de eliminar "X"
-    document.querySelectorAll('.btn-eliminar-item').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+    // agregamos el comportamiento a los botones de eliminar
+    document.querySelectorAll('.btn-eliminar-item').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
             eliminarDelCarrito(parseInt(e.target.dataset.id));
         });
     });
 }
 
 /**
- * Crea una alerta flotante moderna (Toast) no bloqueante.
- * Esto permite que el navegador siga trabajando y actualice el catalogo visualmente de fondo.
+ * crea una alerta flotante moderna toast no bloqueante
+ * esto permite que el navegador siga trabajando y actualice el catalogo visualmente de fondo
  */
 function mostrarNotificacion(mensaje, tipo) {
     const toast = document.createElement('div');
@@ -547,8 +585,8 @@ function mostrarNotificacion(mensaje, tipo) {
     
     document.body.appendChild(toast);
     
-    setTimeout(() => {
+    setTimeout(function() {
         toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 500); // Lo borramos del HTML tras la animacion
+        setTimeout(function() { toast.remove(); }, 500); // lo borramos del html tras la animacion
     }, 3500);
 }

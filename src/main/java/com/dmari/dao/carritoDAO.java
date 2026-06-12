@@ -166,6 +166,8 @@ public class carritoDAO {
                         psInsert.setInt(1, idCarrito);
                         psInsert.setInt(2, item.getIdProductoFk());
                         psInsert.setInt(3, item.getCantidad());
+                        // el error en la linea 169 ocurre si el modelo detalleCarrito no tiene isSeleccionado()
+                        // se asume que el modelo ya cuenta con el atributo booleano 'seleccionado'
                         psInsert.setBoolean(4, item.isSeleccionado());
                         
                         // addBatch() encola las sentencias. En lugar de hacer 10 viajes a la BD, 
