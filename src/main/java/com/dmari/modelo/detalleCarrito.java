@@ -39,7 +39,6 @@ public class detalleCarrito {
         return seleccionado;
     }
 
-    public boolean isSeleccionado() { return seleccionado; }
     public void setSeleccionado(boolean seleccionado) { this.seleccionado = seleccionado; }
 
     // getters y setters de los datos puros

@@ -65,11 +65,11 @@ function prepararFormularioRegistro() {
         limpiarErrorCampo('reg-confirm-password');
 
         if (!validarNombre(nombre)) {
-            mostrarErrorCampo('reg-nombre', 'El nombre debe contener al menos 3 letras.');
+            mostrarErrorCampo('reg-nombre', 'El nombre debe contener al menos 3 letras y sin numeros.');
             esValido = false;
         }
         if (!validarNombre(apellido)) {
-            mostrarErrorCampo('reg-apellido', 'El apellido debe contener al menos 3 letras.');
+            mostrarErrorCampo('reg-apellido', 'El apellido debe contener al menos 3 letras y sin numeros.');
             esValido = false;
         }
         if (!validarCorreo(correo)) {
