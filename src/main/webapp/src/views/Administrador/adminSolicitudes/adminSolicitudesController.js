@@ -6,6 +6,8 @@ export async function cargarVistaAdminSolicitudes() {
     await cargarComponente('component-main', './src/views/Administrador/adminSolicitudes/adminSolicitudes.html');
     
     cargarListaSolicitudes();
+    // inicializamos el buscador de solicitudes para identificar artesanos rapidamente
+    prepararFiltrosSolicitudes();
 }
 
 // Obtiene y renderiza el listado de solicitudes
@@ -49,6 +51,23 @@ async function cargarListaSolicitudes() {
     } catch (error) {
         console.error('Error al cargar la tabla de solicitudes:', error);
         tbody.innerHTML = `<tr><td colspan="6">Error de conexión al cargar solicitudes</td></tr>`;
+    }
+}
+
+// permite al administrador buscar por nombre de artesano o estado de la peticion
+function prepararFiltrosSolicitudes() {
+    const inputBusqueda = document.getElementById('busqueda-solicitudes');
+    const tbody = document.getElementById('tabla-solicitudes-body');
+    
+    if (inputBusqueda && tbody) {
+        inputBusqueda.addEventListener('input', (e) => {
+            const termino = e.target.value.toLowerCase();
+            const filas = tbody.querySelectorAll('tr');
+            filas.forEach(fila => {
+                const texto = fila.innerText.toLowerCase();
+                fila.style.display = texto.includes(termino) ? '' : 'none';
+            });
+        });
     }
 }
 

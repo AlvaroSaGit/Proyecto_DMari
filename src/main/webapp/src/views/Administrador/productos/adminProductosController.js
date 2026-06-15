@@ -318,6 +318,19 @@ function prepararVistaAdminProductos() {
         });
     }
 
+    // buscador de texto para la tabla: permite filtrar por nombre o marca del proveedor
+    const inputBusqueda = document.getElementById('input-busqueda-admin');
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener('input', (e) => {
+            const termino = e.target.value.toLowerCase();
+            const filas = tbody.querySelectorAll('tr');
+            filas.forEach(fila => {
+                const contenido = fila.innerText.toLowerCase();
+                fila.style.display = contenido.includes(termino) ? '' : 'none';
+            });
+        });
+    }
+
     // al entrar por primera vez pedimos los productos sin filtro
     cargarListaProductos();
     
@@ -421,10 +434,13 @@ async function cargarListaProductos(idProveedor = '') {
             const id = prod.idProductoPk || prod.id_producto_pk || prod.id;
             const nombre = prod.nombreProducto || prod.nombre_producto || prod.nombre || 'Producto sin nombre';
             const rutaImg = prod.urlRuta || prod.url_ruta || prod.imagen || 'src/img/productos/default/gato_programador.jpg';
-            // Agregamos todas las combinaciones posibles de JSON para atrapar el ID de la categoria si o si
             const catId = prod.idCategoriaFk || prod.id_categoria_fk || prod.id_categoria || prod.idCategoria || prod.categoriaId || '';
             const nombreCategoria = prod.categoria || prod.nombre_categoria || prod.nombreCategoria || 'Sin categoria';
-            
+            // capturamos el nombre del proveedor si viene en el json, de lo contrario es dmari
+            const esPropio = !prod.id_proveedor_fk; 
+            const nombreVendedor = prod.nombre_vendedor || prod.nombreVendedor || prod.marca || (esPropio ? '📦 DMari Oficial' : 'Proveedor Externo');
+            const colorOwner = esPropio ? '#e91e63' : '#2c3e50'; // rosa para dmari, oscuro para artesanos
+
             // verificamos si las etiquetas vienen como array o como texto simple
             let etiquetasTxt = '';
             if (Array.isArray(prod.etiquetas)) etiquetasTxt = prod.etiquetas.join(', ');
@@ -440,6 +456,10 @@ async function cargarListaProductos(idProveedor = '') {
                 <td>
                     <div style="font-weight: bold; margin-bottom: 4px;">${nombre}</div>
                     <span style="font-size: 0.75rem; color: #666; background-color: #f0f0f0; padding: 2px 6px; border-radius: 10px;">${nombreCategoria}</span>
+                </td>
+                <td>
+                    <div style="font-size: 0.85rem; font-weight: 600; color: ${colorOwner};"><i class='bx bx-store-alt'></i> ${nombreVendedor}</div>
+                    <small style="color: #999;">${esPropio ? 'Gestion Interna' : 'ID Prov: ' + prod.id_proveedor_fk}</small>
                 </td>
                 <td>
                     <div>$${prod.precio}</div>

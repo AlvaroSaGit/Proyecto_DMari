@@ -37,7 +37,7 @@ insert into usuario (nombre, apellido, id_rol_fk, estado_cuenta) values
 ('miguel', 'reparte', 2, true);    -- id 15: cliente
 
 -- ==========================================================
--- 4. registro de correos satelite
+-- 4. correos electronicos
 -- ==========================================================
 insert into correo (id_usuario_fk, correo, correo_primario) values 
 (1, 'alvaro@dmari.com', true),
@@ -57,8 +57,7 @@ insert into correo (id_usuario_fk, correo, correo_primario) values
 (15, 'miguel.entregas@envios.com', true);
 
 -- ==========================================================
--- 5. encriptacion de contrasenas
--- los valores se insertan usando aes_encrypt para varbinary
+-- 5. credenciales con encriptacion aes
 -- ==========================================================
 insert into credenciales (id_usuario, passwd_encript) values 
 (1, aes_encrypt('admin123', 'llave_dmari')),
@@ -78,7 +77,7 @@ insert into credenciales (id_usuario, passwd_encript) values
 (15, aes_encrypt('reparto123', 'llave_dmari'));
 
 -- ==========================================================
--- 6. completar perfiles de clientes (solo datos de extension)
+-- 6. perfiles de clientes
 -- ==========================================================
 insert into cliente (id_cliente_pk, referencia_ubicacion) values 
 (2, 'casa blanca esquinera'),
@@ -94,7 +93,7 @@ insert into cliente (id_cliente_pk, referencia_ubicacion) values
 (15, 'conjunto residencial bloques del norte');
 
 -- ==========================================================
--- 7. completar perfiles de proveedores
+-- 7. perfiles de proveedores
 -- ==========================================================
 insert into proveedor (id_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta) values
 (3, '900123456-1', 'ceras giron', '123456789', 'bancolombia', 'ahorros'),
@@ -102,27 +101,27 @@ insert into proveedor (id_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancar
 (5, '900555666-3', 'vivero san luis', '555666777', 'nequi', 'ahorros');
 
 -- ==========================================================
--- 8. registro de productos (15 registros para sena)
+-- 8. catalogo de productos
 -- ==========================================================
 insert into producto (id_categoria_fk, nombre_producto, descripcion, precio, stock, estado) values 
-(2, 'vela de vainilla y canela', 'aroma dulce ideal para relajacion', 18000, 15, true),     -- id 1
-(1, 'dona glaseada especial', 'clasica con glaseado de azucar', 4500, 30, true),           -- id 2
-(2, 'vela decorativa de flores', 'vela artesanal con petalos secos', 22000, 10, true),    -- id 3
-(3, 'ramo de rosas rojas', 'hermoso arreglo floral para regalar a mama', 65000, 5, true), -- id 4
-(1, 'dona rellena de arequipe', 'masa suave con relleno tradicional', 5500, 25, true),    -- id 5
-(1, 'caja de mini donas', 'set de 6 mini donas surtidas para regalo', 15000, 10, true),   -- id 6
-(1, 'desayuno feliz', 'bandeja con jugo, sanduche, fruta y globo', 85000, 8, true),       -- id 7
-(2, 'ancheta cumpleanos', 'dulces surtidos y cervezas', 110000, 4, true),                 -- id 8
-(1, 'caja de trufas', '12 trufas de chocolate belga', 35000, 20, true),                   -- id 9
-(2, 'globo helio te amo', 'globo metalizado gigante', 12000, 50, true),                   -- id 10
-(2, 'peluche oso gigante', 'oso de felpa de 1 metro de alto', 150000, 3, true),           -- id 11
-(2, 'vino tinto reserva', 'botella de vino tinto importado', 75000, 12, true),            -- id 12
-(2, 'tarjeta 3d cumpleanos', 'tarjeta artesanal con relieve', 8000, 100, true),           -- id 13
-(1, 'pastel de chocolate', 'pastel humedo para 10 personas', 55000, 6, true),             -- id 14
-(1, 'cupcakes decorados', 'caja de 4 cupcakes personalizados', 20000, 15, true);          -- id 15
+(2, 'vela de vainilla y canela', 'aroma dulce ideal para relajacion', 18000, 15, true),     
+(1, 'dona glaseada especial', 'clasica con glaseado de azucar', 4500, 30, true),           
+(2, 'vela decorativa de flores', 'vela artesanal con petalos secos', 22000, 10, true),    
+(3, 'ramo de rosas rojas', 'hermoso arreglo floral para regalar a mama', 65000, 5, true), 
+(1, 'dona rellena de arequipe', 'masa suave con relleno tradicional', 5500, 25, true),    
+(1, 'caja de mini donas', 'set de 6 mini donas surtidas para regalo', 15000, 10, true),   
+(1, 'desayuno feliz', 'bandeja con jugo, sanduche, fruta y globo', 85000, 8, true),       
+(2, 'ancheta cumpleanos', 'dulces surtidos y cervezas', 110000, 4, true),                 
+(1, 'caja de trufas', '12 trufas de chocolate belga', 35000, 20, true),                   
+(2, 'globo helio te amo', 'globo metalizado gigante', 12000, 50, true),                   
+(2, 'peluche oso gigante', 'oso de felpa de 1 metro de alto', 150000, 3, true),           
+(2, 'vino tinto reserva', 'botella de vino tinto importado', 75000, 12, true),            
+(2, 'tarjeta 3d cumpleanos', 'tarjeta artesanal con relieve', 8000, 100, true),           
+(1, 'pastel de chocolate', 'pastel humedo para 10 personas', 55000, 6, true),             
+(1, 'cupcakes decorados', 'caja de 4 cupcakes personalizados', 20000, 15, true);          
 
 -- ==========================================================
--- 9. registro de imagenes relacionadas
+-- 9. galeria de imagenes
 -- ==========================================================
 insert into imagenes (id_producto_fk, url_ruta, imagen_principal) values 
 (1, 'src/img/productos/default/gato_programador.jpg', 1),
@@ -142,7 +141,7 @@ insert into imagenes (id_producto_fk, url_ruta, imagen_principal) values
 (15, 'src/img/productos/default/gato_programador.jpg', 1);
 
 -- ==========================================================
--- 10. poblacion de etiquetas (15 registros)
+-- 10. etiquetas de busqueda
 -- ==========================================================
 insert into etiqueta (nombre_etiqueta) values 
 ('aromaterapia'), ('relajacion'), ('dulce'), ('decoracion'), ('arequipe'), 
@@ -150,7 +149,7 @@ insert into etiqueta (nombre_etiqueta) values
 ('chocolate'), ('premium'), ('infantil'), ('para ella'), ('para el');
 
 -- ==========================================================
--- 11. asignacion de etiquetas a productos
+-- 11. vinculacion producto-etiqueta
 -- ==========================================================
 insert into producto_etiqueta (id_producto, id_etiqueta) values 
 (1, 1), (1, 2), (1, 14),
@@ -170,13 +169,13 @@ insert into producto_etiqueta (id_producto, id_etiqueta) values
 (15, 3), (15, 9), (15, 13);
 
 -- ==========================================================
--- 12. relacion proveedor - producto
+-- 12. vinculacion proveedor-producto
 -- ==========================================================
 insert into proveedor_producto (id_proveedor_fk, id_producto_fk) values 
 (3, 1), (3, 3), (4, 2), (4, 5), (4, 6), (4, 14), (4, 15), (5, 4);
 
 -- ==========================================================
--- 13. poblacion de metodos de pago
+-- 13. metodos de pago habilitados
 -- ==========================================================
 insert into metodo_pago (descripcion_pago, estado_activo) values 
 ('nequi', true),
@@ -186,7 +185,7 @@ insert into metodo_pago (descripcion_pago, estado_activo) values
 ('pse', true);
 
 -- ==========================================================
--- 14. direcciones y telefonos de clientes
+-- 14. datos logisticos (direcciones y telefonos)
 -- ==========================================================
 insert into telefono (id_usuario_fk, numero_telefonico) values 
 (2, '3101234567'), (2, '3100000000'), 
@@ -195,86 +194,67 @@ insert into telefono (id_usuario_fk, numero_telefonico) values
 (10, '3144444444');                   
 
 insert into direccion (id_usuario_fk, direccion, direccion_detallada, direccion_primario) values 
-(2, 'calle 10 # 5-20, giron', 'casa blanca esquinera, timbre 2', true),            -- id direccion: 1
-(7, 'carrera 15 # 22-10, bucaramanga', 'apto 402', true),                           -- id direccion: 2
-(8, 'calle 45 # 9-50, floridablanca', 'casa 3', true),                              -- id direccion: 3
-(9, 'avenida 33 # 10-12, piedecuesta', 'conjunto cerrado', true),                   -- id direccion: 4
-(10, 'calle 50 # 14-20, bucaramanga', 'casa rejas negras', true);                   -- id direccion: 5
+(2, 'calle 10 # 5-20, giron', 'casa blanca esquinera, timbre 2', true),            
+(7, 'carrera 15 # 22-10, bucaramanga', 'apto 402', true),                           
+(8, 'calle 45 # 9-50, floridablanca', 'casa 3', true),                              
+(9, 'avenida 33 # 10-12, piedecuesta', 'conjunto cerrado', true),                   
+(10, 'calle 50 # 14-20, bucaramanga', 'casa rejas negras', true);                   
 
 -- ==========================================================
--- 15. simulacion del flujo operativo e historial de compras (5 tablas conectadas)
+-- 15. simulacion del flujo operativo de ventas
 -- ==========================================================
 
--- === transaccion 1: maria (id cliente: 2) ===
-
--- paso 1: maria agrega items a su carrito operativo
-insert into carrito (id_cliente_fk, estado) values (2, 'procesado'); -- genera id_carrito: 1
+-- transaccion 1: compra de maria (id cliente: 2)
+-- el carrito debe estar en estado procesado para generar un pedido
+insert into carrito (id_cliente_fk, estado) values (2, 'Procesado'); -- id_carrito: 1
 insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values 
 (1, 1, 2, true), 
 (1, 2, 1, true);
 
--- paso 2: maria confirma la compra de los articulos seleccionados (se guarda la fecha)
-insert into productos_confirmados (id_carrito_fk, id_producto_fk, cantidad) values 
-(1, 1, 2), -- genera id_confirmado: 1
-(1, 2, 1); -- genera id_confirmado: 2
+-- cabecera del pedido (ahora vincula correctamente el id_carrito_fk)
+insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) values 
+(2, 1, 1, 40500.00, 'Pendiente'); -- id_pedido: 1
 
--- paso 3: se genera la cabecera del pedido logistico
-insert into pedido (id_cliente_fk, id_direccion_fk, total_pagar, estado_pedido) values 
-(2, 1, 40500.00, 'pendiente'); -- genera id_pedido: 1
+-- detalle inmutable del pedido
+insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values 
+(1, 1, 2, 18000.00, 36000.00), 
+(1, 2, 1, 4500.00, 4500.00);
 
--- paso 4: el detalle del pedido vincula el pedido con los productos confirmados del paso 2
-insert into detalle_pedido (id_pedido_fk, id_confirmado_fk, precio_unitario, subtotal) values 
-(1, 1, 18000.00, 36000.00), 
-(1, 2, 4500.00, 4500.00);
-
--- paso 5: registro financiero del pago
+-- registro de pago
 insert into pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comision_dmari, monto_total, estado_pago) values 
-(1, 1, 'celular nequi: 3101234567', 2025.00, 38475.00, 'aprobado');
+(1, 1, 'celular nequi: 3101234567', 2025.00, 38475.00, 'Aprobado');
 
 
--- === transaccion 2: laura (id cliente: 7) ===
-
--- paso 1: carrito operativo
-insert into carrito (id_cliente_fk, estado) values (7, 'procesado'); -- genera id_carrito: 2
+-- transaccion 2: compra de laura (id cliente: 7)
+insert into carrito (id_cliente_fk, estado) values (7, 'Procesado'); -- id_carrito: 2
 insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values 
 (2, 11, 1, true);
 
--- paso 2: congelamiento e historial de confirmacion
-insert into productos_confirmados (id_carrito_fk, id_producto_fk, cantidad) values 
-(2, 11, 1); -- genera id_confirmado: 3
+insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) values 
+(7, 2, 2, 150000.00, 'Entregado'); -- id_pedido: 2
 
--- paso 3: cabecera del pedido logistico
-insert into pedido (id_cliente_fk, id_direccion_fk, total_pagar, estado_pedido) values 
-(7, 2, 150000.00, 'entregado'); -- genera id_pedido: 2
+insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values 
+(2, 11, 1, 150000.00, 150000.00);
 
--- paso 4: vinculo del detalle utilizando la llave del producto confirmado
-insert into detalle_pedido (id_pedido_fk, id_confirmado_fk, precio_unitario, subtotal) values 
-(2, 3, 150000.00, 150000.00);
-
--- paso 5: registro del pago
 insert into pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comision_dmari, monto_total, estado_pago) values 
-(2, 3, 'voucher tarjeta: 444455556666', 7500.00, 142500.00, 'aprobado');
+(2, 3, 'voucher tarjeta: 444455556666', 7500.00, 142500.00, 'Aprobado');
 
 
--- === transaccion 3: jorge (id cliente: 8) ===
-
--- paso 1: carrito operativo
-insert into carrito (id_cliente_fk, estado) values (8, 'procesado'); -- genera id_carrito: 3
+-- transaccion 3: compra de jorge (id cliente: 8)
+insert into carrito (id_cliente_fk, estado) values (8, 'Procesado'); -- id_carrito: 3
 insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values 
 (3, 7, 1, true);
 
--- paso 2: congelamiento e historial de confirmacion
-insert into productos_confirmados (id_carrito_fk, id_producto_fk, cantidad) values 
-(3, 7, 1); -- genera id_confirmado: 4
+insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) values 
+(8, 3, 3, 85000.00, 'En Camino'); -- id_pedido: 3
 
--- paso 3: cabecera del pedido logistico
-insert into pedido (id_cliente_fk, id_direccion_fk, total_pagar, estado_pedido) values 
-(8, 3, 85000.00, 'en camino'); -- genera id_pedido: 3
+insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values 
+(3, 7, 1, 85000.00, 85000.00);
 
--- paso 4: conector final del detalle
-insert into detalle_pedido (id_pedido_fk, id_confirmado_fk, precio_unitario, subtotal) values 
-(3, 4, 85000.00, 85000.00);
-
--- paso 5: registro del pago
 insert into pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comision_dmari, monto_total, estado_pago) values 
-(3, 2, 'celular daviplata: 3124567890', 4250.00, 80750.00, 'aprobado');
+(3, 2, 'celular daviplata: 3124567890', 4250.00, 80750.00, 'Aprobado');
+
+-- transaccion 4: carrito abandonado por maria
+insert into carrito (id_cliente_fk, estado) values (2, 'Activo'); -- id_carrito: 4
+insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values 
+(4, 5, 3, true);

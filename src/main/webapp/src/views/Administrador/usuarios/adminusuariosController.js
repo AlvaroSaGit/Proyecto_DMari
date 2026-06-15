@@ -1,5 +1,7 @@
 // importamos la herramienta para inyectar el html en la pantalla
 import { cargarComponente } from '../../../services/uiService.js';
+// importamos el servicio de usuarios para centralizar la data y la logica de filtrado
+import { obtenerUsuarios, filtrarUsuarios, actualizarPermisosUsuario } from '../../../services/usuarioService.js';
 
 // variable global para recordar a que usuario le estamos cambiando los permisos
 let usuarioEditandoId = null;
@@ -39,8 +41,8 @@ function prepararVistaAdminUsuarios() {
             parametros.append('estado', estado);
 
             try {
-                // hacemos la peticion al nuevo servlet 'usuarios' que programaremos en java
-                const respuesta = await fetch('usuarios', { method: 'POST', body: parametros });
+                // usamos el servicio para enviar los datos al servidor
+                const respuesta = await actualizarPermisosUsuario(parametros);
                 
                 if (respuesta.ok) {
                     alert('¡permisos del usuario actualizados correctamente!');
@@ -72,6 +74,13 @@ function prepararVistaAdminUsuarios() {
         });
     }
 
+    // oidores para los filtros de busqueda
+    const inputBusqueda = document.getElementById('busqueda-usuarios');
+    const selectRol = document.getElementById('filtro-rol-usuario');
+
+    if (inputBusqueda) inputBusqueda.addEventListener('input', filtrarUsuariosUI);
+    if (selectRol) selectRol.addEventListener('change', filtrarUsuariosUI);
+
     // pedimos los datos a java al momento de abrir la pantalla
     cargarListaUsuarios();
 }
@@ -82,42 +91,60 @@ async function cargarListaUsuarios() {
     if (!tbody) return;
 
     try {
-        // peticion get al backend para traer a todo el personal registrado
-        const respuesta = await fetch('usuarios');
-        if (!respuesta.ok) throw new Error('fallo la peticion al servidor');
+        // pedimos los usuarios al servicio
+        const usuarios = await obtenerUsuarios();
+        dibujarTablaUsuarios(usuarios);
 
-        const usuarios = await respuesta.json();
-        tbody.innerHTML = '';
-
-        if (usuarios.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">no hay usuarios registrados</td></tr>';
-            return;
-        }
-
-        // recorremos el arreglo y dibujamos a cada persona
-        usuarios.forEach(usr => {
-            const tr = document.createElement('tr');
-            
-            // traduccion de roles numericos a texto amigable
-            let rolTexto = 'cliente';
-            if (usr.idRol === 1) rolTexto = 'administrador';
-            if (usr.idRol === 3) rolTexto = 'repartidor';
-            if (usr.idRol === 4) rolTexto = 'proveedor';
-
-            tr.innerHTML = `
-                <td>#00${usr.idUsuario}</td>
-                <td><strong>${usr.nombre} ${usr.apellido}</strong></td>
-                <td>${usr.correo || 'Sin correo asociado'}</td>
-                <td><span style="font-size: 0.75rem; color: #666; background-color: #f0f0f0; padding: 2px 6px; border-radius: 10px; text-transform: uppercase; font-weight: bold;">${rolTexto}</span></td>
-                <td><span class="badge-estado ${usr.estadoCuenta ? 'badge-activo' : 'badge-inactivo'}">${usr.estadoCuenta ? 'ACTIVO' : 'BLOQUEADO'}</span></td>
-                <td>
-                    <button class="btn-editar" data-id="${usr.idUsuario}" data-nombre="${usr.nombre} ${usr.apellido}" data-rol="${usr.idRol}" data-estado="${usr.estadoCuenta}"><i class='bx bx-edit'></i> Editar Permisos</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
     } catch (error) {
         console.error('error al cargar usuarios:', error);
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">error al cargar los datos</td></tr>';
     }
+}
+
+// funcion para dibujar las filas basado en un arreglo filtrado
+function dibujarTablaUsuarios(lista) {
+    const tbody = document.getElementById('tabla-usuarios-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">no se encontraron usuarios</td></tr>';
+        return;
+    }
+
+    lista.forEach(usr => {
+        const tr = document.createElement('tr');
+        
+        // identificacion visual: colores por rol para saber quien es quien
+        let rolTexto = 'cliente';
+        let colorBadge = '#3498db'; // azul para clientes
+        if (usr.idRol === 1) { rolTexto = 'administrador'; colorBadge = '#2c3e50'; }
+        if (usr.idRol === 3) { rolTexto = 'repartidor'; colorBadge = '#2ecc71'; }
+        if (usr.idRol === 4) { rolTexto = 'proveedor'; colorBadge = '#e67e22'; }
+
+        tr.innerHTML = `
+            <td>#00${usr.idUsuario}</td>
+            <td><strong>${usr.nombre} ${usr.apellido}</strong></td>
+            <td>${usr.correo || 'Sin correo asociado'}</td>
+            <td><span style="font-size: 0.75rem; color: white; background-color: ${colorBadge}; padding: 4px 8px; border-radius: 12px; text-transform: uppercase; font-weight: bold;">${rolTexto}</span></td>
+            <td><span class="badge-estado ${usr.estadoCuenta ? 'badge-activo' : 'badge-inactivo'}">${usr.estadoCuenta ? 'ACTIVO' : 'BLOQUEADO'}</span></td>
+            <td>
+                <button class="btn-editar" data-id="${usr.idUsuario}" data-nombre="${usr.nombre} ${usr.apellido}" data-rol="${usr.idRol}" data-estado="${usr.estadoCuenta}"><i class='bx bx-edit'></i> Editar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// logica de filtrado para el administrador
+function filtrarUsuariosUI() {
+    const termino = document.getElementById('busqueda-usuarios').value.toLowerCase();
+    const rolFiltro = document.getElementById('filtro-rol-usuario').value;
+
+    // le pedimos al servicio que procese el filtro en memoria
+    const filtrados = filtrarUsuarios(termino, rolFiltro);
+    
+    // redibujamos la tabla con los resultados
+    dibujarTablaUsuarios(filtrados);
 }

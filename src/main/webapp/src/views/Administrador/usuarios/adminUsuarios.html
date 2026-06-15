@@ -6,6 +6,17 @@
 <section class="admin-vista-productos">
     <div class="admin-header-seccion">
         <h2>gestion de usuarios y permisos</h2>
+        <!-- barra de filtros para que el admin identifique quien es quien -->
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <input type="text" id="busqueda-usuarios" placeholder="buscar por nombre o correo..." class="admin-form__input" style="width: 250px; margin-bottom: 0;">
+            <select id="filtro-rol-usuario" class="admin-form__input" style="width: 180px; margin-bottom: 0;">
+                <option value="">todos los roles</option>
+                <option value="1">Administrador</option>
+                <option value="2">Cliente</option>
+                <option value="3">Repartidor</option>
+                <option value="4">Proveedor</option>
+            </select>
+        </div>
     </div>
     
     <div class="admin-tabla-contenedor">

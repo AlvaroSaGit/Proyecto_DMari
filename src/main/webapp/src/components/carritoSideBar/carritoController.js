@@ -293,12 +293,16 @@ async function confirmarPagoSimulado() {
     botonConfirmar.innerText = "Procesando pago...";
     botonConfirmar.disabled = true;
     
-    // llamado central enviamos la informacion al controlador de pedidos en java
-    const exito = await enviarPedido(carrito, idMetodo, cuenta);
+    // filtramos unicamente los items seleccionados para la compra
+    const itemsAComprar = carrito.filter(function(item) { return item.seleccionado; });
+    
+    // enviamos solo lo seleccionado al servidor java
+    const exito = await enviarPedido(itemsAComprar, idMetodo, cuenta);
     
     if (exito) {
-        // si java devolvio exito vaciamos el arreglo local de js
-        carrito = [];
+        // limpieza selectiva: mantenemos en el carrito lo que no se compro
+        carrito = carrito.filter(function(item) { return !item.seleccionado; });
+        
         // destruimos las cookies almacenamiento local para que no reaparezcan cosas fantasma
         localStorage.setItem('carritoDMari', JSON.stringify(carrito));
         

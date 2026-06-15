@@ -7,14 +7,13 @@
 /**
  * envia la informacion de la compra al servidor java para registrar el pedido.
  * 
- * @param {Array} carrito - lista de productos en la canasta [{id, cantidad, precio}, ...]
  * @param {number} idCarrito - id del carrito activo en mysql.
  * @param {number} idDireccion - id de la direccion seleccionada.
  * @param {string} idMetodo - identificador del medio de pago seleccionado.
  * @param {string} cuenta - numero de cuenta o comprobante ingresado.
  * @returns {Promise<boolean>} - true si el pedido se proceso con exito en mysql.
  */
-export async function enviarPedido(carrito, idMetodo, cuenta) {
+export async function enviarPedido(carrito, idCarrito, idMetodo, cuenta) {
     // validacion de seguridad modulo 5: expresion regular para asegurar que la cuenta sea numerica.
     // permite longitudes de 10 a 15 digitos comunes en cuentas y celulares.
     const regexCuenta = /^[0-9]{10,15}$/;
@@ -56,6 +55,7 @@ export async function enviarPedido(carrito, idMetodo, cuenta) {
     parametros.append('idMetodo', idMetodo);
     parametros.append('cuenta', cuenta);
     
+    // el servlet recibira la lista y debe usar una transaccion para pasar de carrito a detalle_pedido
     try {
         // disparamos la peticion post hacia el endpoint /pedido definido en el controlador java.
         // usamos fetch para una comunicacion asincrona sin recargar la pagina.
@@ -116,5 +116,21 @@ export async function cambiarEstadoPedido(id, nuevoEstado, motivo = "") {
     } catch (error) {
         console.error('error fatal al cambiar estado del pedido:', error);
         return false;
+    }
+}
+
+/**
+ * obtiene el listado global de pedidos para el administrador o el filtrado para proveedor.
+ * el backend decide que devolver segun el rol de la sesion.
+ * @returns {Promise<Array|null>}
+ */
+export async function obtenerTodosLosPedidos() {
+    try {
+        const respuesta = await fetch('pedido?admin=true&t=' + Date.now());
+        if (!respuesta.ok) throw new Error('error al obtener lista de pedidos');
+        return await respuesta.json();
+    } catch (error) {
+        console.error('error al solicitar pedidos de gestion:', error);
+        return null;
     }
 }

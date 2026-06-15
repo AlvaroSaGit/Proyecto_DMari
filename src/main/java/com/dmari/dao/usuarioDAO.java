@@ -308,23 +308,123 @@ public class usuarioDAO {
      * @return boolean: true si la solicitud se guardo correctamente.
      */
     public boolean registrarSolicitudProveedor(int idUsuario, String nit, String marca, String cuenta, String banco, String tipo) {
-        String sql = "insert into solicitud_proveedor (id_usuario_fk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta, estado_solicitud) values (?, ?, ?, ?, ?, ?, 'pendiente')";
+        // consulta para insertar los datos comerciales de la peticion
+        String sqlSol = "insert into solicitud_proveedor (id_usuario_fk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta, estado_solicitud) values (?, ?, ?, ?, ?, ?, 'pendiente')";
+        // consulta para pausar la cuenta del usuario (estado_cuenta = 0)
+        String sqlPausar = "update usuario set estado_cuenta = 0 where id_usuario_pk = ?";
         
-        try (Connection con = db.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        Connection con = null;
+        try {
+            con = db.conectar();
+            // iniciamos transaccion para asegurar que si falla el bloqueo no se cree la solicitud
+            con.setAutoCommit(false);
             
-            // configuracion de los parametros de la solicitud
-            ps.setInt(1, idUsuario);
-            ps.setString(2, nit);
-            ps.setString(3, marca);
-            ps.setString(4, cuenta);
-            ps.setString(5, banco);
-            ps.setString(6, tipo);
+            // paso 1: registrar la peticion en la tabla de solicitudes
+            try (PreparedStatement psSol = con.prepareStatement(sqlSol)) {
+                psSol.setInt(1, idUsuario);
+                psSol.setString(2, nit);
+                psSol.setString(3, marca);
+                psSol.setString(4, cuenta);
+                psSol.setString(5, banco);
+                psSol.setString(6, tipo);
+                psSol.executeUpdate();
+            }
             
-            return ps.executeUpdate() > 0;
+            // paso 2: pausar la cuenta del usuario inmediatamente
+            try (PreparedStatement psPause = con.prepareStatement(sqlPausar)) {
+                psPause.setInt(1, idUsuario);
+                psPause.executeUpdate();
+            }
+            
+            // confirmamos ambos cambios
+            con.commit();
+            return true;
         } catch (SQLException e) {
-            System.out.println("error al registrar solicitud de proveedor: " + e.getMessage());
+            // si algo falla revertimos para que el usuario no quede bloqueado sin solicitud
+            try { if (con != null) con.rollback(); } catch (SQLException ex) {
+                System.err.println("fallo critico en rollback de solicitud: " + ex.getMessage());
+            }
+            System.out.println("error al procesar solicitud y pausa de cuenta: " + e.getMessage());
             return false;
+        } finally {
+            // restauramos el estado de la conexion y cerramos
+            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
+        }
+    }
+
+    /**
+     * el administrador aprueba la peticion del usuario.
+     * este proceso mueve los datos de la solicitud a la tabla de proveedor,
+     * cambia el rol del usuario a 4 y reactiva su cuenta (estado 1).
+     * 
+     * @param idSolicitud int: identificador de la peticion a procesar.
+     * @return boolean: true si toda la operacion atomica fue exitosa.
+     */
+    public boolean aprobarSolicitudProveedor(int idSolicitud) {
+        // sql para obtener los datos de la solicitud antes de moverlos
+        String sqlGet = "select id_usuario_fk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta from solicitud_proveedor where id_solicitud_pk = ?";
+        // sql para actualizar el estado de la solicitud
+        String sqlUpdateSol = "update solicitud_proveedor set estado_solicitud = 'aprobada' where id_solicitud_pk = ?";
+        // sql para activar al usuario y subirlo a rol proveedor (4)
+        String sqlUpdateUser = "update usuario set id_rol_fk = 4, estado_cuenta = 1 where id_usuario_pk = ?";
+        // sql para insertar o actualizar el perfil comercial definitivo
+        String sqlInsertProv = "insert into proveedor (id_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta) values (?, ?, ?, ?, ?, ?) on duplicate key update nit_empresa = values(nit_empresa), nombre_marca = values(nombre_marca)";
+
+        Connection con = null;
+        try {
+            con = db.conectar();
+            con.setAutoCommit(false);
+
+            int idUser = 0;
+            String nit = "", marca = "", cuenta = "", banco = "", tipo = "";
+
+            // paso 1: recuperamos los datos comerciales de la solicitud
+            try (PreparedStatement psGet = con.prepareStatement(sqlGet)) {
+                psGet.setInt(1, idSolicitud);
+                try (ResultSet rs = psGet.executeQuery()) {
+                    if (rs.next()) {
+                        idUser = rs.getInt("id_usuario_fk");
+                        nit = rs.getString("nit_empresa");
+                        marca = rs.getString("nombre_marca");
+                        cuenta = rs.getString("cuenta_bancaria");
+                        banco = rs.getString("banco_nombre");
+                        tipo = rs.getString("tipo_cuenta");
+                    }
+                }
+            }
+
+            if (idUser > 0) {
+                // paso 2: marcamos la solicitud como aprobada
+                try (PreparedStatement psSol = con.prepareStatement(sqlUpdateSol)) {
+                    psSol.setInt(1, idSolicitud);
+                    psSol.executeUpdate();
+                }
+                // paso 3: activamos el acceso al sistema con el nuevo rol
+                try (PreparedStatement psUser = con.prepareStatement(sqlUpdateUser)) {
+                    psUser.setInt(1, idUser);
+                    psUser.executeUpdate();
+                }
+                // paso 4: creamos el perfil oficial de proveedor
+                try (PreparedStatement psProv = con.prepareStatement(sqlInsertProv)) {
+                    psProv.setInt(1, idUser);
+                    psProv.setString(2, nit);
+                    psProv.setString(3, marca);
+                    psProv.setString(4, cuenta);
+                    psProv.setString(5, banco);
+                    psProv.setString(6, tipo);
+                    psProv.executeUpdate();
+                }
+                con.commit();
+                return true;
+            }
+            con.rollback();
+            return false;
+        } catch (SQLException e) {
+            try { if (con != null) con.rollback(); } catch (SQLException ex) {}
+            System.out.println("error al aprobar proveedor: " + e.getMessage());
+            return false;
+        } finally {
+            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
         }
     }
 }

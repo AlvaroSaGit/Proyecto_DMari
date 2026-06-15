@@ -15,11 +15,11 @@ Maneja la seguridad del sistema.
 ## 📦 PedidoDAO (Transaccional)
 Es el DAO más crítico de la tienda y asegura que no haya pérdida de dinero ni inventario fantasma.
 * **Integridad Transaccional:** Cuando un cliente paga su carrito, este DAO desactiva el Auto-Commit (`conn.setAutoCommit(false)`).
-* **Ejecución en Bloque:** 
+* **Ciclo de Vida de los Datos (Carrito ➔ Pedido):** 
   1. Inserta la orden maestra en la tabla `pedido`.
-  2. Obtiene el ID autogenerado.
-  3. Inserta todos los productos en la tabla `detalle_pedido`.
-  4. Descuenta las cantidades del stock disponible en `producto`.
+  2. **Snapshot de Precios:** Recupera los items de `detalle_carrito` donde `seleccionado = true` e inserta en `detalle_pedido` guardando el precio unitario del momento.
+  3. **Control de Inventario:** Verifica y descuenta las cantidades del stock en `producto`. Si el stock es insuficiente, lanza una excepción para el rollback.
+  4. **Sincronizacion de Limpieza:** En lugar de un borrado manual, el sistema delega la limpieza al `carritoDAO`. Al finalizar el pedido, el frontend envia el estado actualizado del carrito (solo con los items no comprados) y el DAO sincroniza la tabla `detalle_carrito` mediante un proceso de reemplazo total (Delete/Insert Batch).
 * **Rollback:** Si alguna de las operaciones falla (por ejemplo, si no hay stock de un producto al último segundo), hace un `conn.rollback()`, deshaciendo absolutamente todo y protegiendo el sistema.
 
 ## 🏷️ EtiquetaDAO y CategoriaDAO

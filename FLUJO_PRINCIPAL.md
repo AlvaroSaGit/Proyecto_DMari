@@ -75,15 +75,16 @@ Este documento explica el recorrido paso a paso de la informacion a traves de la
 **Objetivo:** Convertir el carrito en una venta real descontando el inventario de forma segura (ACID).
 
 1. **Frontend (`carritoController.js`):** 
-   El usuario selecciona el metodo de pago y le da a "Pagar Ahora". JS verifica que el carrito no este vacio, que el usuario tenga perfil (direccion) y envia el arreglo de productos a Java (`/pedido` POST).
+   El usuario marca los productos (check `seleccionado`) que desea pagar ahora. JS filtra el arreglo del carrito y envia al servidor solo los elementos seleccionados.
 2. **Backend (Pedido DAO):**
    Este es el proceso transaccional mas estricto del sistema.
    * `INSERT` en la tabla `pedido` (obtiene el ID maestro de la factura).
-   * Bucle: Por cada producto, hace un `INSERT` en `detalle_pedido` guardando el precio unitario congelado.
+   * Bucle: Por cada producto seleccionado en el carrito, hace un `INSERT` en `detalle_pedido` guardando el precio unitario actual (snapshot) y calculando el subtotal.
    * Bucle: Hace un `UPDATE` en la tabla `producto` para restar la cantidad comprada al `stock` disponible.
    * Si todo sale perfecto: `commit()`. Si un producto se quedo sin stock justo en ese milisegundo: `rollback()`.
 3. **Limpieza (Post-Compra):**
-   Java devuelve un `200 OK`. JavaScript vacia el arreglo en RAM (`carrito = []`), lo borra del `localStorage` y envia ese carrito vacio a MySQL. El DAO del carrito, al ver que la lista viene vacia, ejecuta el `DELETE` limpiando la tabla `detalle_carrito`. El usuario es redirigido a `#historial`.
+   Java devuelve un `200 OK`. JavaScript aplica un `.filter()` al arreglo `carrito` para eliminar solo los items cuya propiedad `seleccionado` era `true`.
+   Inmediatamente se dispara `programarSincronizacion()`, enviando el carrito restante a la base de datos. El DAO de MySQL reemplaza el contenido viejo por este nuevo estado filtrado, logrando una limpieza selectiva sin logica SQL compleja. Finalmente, se redirige a `#historial`.
 
 ---
 

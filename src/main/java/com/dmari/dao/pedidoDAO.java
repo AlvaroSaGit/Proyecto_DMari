@@ -21,17 +21,17 @@ public class pedidoDAO {
      * los detalles de cada producto, descuenta el inventario y registra el pago.
      * 
      * @param idCliente int: identificador numerico del comprador.
+     * @param idCarrito int: identificador del carrito que se esta procesando.
      * @param totalPagar double: costo total de la compra con decimales.
      * @param carrito arraylist<detallepedido>: arreglo de objetos conteniendo ids de producto y sus cantidades.
      * @param idMetodoPago int: identificador de la forma de pago (ej. 1 para nequi).
      * @param numeroCuenta string: texto con el comprobante, cuenta o celular usado.
      * @return boolean: true si el commit general se ejecuta sin errores, false si hubo un rollback.
      */
-    public boolean registrarPedido(int idCliente, double totalPagar, ArrayList<detallePedido> carrito, int idMetodoPago, String numeroCuenta) {
+    public boolean registrarPedido(int idCliente, int idCarrito, double totalPagar, ArrayList<detallePedido> carrito, int idMetodoPago, String numeroCuenta) {
         // sql para insertar la cabecera del pedido.
-        // guarda la relacion con el cliente y el monto total de la venta.
-        // el estado inicial se establece como pendiente.
-        String sqlPedido = "INSERT INTO pedido (id_cliente_fk, total_pagar, estado_pedido) VALUES (?, ?, 'Pendiente')";
+        // se agrega id_carrito_fk para cumplir con la restriccion de la base de datos
+        String sqlPedido = "INSERT INTO pedido (id_cliente_fk, id_carrito_fk, total_pagar, estado_pedido) VALUES (?, ?, ?, 'Pendiente')";
         // sql para registrar cada producto comprado.
         // vincula el item al pedido principal usando su id.
         // guarda la cantidad, el precio capturado y el subtotal calculado.
@@ -55,10 +55,10 @@ public class pedidoDAO {
             
             // paso 1: insertamos el pedido maestro
             try (PreparedStatement psPedido = con.prepareStatement(sqlPedido, PreparedStatement.RETURN_GENERATED_KEYS)) {
-                // asignamos los parametros del cliente y monto a la consulta
-                // configuracion de parametros para la cabecera de la factura
+                // configuramos los parametros incluyendo la referencia al carrito operativo
                 psPedido.setInt(1, idCliente);
-                psPedido.setDouble(2, totalPagar);
+                psPedido.setInt(2, idCarrito);
+                psPedido.setDouble(3, totalPagar);
                 // enviamos el comando de insercion a la base de datos
                 // ejecucion de la insercion maestra del pedido
                 psPedido.executeUpdate();
