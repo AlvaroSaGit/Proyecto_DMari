@@ -58,7 +58,8 @@ public class AuthController extends HttpServlet {
                 if (user != null) {
                     response.setContentType("application/json;charset=UTF-8");
                     response.setStatus(HttpServletResponse.SC_OK);
-                    response.getWriter().print("{\"nombre\": \"" + user.getNombre() + "\"}");
+                    // devolvemos el nombre y el rol para que el frontend sepa que permisos tiene el usuario
+                    response.getWriter().print("{\"nombre\": \"" + user.getNombre() + "\", \"idRol\": " + user.getIdRol() + "}");
                 }
             } else {
                 // sc_unauthorized (401) le dice al frontend que el usuario es un invitado (no esta logueado).

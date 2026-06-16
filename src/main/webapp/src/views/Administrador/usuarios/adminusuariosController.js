@@ -6,6 +6,9 @@ import { obtenerUsuarios, filtrarUsuarios, actualizarPermisosUsuario } from '../
 // variable global para recordar a que usuario le estamos cambiando los permisos
 let usuarioEditandoId = null;
 
+// cache para los usuarios cargados para filtrar en memoria sin ir a java
+let usuariosCache = [];
+
 // funcion de arranque que el enrutador (router.js) llamara al entrar a esta vista
 export async function cargarVistaAdminUsuarios() {
     // CORRECCION: Ajustamos la ruta para que apunte correctamente a la carpeta 'usuarios'
@@ -137,7 +140,7 @@ function dibujarTablaUsuarios(lista) {
     });
 }
 
-// logica de filtrado para el administrador
+    // logica de filtrado para el administrador sin tildes
 function filtrarUsuariosUI() {
     const termino = document.getElementById('busqueda-usuarios').value.toLowerCase();
     const rolFiltro = document.getElementById('filtro-rol-usuario').value;

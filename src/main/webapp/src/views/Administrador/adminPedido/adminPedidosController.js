@@ -16,6 +16,19 @@ async function prepararVistaPedidos() {
     const contenedor = document.getElementById('contenedor-lista-pedidos');
     if (!contenedor) return;
 
+    // oidor para el buscador de pedidos: permite filtrar por cliente o por producto especifico
+    const inputBusqueda = document.getElementById('busqueda-pedidos-admin');
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener('input', (e) => {
+            const termino = e.target.value.toLowerCase();
+            const tarjetas = contenedor.querySelectorAll('.bloque-pedido-admin');
+            tarjetas.forEach(tarjeta => {
+                const texto = tarjeta.innerText.toLowerCase();
+                tarjeta.style.display = texto.includes(termino) ? '' : 'none';
+            });
+        });
+    }
+
     // pedimos los datos al servidor (java devolvera todos si eres admin, o solo los tuyos si eres proveedor)
     const listaPlana = await obtenerHistorialPedidos();
 
@@ -70,6 +83,7 @@ function crearBloquePedidoAdmin(pedido) {
 
     const div = document.createElement('div');
     div.style.cssText = 'background:#fff; border:1px solid #ddd; border-radius:8px; padding:20px; margin-bottom:20px; box-shadow:0 2px 5px rgba(0,0,0,0.05);';
+    div.classList.add('bloque-pedido-admin'); // clase para permitir el filtrado por buscador
     div.innerHTML = `
         <div style="display:flex; justify-content:space-between; border-bottom:2px solid #222; padding-bottom:10px; margin-bottom:10px;">
             <div>

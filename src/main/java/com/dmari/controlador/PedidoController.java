@@ -27,7 +27,7 @@ import jakarta.servlet.http.HttpSession;
 public class PedidoController extends HttpServlet {
 
     /**
-     * metodo post: enrutador de modificaciones
+     * metodo post: enrutador de modificaciones.
      * actua como un guardia de trafico bidireccional dependiendo del contenido enviado:
      * 
      * ruta a: si detecta "accion = cambiar_estado", asume que es un empleado gestionando envios.
@@ -42,8 +42,8 @@ public class PedidoController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // 1. Verificamos que el usuario tenga una sesion valida
-        // 1. capa de proteccion: exigir credencial de sesion activa en el navegador
+        // 1. verificamos que el usuario tenga una sesion valida
+        // 1. capa de proteccion: exigir credencial de sesion activa en el navegador.
         HttpSession sesion = request.getSession(false);
         // condicional de seguridad: si no hay cookies activas, expulsa la peticion con un error 401.
         if (sesion == null || sesion.getAttribute("usuarioLogueado") == null) {
@@ -55,13 +55,13 @@ public class PedidoController extends HttpServlet {
         usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
         
         // =========================================================================
-        // ruta a: cambio de estado logistico (exclusivo de administrador y proveedor)
+        // ruta a: cambio de estado logistico (exclusivo de administrador y proveedor).
         // =========================================================================
         String accion = request.getParameter("accion");
         // validacion de accion: ahora coincide con el nombre enviado desde pedidoservice.js
         if ("actualizar_estado".equals(accion)) {
             
-            // barrera de privilegios: solo permitimos el paso a administradores, proveedores y clientes
+            // barrera de privilegios: solo permitimos el paso a administradores, proveedores y clientes.
             if (user.getIdRol() != 1 && user.getIdRol() != 4 && user.getIdRol() != 2) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403: usted no tiene nivel jerarquico
                 return;
@@ -70,16 +70,16 @@ public class PedidoController extends HttpServlet {
             // extraemos el id usando el nombre de parametro correcto enviado por el frontend
             int idPedido = Integer.parseInt(request.getParameter("id"));
             String nuevoEstado = request.getParameter("estado");
-            String motivo = request.getParameter("motivo"); // capturamos la razon enviada desde el modal
+            String motivo = request.getParameter("motivo"); // capturamos la razon enviada desde el modal.
             
-            // validacion de seguridad: el cliente solo puede cancelar si el pedido esta pendiente
+            // validacion de seguridad: el cliente solo puede cancelar si el pedido esta pendiente.
             if (user.getIdRol() == 2 && !"Cancelado_por_Cliente".equals(nuevoEstado)) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
             
             pedidoDAO dao = new pedidoDAO();
-            // pasamos todos los parametros necesarios para la auditoria
+            // pasamos todos los parametros necesarios para la auditoria.
             boolean exito = dao.actualizarEstadoPedido(idPedido, nuevoEstado, motivo, user.getIdUsuario());
             
             // condicional de respuesta: si el dao devulve true responde 200, sino error 500.
@@ -92,9 +92,9 @@ public class PedidoController extends HttpServlet {
         }
         
         // =========================================================================
-        // ruta b: creacion de un pedido nuevo (checkout del cliente)
+        // ruta b: creacion de un pedido nuevo (checkout del cliente).
         // =========================================================================
-        // atrapamos arreglos completos generados por javascript. ejemplo: ids = [2, 5, 8]
+        // atrapamos arreglos completos generados por javascript. ejemplo: ids = [2, 5, 8].
         String[] idsProductos = request.getParameterValues("id_producto");
         String[] cantidades = request.getParameterValues("cantidad");
         String[] precios = request.getParameterValues("precio");
@@ -103,10 +103,10 @@ public class PedidoController extends HttpServlet {
         String idMetodoStr = request.getParameter("idMetodo");
         String cuenta = request.getParameter("cuenta");
         
-        // validacion de seguridad modulo 5: evitamos nulos y verificamos formato numerico de la cuenta
-        // esto previene fallos de nullpointerexception y ataques de inyeccion de texto
+        // validacion de seguridad modulo 5: evitamos nulos y verificamos formato numerico de la cuenta.
+        // esto previene fallos de nullpointerexception y ataques de inyeccion de texto.
         if (idsProductos == null || idsProductos.length == 0 || idMetodoStr == null || cuenta == null || !cuenta.matches("^[0-9]+$")) {
-            // sc_bad_request (400): el servidor rechaza la peticion porque faltan datos clave del carrito
+            // sc_bad_request (400): el servidor rechaza la peticion porque faltan datos clave del carrito.
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
@@ -114,9 +114,9 @@ public class PedidoController extends HttpServlet {
         ArrayList<detallePedido> carritoList = new ArrayList<>();
         double totalPagar = 0;
         
-        // 3. deserializacion y calculo financiero en zona segura
+        // 3. deserializacion y calculo financiero en zona segura.
         // recorremos el carrito para convertir el texto (string) en numeros matematicos (int/double).
-        // iteracion clasica: recorre la longitud del arreglo "idsproductos" que vino por http.
+        // iteracion clasica: recorre la longitud del arreglo idsproductos que vino por http.
         for (int i = 0; i < idsProductos.length; i++) {
             detallePedido item = new detallePedido();
             item.setIdProductoFk(Integer.parseInt(idsProductos[i]));
@@ -132,29 +132,33 @@ public class PedidoController extends HttpServlet {
             carritoList.add(item);
         }
         
+        // capturamos el id del carrito de forma segura para la base de datos
+        String idCarStr = request.getParameter("id_carrito");
+        int idCarrito = (idCarStr != null && !idCarStr.isEmpty()) ? Integer.parseInt(idCarStr) : 0;
         int idMetodo = Integer.parseInt(idMetodoStr);
         
-        // 4. ejecucion del nucleo de datos
+        // ejecucion del nucleo de datos: agregamos el parametro faltante para que compile
         pedidoDAO dao = new pedidoDAO();
-        boolean exito = dao.registrarPedido(user.getIdUsuario(), totalPagar, carritoList, idMetodo, cuenta);
+        // enviamos los 6 parametros obligatorios en el orden exacto del dao
+        boolean exito = dao.registrarPedido(user.getIdUsuario(), idCarrito, totalPagar, carritoList, idMetodo, cuenta);
         
-        // 5. resolucion web y limpieza
+        // 5. resolucion web y limpieza.
         // condicional critico: confirma si mysql logro insertar todos los componentes.
         if (exito) {
             // como el pago fue autorizado, la canasta en la base de datos se debe destruir.
             carritoDAO cartDao = new carritoDAO();
             cartDao.vaciarCarrito(user.getIdUsuario());
             
-            // sc_ok (200): todo salio perfecto, el pedido se registro en mysql
+            // sc_ok (200): todo salio perfecto, el pedido se registro en mysql.
             response.setStatus(HttpServletResponse.SC_OK);
         } else {
-            // sc_internal_server_error (500): fallo critico (ej. no habia stock o error sql)
+            // sc_internal_server_error (500): fallo critico (ej. no habia stock o error sql).
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
     /**
-     * metodo get: lectura dinamica de facturas
+     * metodo get: lectura dinamica de facturas.
      * este es un endpoint inteligente: responde de 3 formas totalmente distintas
      * leyendo el rol del visitante autenticado. un solo codigo sirve para el 
      * panel del cliente, el dashboard del administrador y la logistica del proveedor.
@@ -176,10 +180,11 @@ public class PedidoController extends HttpServlet {
         
         usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
         pedidoDAO dao = new pedidoDAO();
-        ArrayList<detallePedido> lista;
+        // inicializamos la lista para evitar errores de puntero nulo (npe).
+        ArrayList<detallePedido> lista = new ArrayList<>();
         
-        // estructura de enrutamiento basada en rol (rbac)
-        // condicional de control de acceso: envia peticiones sql diferentes usando el perfil (rol)
+        // estructura de enrutamiento basada en rol (rbac).
+        // condicional de control de acceso: envia peticiones sql diferentes usando el perfil (rol).
         if (user.getIdRol() == 1) { // rol 1 = administrador 
             lista = dao.listarTodosLosPedidos();
         } else if (user.getIdRol() == 4) { // rol 4 = proveedor 
@@ -188,7 +193,12 @@ public class PedidoController extends HttpServlet {
             lista = dao.listarPedidosPorCliente(user.getIdUsuario());
         }
         
-        // utilizamos el motor manual (helper) para parsear los arreglos complejos a texto legible para js
+        // validacion de integridad: si el dao responde nulo por error de red, lo convertimos en lista vacia.
+        if (lista == null) {
+            lista = new ArrayList<>();
+        }
+
+        // utilizamos el motor manual (helper) para parsear los arreglos complejos a texto legible para js.
         jsonHelper helper = new jsonHelper();
         String jsonString = helper.pedidosAJson(lista);
         

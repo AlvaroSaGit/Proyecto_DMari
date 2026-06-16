@@ -7,6 +7,13 @@
 <section class="admin-vista-productos">
     <div class="admin-header-seccion">
         <h2>gestion de productos</h2>
+        <!-- barra de filtros para identificar dueños y buscar productos especificos -->
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-top: 10px;">
+            <input type="text" id="input-busqueda-admin" placeholder="buscar por nombre o marca..." class="admin-form__input" style="width: 250px; margin-bottom: 0;">
+            <select id="filtro-proveedor-lista" class="admin-form__input" style="width: 200px; margin-bottom: 0;">
+                <option value="">todos los proveedores</option>
+            </select>
+        </div>
         <!-- Este boton es escuchado por JS para limpiar el formulario y abrir la ventana flotante (Modal) -->
         <button id="btn-nuevo-producto" class="btn-nuevo-prod"><i class='bx bx-plus'></i> Nuevo Producto</button>
     </div>
@@ -18,6 +25,7 @@
                     <th>id</th>
                     <th>imagen</th>
                     <th>nombre</th>
+                    <th>dueño/origen</th>
                     <th>precio</th>
                     <th>estado</th>
                     <th>acciones</th>

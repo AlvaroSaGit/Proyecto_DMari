@@ -53,6 +53,7 @@ export async function enviarPedido(carrito, idCarrito, idMetodo, cuenta) {
     // idmetodo: llave foranea hacia la tabla metodo_pago.
     // cuenta: el numero validado anteriormente para la tabla pago.
     parametros.append('idMetodo', idMetodo);
+    parametros.append('id_carrito', idCarrito); // enviamos el id del carrito para que java lo procese
     parametros.append('cuenta', cuenta);
     
     // el servlet recibira la lista y debe usar una transaccion para pasar de carrito a detalle_pedido
