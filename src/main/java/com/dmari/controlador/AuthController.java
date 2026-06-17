@@ -140,6 +140,14 @@ public class AuthController extends HttpServlet {
                 return;
             }
 
+            // Paso 1: Verificamos si el correo existe independientemente de la contraseña
+            if (!dao.existeCorreo(correo)) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                response.getWriter().print("El correo ingresado no está registrado en nuestro sistema.");
+                return;
+            }
+
+            // Paso 2: Si el correo existe, intentamos validar la contraseña
             usuario usuarioLogueado = dao.verificarLogin(correo, password);
 
             // condicional de exito de login
@@ -160,7 +168,9 @@ public class AuthController extends HttpServlet {
                 response.setStatus(HttpServletResponse.SC_OK); 
                 response.getWriter().print("{\"idRol\": " + usuarioLogueado.getIdRol() + "}");
             } else {
+                // Si llegamos aquí, el correo existe pero la contraseña es incorrecta
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); 
+                response.getWriter().print("La contraseña es incorrecta. Inténtalo de nuevo.");
             }
         }
     }

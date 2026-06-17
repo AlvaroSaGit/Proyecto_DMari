@@ -183,6 +183,30 @@ public class usuarioDAO {
     }
 
     /**
+     * comprueba si un correo electronico ya esta registrado en el sistema.
+     * se usa para dar mensajes de error mas precisos en el login.
+     * 
+     * @param correo string: el email que el usuario intenta usar.
+     * @return boolean: true si el correo ya existe en la tabla correo.
+     */
+    public boolean existeCorreo(String correo) {
+        String sql = "SELECT 1 FROM correo WHERE correo = ?";
+        
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setString(1, correo);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next(); // devuelve true si encontro el correo
+            }
+            
+        } catch (SQLException e) {
+            System.out.println("Error al validar existencia de correo: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * extrae todos los usuarios registrados en el sistema (panel de administracion).
      * 
      * @return arraylist<usuario>: lista completa con roles, correos y estados.
