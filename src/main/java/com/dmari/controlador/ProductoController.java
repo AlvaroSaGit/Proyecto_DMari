@@ -55,45 +55,40 @@ public class ProductoController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException
     {
-        /*
-            se define que la respuesta es un json,
-            el estandar para que javascript entienda los datos.
-        */
         response.setContentType("application/json;charset=UTF-8");
         
-        // leemos de la url si debemos filtrar solo los activos
-        String paramActivos = request.getParameter("activos");
-        boolean soloActivos = paramActivos != null && paramActivos.equals("true");
-        
-        // leemos si la peticion viene exclusivamente de un proveedor
-        String paramProveedor = request.getParameter("proveedor");
-        boolean esProveedor = paramProveedor != null && paramProveedor.equals("true");
-        
-        productoDAO dao = new productoDAO();
-        ArrayList<producto> lista = new ArrayList<>();
-        
-        if (esProveedor) {
-            // obtenemos la sesion actual sin crear una nueva
-            HttpSession sesion = request.getSession(false);
-            if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
-                usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
-                lista = dao.listarProductosPorProveedor(user.getIdUsuario());
-            }
-        } else {
-            // si no es proveedor, aplicamos la logica del cliente (activos) o admin (todos)
-            lista = dao.listarProductos(soloActivos);
-        }
-        
-        /*
-            armar el json usando stringbuilder
-        */
-        try(PrintWriter out = response.getWriter()){
+        try (PrintWriter out = response.getWriter()) {
+            // leemos de la url si debemos filtrar solo los activos
+            String paramActivos = request.getParameter("activos");
+            boolean soloActivos = paramActivos != null && paramActivos.equals("true");
             
+            // leemos si la peticion viene exclusivamente de un proveedor
+            String paramProveedor = request.getParameter("proveedor");
+            boolean esProveedor = paramProveedor != null && paramProveedor.equals("true");
+            
+            productoDAO dao = new productoDAO();
+            ArrayList<producto> lista = new ArrayList<>();
+            
+            if (esProveedor) {
+                // obtenemos la sesion actual sin crear una nueva
+                HttpSession sesion = request.getSession(false);
+                if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
+                    usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
+                    lista = dao.listarProductosPorProveedor(user.getIdUsuario());
+                }
+            } else {
+                // si no es proveedor, aplicamos la logica del cliente (activos) o admin (todos)
+                lista = dao.listarProductos(soloActivos);
+            }
             // instanciamos nuestro nuevo helper para construir la respuesta limpia
             jsonHelper helper = new jsonHelper();
             String jsonString = helper.productosAJson(lista);
             
             out.print(jsonString);
+        } catch (Exception e) {
+            // Capturamos fallos internos (como 'con' siendo null) para que no rompan el servidor
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            e.printStackTrace();
         }
     }
 

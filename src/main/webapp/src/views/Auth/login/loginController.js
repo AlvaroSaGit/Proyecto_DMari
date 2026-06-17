@@ -1,4 +1,5 @@
 import { cargarComponente } from '../../../services/uiService.js';
+import { limpiarErrorCampo, mostrarErrorCampo, validarCorreo, validarPassword } from '../../../services/validacionHelper.js';
 // importamos el enrutador para la navegacion
 import { navegarA } from '../../../router/router.js';
 
@@ -105,10 +106,14 @@ function prepararFormularioLogin() {
                 const msj = 'Tu cuenta ha sido bloqueada por un administrador.';
                 if (mensajeErrorGlobal) { mensajeErrorGlobal.textContent = msj; mensajeErrorGlobal.style.display = 'block'; }
                 else alert(msj);
-            } else {
+            } else if (respuesta.status === 401 || respuesta.status === 404) {
                 // Capturamos el texto exacto enviado por Java (ej: "La contraseña es incorrecta")
                 const errorBody = await respuesta.text();
-                
+                // Si es 401 lo mostramos en el password, si es 404 en el correo
+                if (respuesta.status === 401) mostrarErrorCampo('login-password', errorBody);
+                else mostrarErrorCampo('login-correo', errorBody);
+            } else {
+                const errorBody = await respuesta.text();
                 if (mensajeErrorGlobal) {
                     mensajeErrorGlobal.textContent = errorBody || 'Correo o contraseña incorrectos';
                     mensajeErrorGlobal.style.display = 'block';
