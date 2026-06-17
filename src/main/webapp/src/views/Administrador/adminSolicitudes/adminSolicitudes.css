@@ -1,0 +1,41 @@
+/* Reutilizamos el estilo base del contenedor de productos para mantener uniformidad */
+.admin-vista-solicitudes {
+    padding: 20px;
+    background-color: var(--color_fondo, #ffffff);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin: 20px;
+}
+
+/* Etiquetas para saber si quieren Insertar, Editar o Borrar */
+.badge-accion {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: white;
+}
+
+.badge-nuevo { background-color: #17a2b8; } /* Azul para nuevo */
+.badge-editar { background-color: #ffc107; color: #333; } /* Amarillo para editar */
+.badge-borrar { background-color: #dc3545; } /* Rojo para borrar */
+
+/* Botones de decision del administrador */
+.btn-aprobar {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.btn-rechazar {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}

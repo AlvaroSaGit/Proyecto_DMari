@@ -145,6 +145,11 @@ public class carritoDAO {
         try {
             con = db.conectar();
             // Transaccion de Seguridad: Si borrar o insertar falla a la mitad, MySQL cancela todo el proceso
+            
+            // el proceso de limpieza selectiva ocurre aqui: al borrar todo e insertar solo lo que
+            // el frontend envio (que ya viene filtrado), los productos que se pagaron desaparecen
+            // de la tabla mientras que los no seleccionados se mantienen persistentes.
+            
             // Esto evita que un cliente se quede con un carrito medio vacio por un error de internet.
             con.setAutoCommit(false); 
             

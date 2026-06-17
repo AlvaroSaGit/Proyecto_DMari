@@ -1,4 +1,5 @@
 // dto maestro para facturacion. corregimos el paquete para que coincida con la carpeta modelo.
+// dto maestro para facturacion. corregimos el paquete para que el compilador lo encuentre.
 package com.dmari.modelo;
 
 import java.util.List;

@@ -37,7 +37,7 @@ function prepararFormularioLogin() {
         evento.preventDefault();
         
         // extraemos los valores que el usuario escribio en los inputs
-        const correo = document.getElementById('login-correo').value;
+        const correo = document.getElementById('login-correo').value.trim();
         const password = document.getElementById('login-password').value;
         
         // Empaquetamos los datos con URLSearchParams para que Java los lea facil con request.getParameter
