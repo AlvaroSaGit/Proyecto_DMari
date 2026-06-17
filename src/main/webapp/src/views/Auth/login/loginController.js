@@ -54,12 +54,14 @@ function prepararFormularioLogin() {
         }
 
 
-        // validación avanzada usando el helper
+        // Validación avanzada usando el helper importado
         let esValido = true;
 
-        // Limpiar errores previos
-        limpiarErrorCampo('login-correo');
-        limpiarErrorCampo('login-password');
+        // Ahora estas funciones no darán ReferenceError porque están importadas al inicio
+        if (typeof limpiarErrorCampo === 'function') {
+            limpiarErrorCampo('login-correo');
+            limpiarErrorCampo('login-password');
+        }
 
         if (!validarCorreo(correo)) {
             mostrarErrorCampo('login-correo', 'El formato del correo es invalido.');
@@ -104,12 +106,15 @@ function prepararFormularioLogin() {
                 window.location.reload();
             } else if (respuesta.status === 403) {
                 const msj = 'Tu cuenta ha sido bloqueada por un administrador.';
-                if (mensajeErrorGlobal) { mensajeErrorGlobal.textContent = msj; mensajeErrorGlobal.style.display = 'block'; }
+                if (mensajeErrorGlobal) { 
+                    mensajeErrorGlobal.textContent = msj; 
+                    mensajeErrorGlobal.style.display = 'block'; 
+                }
                 else alert(msj);
             } else if (respuesta.status === 401 || respuesta.status === 404) {
-                // Capturamos el texto exacto enviado por Java (ej: "La contraseña es incorrecta")
+                // CAPTURA DEL ERROR: Aquí leemos el mensaje "Contraseña incorrecta" del servidor
                 const errorBody = await respuesta.text();
-                // Si es 401 lo mostramos en el password, si es 404 en el correo
+                // Lo inyectamos en el HTML usando el helper
                 if (respuesta.status === 401) mostrarErrorCampo('login-password', errorBody);
                 else mostrarErrorCampo('login-correo', errorBody);
             } else {

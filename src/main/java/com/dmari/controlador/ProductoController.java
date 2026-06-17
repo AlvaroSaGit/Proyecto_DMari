@@ -88,6 +88,8 @@ public class ProductoController extends HttpServlet {
         } catch (Exception e) {
             // Capturamos fallos internos (como 'con' siendo null) para que no rompan el servidor
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            // Enviamos un mensaje claro al frontend en formato JSON
+            out.print("{\"error\": \"Error al conectar con la base de datos: " + e.getMessage() + "\"}");
             e.printStackTrace();
         }
     }
