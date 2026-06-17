@@ -60,7 +60,7 @@ public class productoDAO {
         
         // condicional: anexa exigencias estrictas al motor de base de datos
         if (soloActivos) {
-            sql += " WHERE p.estado = 1 AND p.stock > 0 AND c.estado_activo = 1 AND (u.estado_cuenta = 1 OR u.id_usuario_pk IS NULL)";
+            sql += " WHERE p.estado = 1 AND p.stock > 0 AND (c.estado_activo = 1 OR c.id_categoria_pk IS NULL) AND (u.estado_cuenta = 1 OR u.id_usuario_pk IS NULL)";
         }
 
         try(
@@ -80,12 +80,16 @@ public class productoDAO {
                 prod.setUrlRuta(rs.getString("url_ruta"));
                 
                 prod.setIdCategoriaFk(rs.getInt("id_categoria_fk"));
-                prod.setCategoria(rs.getString("nombre_categoria"));
+                String cat = rs.getString("nombre_categoria");
+                prod.setCategoria(cat != null ? cat : "General");
                 
                 // extraemos los datos de contacto y marca del proveedor vinculados
-                prod.setProveedorMarca(rs.getString("nombre_marca"));
-                prod.setProveedorTelefono(rs.getString("contacto_tel"));
-                prod.setProveedorCorreo(rs.getString("contacto_correo"));
+                String marca = rs.getString("nombre_marca");
+                prod.setProveedorMarca(marca != null ? marca : "DMari Oficial");
+                String tel = rs.getString("contacto_tel");
+                prod.setProveedorTelefono(tel != null ? tel : "N/A");
+                String correo = rs.getString("contacto_correo");
+                prod.setProveedorCorreo(correo != null ? correo : "contacto@dmari.com");
                 
                 // extraemos la cadena de multiples etiquetas y la convertimos en un arreglo (lista)
                 String etiquetasStr = rs.getString("etiquetas_str");
@@ -165,7 +169,8 @@ public class productoDAO {
                      prod.setUrlRuta(rs.getString("url_ruta"));
                      
                      prod.setIdCategoriaFk(rs.getInt("id_categoria_fk"));
-                     prod.setCategoria(rs.getString("nombre_categoria"));
+                     String catP = rs.getString("nombre_categoria");
+                     prod.setCategoria(catP != null ? catP : "General");
                      
                      String etiquetasStr = rs.getString("etiquetas_str");
                      ArrayList<String> listaTags = new ArrayList<>();
