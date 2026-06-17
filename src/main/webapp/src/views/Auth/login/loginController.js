@@ -43,6 +43,14 @@ function prepararFormularioLogin() {
         const parametros = new URLSearchParams();
         parametros.append('correo', correo);
         parametros.append('password', password);
+        
+        // Referencia al contenedor de mensajes de error en el HTML
+        const mensajeErrorGlobal = document.getElementById('mensaje-error-login');
+        
+        if (mensajeErrorGlobal) {
+            mensajeErrorGlobal.style.display = 'none';
+            mensajeErrorGlobal.textContent = '';
+        }
 
 
         // validación avanzada usando el helper
@@ -58,7 +66,7 @@ function prepararFormularioLogin() {
         }
         if (!validarPassword(password)) {
             mostrarErrorCampo('login-password', 'La contrasena debe tener al menos 8 caracteres, una mayuscula y un numero.');
-            esValido = true; 
+            esValido = false; 
         }
 
         if (!esValido) {
@@ -94,11 +102,19 @@ function prepararFormularioLogin() {
                 
                 window.location.reload();
             } else if (respuesta.status === 403) {
-                alert('tu cuenta ha sido bloqueada por un administrador. por favor contacta a soporte.');
+                const msj = 'Tu cuenta ha sido bloqueada por un administrador.';
+                if (mensajeErrorGlobal) { mensajeErrorGlobal.textContent = msj; mensajeErrorGlobal.style.display = 'block'; }
+                else alert(msj);
             } else {
-                // mostramos el mensaje de error enviado desde el authcontroller de java
+                // Capturamos el texto exacto enviado por Java (ej: "La contraseña es incorrecta")
                 const errorBody = await respuesta.text();
-                alert(errorBody || 'correo o contraseña incorrectos');
+                
+                if (mensajeErrorGlobal) {
+                    mensajeErrorGlobal.textContent = errorBody || 'Correo o contraseña incorrectos';
+                    mensajeErrorGlobal.style.display = 'block';
+                } else {
+                    alert(errorBody || 'correo o contraseña incorrectos');
+                }
             }
         } catch (error) {
             console.error('error al iniciar sesion:', error);

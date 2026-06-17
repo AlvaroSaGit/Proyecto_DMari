@@ -77,7 +77,8 @@ public class productoDAO {
                 prod.setPrecio(rs.getDouble("precio"));
                 prod.setStock(rs.getInt("stock"));
                 prod.setEstado(rs.getBoolean("estado"));
-                prod.setUrlRuta(rs.getString("url_ruta"));
+                String ruta = rs.getString("url_ruta");
+                prod.setUrlRuta(ruta != null ? ruta : "src/img/productos/default/gato_programador.jpg");
                 
                 prod.setIdCategoriaFk(rs.getInt("id_categoria_fk"));
                 String cat = rs.getString("nombre_categoria");
@@ -166,7 +167,8 @@ public class productoDAO {
                      prod.setPrecio(rs.getDouble("precio"));
                      prod.setStock(rs.getInt("stock"));
                      prod.setEstado(rs.getBoolean("estado"));
-                     prod.setUrlRuta(rs.getString("url_ruta"));
+                     String rutaP = rs.getString("url_ruta");
+                     prod.setUrlRuta(rutaP != null ? rutaP : "src/img/productos/default/gato_programador.jpg");
                      
                      prod.setIdCategoriaFk(rs.getInt("id_categoria_fk"));
                      String catP = rs.getString("nombre_categoria");
