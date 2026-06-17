@@ -51,13 +51,16 @@ import jakarta.servlet.http.Part;
 public class ProductoController extends HttpServlet {
 
     // doget: responde a peticiones de tipo lectura para mostrar la lista en el frontend.
+    // metodo para procesar solicitudes de lectura. filtra por productos activos para el catalogo 
+    // o por productos vinculados a un proveedor especifico segun la sesion activa.
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException
     {
         response.setContentType("application/json;charset=UTF-8");
         
-        try (PrintWriter out = response.getWriter()) {
+        PrintWriter out = response.getWriter();
+        try {
             // leemos de la url si debemos filtrar solo los activos
             String paramActivos = request.getParameter("activos");
             boolean soloActivos = paramActivos != null && paramActivos.equals("true");
@@ -90,13 +93,16 @@ public class ProductoController extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             // Enviamos un mensaje claro al frontend en formato JSON
             out.print("{\"error\": \"Error al conectar con la base de datos: " + e.getMessage() + "\"}");
+            // imprime el rastro de la excepcion en la consola para identificar la linea exacta del fallo
             e.printStackTrace();
         }
     }
 
-    /*
-    doPost: Responde a peticiones para modificar datos (crear, actualizar, borrar)
-    */
+    // dopost: responde a peticiones para modificar datos (crear, actualizar, borrar).
+    // funciona como un despachador que lee la ruta de la url (servletpath) para 
+    // decidir si debe insertar, actualizar, eliminar o cambiar el estado de un producto.
+    // @param request peticion con los datos del formulario (multipart/form-data).
+    // @param response objeto para devolver codigos de estado ok (200) o error (400).
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -231,7 +237,11 @@ public class ProductoController extends HttpServlet {
         }
     }
 
-    // Metodo auxiliar para procesar el archivo fisico, guardarlo en el servidor y en la BD
+    // metodo auxiliar para procesar el archivo fisico, guardarlo en el servidor y en la bd.
+    // gestiona la subida de imagenes transformando el nombre del archivo para evitar espacios.
+    // guarda la foto en la carpeta temporal de tomcat y la sincroniza con la carpeta de desarrollo.
+    // @param request objeto que contiene la parte binaria del archivo (part).
+    // @param idproducto identificador numerico para nombrar el archivo de forma unica.
     private void guardarImagenFisica(HttpServletRequest request, int idProducto) {
         try {
             Part filePart = request.getPart("imagen");
@@ -281,7 +291,9 @@ public class ProductoController extends HttpServlet {
                 imgDao.insertarImagen(idProducto, rutaRelativa, 1);
             }
         } catch (Exception e) {
+            // en caso de fallo en la subida, se imprime el error para depuracion tecnica
             System.out.println("error critico al subir la foto: " + e.getMessage());
+            // printstacktrace ayuda a ver si el problema es de permisos de carpeta o de tamaño de archivo
             e.printStackTrace();
         }
     }

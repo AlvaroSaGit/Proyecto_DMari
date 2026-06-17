@@ -60,21 +60,21 @@ insert into correo (id_usuario_fk, correo, correo_primario) values
 -- 5. credenciales con encriptacion aes
 -- ==========================================================
 insert into credenciales (id_usuario, passwd_encript) values 
-(1, aes_encrypt('admin123', 'llave_dmari')),
-(2, aes_encrypt('cliente123', 'llave_dmari')),
-(3, aes_encrypt('proveedor123', 'llave_dmari')),
-(4, aes_encrypt('proveedor123', 'llave_dmari')),
-(5, aes_encrypt('proveedor123', 'llave_dmari')),
-(6, aes_encrypt('reparto123', 'llave_dmari')),
-(7, aes_encrypt('cliente123', 'llave_dmari')),
-(8, aes_encrypt('cliente123', 'llave_dmari')),
-(9, aes_encrypt('cliente123', 'llave_dmari')),
-(10, aes_encrypt('cliente123', 'llave_dmari')),
-(11, aes_encrypt('cliente123', 'llave_dmari')),
-(12, aes_encrypt('cliente123', 'llave_dmari')),
-(13, aes_encrypt('cliente123', 'llave_dmari')),
-(14, aes_encrypt('cliente123', 'llave_dmari')),
-(15, aes_encrypt('reparto123', 'llave_dmari'));
+(1, aes_encrypt('Admin12345', 'llave_dmari')),
+(2, aes_encrypt('Cliente123', 'llave_dmari')),
+(3, aes_encrypt('Proveedor123', 'llave_dmari')),
+(4, aes_encrypt('Proveedor123', 'llave_dmari')),
+(5, aes_encrypt('Proveedor123', 'llave_dmari')),
+(6, aes_encrypt('Reparto123', 'llave_dmari')),
+(7, aes_encrypt('Cliente123', 'llave_dmari')),
+(8, aes_encrypt('Cliente123', 'llave_dmari')),
+(9, aes_encrypt('Cliente123', 'llave_dmari')),
+(10, aes_encrypt('Cliente123', 'llave_dmari')),
+(11, aes_encrypt('Cliente123', 'llave_dmari')),
+(12, aes_encrypt('Cliente123', 'llave_dmari')),
+(13, aes_encrypt('Cliente123', 'llave_dmari')),
+(14, aes_encrypt('Cliente123', 'llave_dmari')),
+(15, aes_encrypt('Reparto123', 'llave_dmari'));
 
 -- ==========================================================
 -- 6. perfiles de clientes
