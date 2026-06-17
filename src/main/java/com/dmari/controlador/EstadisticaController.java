@@ -15,7 +15,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@WebServlet(name = "EstadisticaController", urlPatterns = {"/estadisticas"})
+// Corregimos la URL para que coincida con la petición del Frontend
+@WebServlet(name = "EstadisticaController", urlPatterns = {"/api-estadisticas"})
 public class EstadisticaController extends HttpServlet {
 
     private pedidoDAO dao = new pedidoDAO();
@@ -49,22 +50,28 @@ public class EstadisticaController extends HttpServlet {
         }
 
         try (PrintWriter out = response.getWriter()) {
-            // construccion manual de json para etiquetas y valores requeridos por chart.js (sin librerias)
-            StringBuilder etiquetas = new StringBuilder("[");
-            StringBuilder valores = new StringBuilder("[");
-            
-            for (int i = 0; i < datos.size(); i++) {
-                // usamos getetiqueta() que corresponde al dto definido en el modelo
-                etiquetas.append("\"").append(datos.get(i).getEtiqueta()).append("\"");
-                valores.append(datos.get(i).getTotal());
-                
-                // agregamos coma separadora si no es el ultimo elemento del arreglo
-                if (i < datos.size() - 1) { etiquetas.append(","); valores.append(","); }
+            // Calculamos el total de ingresos sumando los datos obtenidos
+            double totalIngresos = 0;
+            for (VentaEstadisticaDTO d : datos) {
+                totalIngresos += d.getTotal();
             }
-            etiquetas.append("]"); valores.append("]");
 
-            // enviamos el objeto json final al frontend
-            out.print("{\"etiquetas\":" + etiquetas + ", \"valores\":" + valores + "}");
+            // Construimos un JSON que incluya los totales para las tarjetas y la lista para la gráfica
+            StringBuilder json = new StringBuilder("{");
+            json.append("\"total_ingresos\":").append(totalIngresos).append(",");
+            json.append("\"cantidad_pedidos\":").append(datos.size()).append(","); // Conteo base de meses con pedidos
+            json.append("\"total_productos_vendidos\":").append(0).append(",");     // Espacio para futura implementación
+            
+            json.append("\"ventas_mensuales\":[");
+            for (int i = 0; i < datos.size(); i++) {
+                json.append("{\"etiqueta\":\"").append(datos.get(i).getEtiqueta()).append("\",");
+                json.append("\"total\":").append(datos.get(i).getTotal()).append("}");
+                if (i < datos.size() - 1) json.append(",");
+            }
+            json.append("]}");
+
+            // Enviamos el objeto estructurado como el JS lo requiere
+            out.print(json.toString());
             out.flush();
         }
     }
