@@ -204,74 +204,90 @@ insert into direccion (id_usuario_fk, direccion, direccion_detallada, direccion_
 -- 15. simulacion del flujo operativo de ventas
 -- ==========================================================
 
--- transaccion 1: compra de maria (id cliente: 2)
--- el carrito debe estar en estado procesado para generar un pedido
-insert into carrito (id_cliente_fk, estado) values (2, 'Procesado'); -- id_carrito: 1
-insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values 
-(1, 1, 2, true), 
-(1, 2, 1, true);
+-- Variables para almacenar los IDs generados automáticamente
+SET @last_carrito_id = 0;
+SET @last_pedido_id = 0;
 
--- cabecera del pedido (ahora vincula correctamente el id_carrito_fk)
-insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) values 
-(2, 1, 1, 40500.00, 'Pendiente'); -- id_pedido: 1
+-- Transacción 1: Compra de Maria (ID Cliente: 2)
+-- El carrito debe estar en estado Procesado para generar un pedido
+INSERT INTO carrito (id_cliente_fk, estado) VALUES (2, 'Procesado');
+SET @last_carrito_id = LAST_INSERT_ID();
+INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES 
+(@last_carrito_id, 1, 2, TRUE), 
+(@last_carrito_id, 2, 1, TRUE);
 
--- detalle inmutable del pedido
-insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values 
-(1, 1, 2, 18000.00, 36000.00), 
-(1, 2, 1, 4500.00, 4500.00);
+-- Cabecera del pedido (ahora vincula correctamente el id_carrito_fk)
+INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES 
+(2, @last_carrito_id, 1, 40500.00, 'Pendiente');
+SET @last_pedido_id = LAST_INSERT_ID();
 
--- registro de pago
-insert into pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comision_dmari, monto_total, estado_pago) values 
-(1, 1, 'celular nequi: 3101234567', 2025.00, 38475.00, 'Aprobado');
+-- Detalle inmutable del pedido
+INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES 
+(@last_pedido_id, 1, 2, 18000.00, 36000.00), 
+(@last_pedido_id, 2, 1, 4500.00, 4500.00);
+
+-- Registro de pago
+INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comision_dmari, monto_total, estado_pago) VALUES 
+(@last_pedido_id, 1, 'celular nequi: 3101234567', 2025.00, 38475.00, 'Aprobado');
 
 -- ==========================================================
 -- 16. DATA VARIADA PARA ESTADÍSTICAS (Enero - Mayo 2024)
 -- ==========================================================
 
--- Venta Enero: Maria compra un Oso Gigante (DMari Oficial)
-insert into carrito (id_cliente_fk, estado) values (2, 'Procesado'); -- id: 5
-insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values (5, 11, 1, true);
-insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
-values (2, 5, 1, 150000.00, 'Entregado', '2024-01-15 10:00:00'); -- id: 4
-insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values (4, 11, 1, 150000.00, 150000.00);
-insert into pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) values (4, 1, 7500.00, 142500.00, 'Aprobado');
+-- Venta de hace 5 meses: Maria compra un Oso Gigante (DMari Oficial)
+INSERT INTO carrito (id_cliente_fk, estado) VALUES (2, 'Procesado');
+SET @last_carrito_id = LAST_INSERT_ID();
+INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 11, 1, TRUE);
+INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+VALUES (2, @last_carrito_id, 1, 150000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 5 MONTH));
+SET @last_pedido_id = LAST_INSERT_ID();
+INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (@last_pedido_id, 11, 1, 150000.00, 150000.00);
+INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) VALUES (@last_pedido_id, 1, 7500.00, 142500.00, 'Aprobado');
 
--- Venta Febrero: Laura compra Donas de Ana (Proveedor ID 4)
-insert into carrito (id_cliente_fk, estado) values (7, 'Procesado'); -- id: 6
-insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values (6, 2, 10, true);
-insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
-values (7, 6, 2, 45000.00, 'Entregado', '2024-02-10 14:30:00'); -- id: 5
-insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values (5, 2, 10, 4500.00, 45000.00);
-insert into pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) values (5, 2, 2250.00, 42750.00, 'Aprobado');
+-- Venta de hace 4 meses: Laura compra Donas de Ana (Proveedor ID 4)
+INSERT INTO carrito (id_cliente_fk, estado) VALUES (7, 'Procesado');
+SET @last_carrito_id = LAST_INSERT_ID();
+INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 2, 10, TRUE);
+INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+VALUES (7, @last_carrito_id, 2, 45000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 4 MONTH));
+SET @last_pedido_id = LAST_INSERT_ID();
+INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (@last_pedido_id, 2, 10, 4500.00, 45000.00);
+INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) VALUES (@last_pedido_id, 2, 2250.00, 42750.00, 'Aprobado');
 
--- Venta Marzo: Jorge compra Velas de Carlos (Proveedor ID 3)
-insert into carrito (id_cliente_fk, estado) values (8, 'Procesado'); -- id: 7
-insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values (7, 1, 5, true);
-insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
-values (8, 7, 3, 90000.00, 'Entregado', '2024-03-05 09:15:00'); -- id: 6
-insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values (6, 1, 5, 18000.00, 90000.00);
-insert into pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) values (6, 3, 4500.00, 85500.00, 'Aprobado');
+-- Venta de hace 3 meses: Jorge compra Velas de Carlos (Proveedor ID 3)
+INSERT INTO carrito (id_cliente_fk, estado) VALUES (8, 'Procesado');
+SET @last_carrito_id = LAST_INSERT_ID();
+INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 1, 5, TRUE);
+INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+VALUES (8, @last_carrito_id, 3, 90000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 3 MONTH));
+SET @last_pedido_id = LAST_INSERT_ID();
+INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (@last_pedido_id, 1, 5, 18000.00, 90000.00);
+INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) VALUES (@last_pedido_id, 3, 4500.00, 85500.00, 'Aprobado');
 
--- Venta Abril: Diana compra Flores de Luis (Proveedor ID 5)
-insert into carrito (id_cliente_fk, estado) values (9, 'Procesado'); -- id: 8
-insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values (8, 4, 2, true);
-insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
-values (9, 8, 4, 130000.00, 'Entregado', '2024-04-20 16:00:00'); -- id: 7
-insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values (7, 4, 2, 65000.00, 130000.00);
-insert into pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) values (7, 5, 6500.00, 123500.00, 'Aprobado');
+-- Venta de hace 2 meses: Diana compra Flores de Luis (Proveedor ID 5)
+INSERT INTO carrito (id_cliente_fk, estado) VALUES (9, 'Procesado');
+SET @last_carrito_id = LAST_INSERT_ID();
+INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 4, 2, TRUE);
+INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+VALUES (9, @last_carrito_id, 4, 130000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 2 MONTH));
+SET @last_pedido_id = LAST_INSERT_ID();
+INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (@last_pedido_id, 4, 2, 65000.00, 130000.00);
+INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) VALUES (@last_pedido_id, 5, 6500.00, 123500.00, 'Aprobado');
 
--- Venta Mayo (Mix): Maria compra Vino (DMari) y Donas (Ana - Prov 4)
-insert into carrito (id_cliente_fk, estado) values (2, 'Procesado'); -- id: 9
-insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values (9, 12, 1, true), (9, 5, 4, true);
-insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
-values (2, 9, 1, 97000.00, 'Entregado', '2024-05-12 11:00:00'); -- id: 8
-insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values 
-(8, 12, 1, 75000.00, 75000.00), -- DMari
-(8, 5, 4, 5500.00, 22000.00);   -- Ana
-insert into pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) values (8, 3, 4850.00, 92150.00, 'Aprobado');
+-- Venta de hace 1 mes: Maria compra Vino (DMari) y Donas (Ana - Prov 4)
+INSERT INTO carrito (id_cliente_fk, estado) VALUES (2, 'Procesado');
+SET @last_carrito_id = LAST_INSERT_ID();
+INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 12, 1, TRUE), (@last_carrito_id, 5, 4, TRUE);
+INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+VALUES (2, @last_carrito_id, 1, 97000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 MONTH));
+SET @last_pedido_id = LAST_INSERT_ID();
+INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES 
+(@last_pedido_id, 12, 1, 75000.00, 75000.00), -- DMari
+(@last_pedido_id, 5, 4, 5500.00, 22000.00);   -- Ana
+INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) VALUES (@last_pedido_id, 3, 4850.00, 92150.00, 'Aprobado');
 
 -- Vinculamos productos que estaban "sueltos" a proveedores para que ellos vean data
-insert into proveedor_producto (id_proveedor_fk, id_producto_fk) values 
+INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) VALUES 
 (3, 3),  -- Vela decorativa -> Carlos
 (4, 9),  -- Trufas -> Ana
 (5, 10); -- Globos -> Luis
@@ -280,54 +296,45 @@ insert into proveedor_producto (id_proveedor_fk, id_producto_fk) values
 -- 17. SOLICITUDES DE NUEVOS PROVEEDORES
 -- ==========================================================
 -- Miguel (ID 15) quiere vender artesanias de cuero
-insert into solicitud_provider (id_usuario_fk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta, estado_solicitud) 
+insert into solicitud_proveedor (id_usuario_fk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta, estado_solicitud) 
 values (15, '800555444-9', 'Cueros Miguel', '444555666', 'Banco de Bogota', 'Corriente', 'pendiente');
 
 -- Andres (ID 12) mando solicitud pero fue rechazada por falta de NIT real
-insert into solicitud_provider (id_usuario_fk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta, estado_solicitud) 
+insert into solicitud_proveedor (id_usuario_fk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta, estado_solicitud) 
 values (12, '000000000-0', 'Andres Manualidades', '111222333', 'Nequi', 'Ahorros', 'rechazada');
 
--- ==========================================================
--- 18. GESTIÓN DE DEVOLUCIONES (Sobre pedidos entregados)
--- ==========================================================
--- Laura (ID 7) solicita devolucion del Oso Gigante (Pedido 2) porque llego descosido
-insert into devolucion (id_pedido_fk, id_cliente_fk, motivo, estado_devolucion) 
-values (2, 7, 'El peluche oso gigante tiene una costura suelta en la espalda.', 'solicitada');
+-- Transacción 2: Compra de Laura (ID Cliente: 7)
+INSERT INTO carrito (id_cliente_fk, estado) VALUES (7, 'Procesado');
+SET @last_carrito_id = LAST_INSERT_ID();
+INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 11, 1, TRUE);
+INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES (7, @last_carrito_id, 2, 150000.00, 'Entregado');
+SET @last_pedido_id = LAST_INSERT_ID();
+INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (@last_pedido_id, 11, 1, 150000.00, 150000.00);
+INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comision_dmari, monto_total, estado_pago) VALUES (@last_pedido_id, 3, 'voucher tarjeta: 444455556666', 7500.00, 142500.00, 'Aprobado');
 
--- Maria (ID 2) solicita devolucion de las Donas (Pedido 8) porque llegaron aplastadas
+-- Transacción 3: Compra de Jorge (ID Cliente: 8)
+INSERT INTO carrito (id_cliente_fk, estado) VALUES (8, 'Procesado');
+SET @last_carrito_id = LAST_INSERT_ID();
+INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 7, 1, TRUE);
+INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES (8, @last_carrito_id, 3, 85000.00, 'En Camino');
+SET @last_pedido_id = LAST_INSERT_ID();
+INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (@last_pedido_id, 7, 1, 85000.00, 85000.00);
+INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comision_dmari, monto_total, estado_pago) VALUES (@last_pedido_id, 2, 'celular daviplata: 3124567890', 4250.00, 80750.00, 'Aprobado');
+
+-- ==========================================================
+-- 18. GESTIÓN DE DEVOLUCIONES (Sobre pedidos existentes)
+-- ==========================================================
+-- Ahora que los pedidos han sido creados arriba, podemos insertar las devoluciones
+-- Laura (ID 7) solicita devolucion del Oso Gigante (Pedido de Transaccion 2)
+insert into devolucion (id_pedido_fk, id_cliente_fk, motivo, estado_devolucion) 
+values (@last_pedido_id - 1, 7, 'El peluche oso gigante tiene una costura suelta en la espalda.', 'solicitada');
+
+-- Maria (ID 2) solicita devolucion de las Donas (Pedido de la seccion de estadisticas)
 insert into devolucion (id_pedido_fk, id_cliente_fk, motivo, estado_devolucion) 
 values (8, 2, 'Las donas llegaron con el glaseado pegado a la caja y aplastadas.', 'solicitada');
 
--- transaccion 2: compra de laura (id cliente: 7)
-insert into carrito (id_cliente_fk, estado) values (7, 'Procesado'); -- id_carrito: 2
-insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values 
-(2, 11, 1, true);
-
-insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) values 
-(7, 2, 2, 150000.00, 'Entregado'); -- id_pedido: 2
-
-insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values 
-(2, 11, 1, 150000.00, 150000.00);
-
-insert into pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comision_dmari, monto_total, estado_pago) values 
-(2, 3, 'voucher tarjeta: 444455556666', 7500.00, 142500.00, 'Aprobado');
-
-
--- transaccion 3: compra de jorge (id cliente: 8)
-insert into carrito (id_cliente_fk, estado) values (8, 'Procesado'); -- id_carrito: 3
-insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values 
-(3, 7, 1, true);
-
-insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) values 
-(8, 3, 3, 85000.00, 'En Camino'); -- id_pedido: 3
-
-insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values 
-(3, 7, 1, 85000.00, 85000.00);
-
-insert into pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comision_dmari, monto_total, estado_pago) values 
-(3, 2, 'celular daviplata: 3124567890', 4250.00, 80750.00, 'Aprobado');
-
--- transaccion 4: carrito abandonado por maria
-insert into carrito (id_cliente_fk, estado) values (2, 'Activo'); -- id_carrito: 4
-insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values 
-(4, 5, 3, true);
+-- Transacción 4: Carrito abandonado por Maria
+INSERT INTO carrito (id_cliente_fk, estado) VALUES (2, 'Activo');
+SET @last_carrito_id = LAST_INSERT_ID();
+INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES 
+(@last_carrito_id, 5, 3, TRUE);
