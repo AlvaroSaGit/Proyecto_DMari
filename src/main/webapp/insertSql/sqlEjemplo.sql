@@ -224,6 +224,79 @@ insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unita
 insert into pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comision_dmari, monto_total, estado_pago) values 
 (1, 1, 'celular nequi: 3101234567', 2025.00, 38475.00, 'Aprobado');
 
+-- ==========================================================
+-- 16. DATA VARIADA PARA ESTADÍSTICAS (Enero - Mayo 2024)
+-- ==========================================================
+
+-- Venta Enero: Maria compra un Oso Gigante (DMari Oficial)
+insert into carrito (id_cliente_fk, estado) values (2, 'Procesado'); -- id: 5
+insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values (5, 11, 1, true);
+insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+values (2, 5, 1, 150000.00, 'Entregado', '2024-01-15 10:00:00'); -- id: 4
+insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values (4, 11, 1, 150000.00, 150000.00);
+insert into pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) values (4, 1, 7500.00, 142500.00, 'Aprobado');
+
+-- Venta Febrero: Laura compra Donas de Ana (Proveedor ID 4)
+insert into carrito (id_cliente_fk, estado) values (7, 'Procesado'); -- id: 6
+insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values (6, 2, 10, true);
+insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+values (7, 6, 2, 45000.00, 'Entregado', '2024-02-10 14:30:00'); -- id: 5
+insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values (5, 2, 10, 4500.00, 45000.00);
+insert into pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) values (5, 2, 2250.00, 42750.00, 'Aprobado');
+
+-- Venta Marzo: Jorge compra Velas de Carlos (Proveedor ID 3)
+insert into carrito (id_cliente_fk, estado) values (8, 'Procesado'); -- id: 7
+insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values (7, 1, 5, true);
+insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+values (8, 7, 3, 90000.00, 'Entregado', '2024-03-05 09:15:00'); -- id: 6
+insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values (6, 1, 5, 18000.00, 90000.00);
+insert into pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) values (6, 3, 4500.00, 85500.00, 'Aprobado');
+
+-- Venta Abril: Diana compra Flores de Luis (Proveedor ID 5)
+insert into carrito (id_cliente_fk, estado) values (9, 'Procesado'); -- id: 8
+insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values (8, 4, 2, true);
+insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+values (9, 8, 4, 130000.00, 'Entregado', '2024-04-20 16:00:00'); -- id: 7
+insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values (7, 4, 2, 65000.00, 130000.00);
+insert into pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) values (7, 5, 6500.00, 123500.00, 'Aprobado');
+
+-- Venta Mayo (Mix): Maria compra Vino (DMari) y Donas (Ana - Prov 4)
+insert into carrito (id_cliente_fk, estado) values (2, 'Procesado'); -- id: 9
+insert into detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) values (9, 12, 1, true), (9, 5, 4, true);
+insert into pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+values (2, 9, 1, 97000.00, 'Entregado', '2024-05-12 11:00:00'); -- id: 8
+insert into detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) values 
+(8, 12, 1, 75000.00, 75000.00), -- DMari
+(8, 5, 4, 5500.00, 22000.00);   -- Ana
+insert into pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) values (8, 3, 4850.00, 92150.00, 'Aprobado');
+
+-- Vinculamos productos que estaban "sueltos" a proveedores para que ellos vean data
+insert into proveedor_producto (id_proveedor_fk, id_producto_fk) values 
+(3, 3),  -- Vela decorativa -> Carlos
+(4, 9),  -- Trufas -> Ana
+(5, 10); -- Globos -> Luis
+
+-- ==========================================================
+-- 17. SOLICITUDES DE NUEVOS PROVEEDORES
+-- ==========================================================
+-- Miguel (ID 15) quiere vender artesanias de cuero
+insert into solicitud_provider (id_usuario_fk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta, estado_solicitud) 
+values (15, '800555444-9', 'Cueros Miguel', '444555666', 'Banco de Bogota', 'Corriente', 'pendiente');
+
+-- Andres (ID 12) mando solicitud pero fue rechazada por falta de NIT real
+insert into solicitud_provider (id_usuario_fk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta, estado_solicitud) 
+values (12, '000000000-0', 'Andres Manualidades', '111222333', 'Nequi', 'Ahorros', 'rechazada');
+
+-- ==========================================================
+-- 18. GESTIÓN DE DEVOLUCIONES (Sobre pedidos entregados)
+-- ==========================================================
+-- Laura (ID 7) solicita devolucion del Oso Gigante (Pedido 2) porque llego descosido
+insert into devolucion (id_pedido_fk, id_cliente_fk, motivo, estado_devolucion) 
+values (2, 7, 'El peluche oso gigante tiene una costura suelta en la espalda.', 'solicitada');
+
+-- Maria (ID 2) solicita devolucion de las Donas (Pedido 8) porque llegaron aplastadas
+insert into devolucion (id_pedido_fk, id_cliente_fk, motivo, estado_devolucion) 
+values (8, 2, 'Las donas llegaron con el glaseado pegado a la caja y aplastadas.', 'solicitada');
 
 -- transaccion 2: compra de laura (id cliente: 7)
 insert into carrito (id_cliente_fk, estado) values (7, 'Procesado'); -- id_carrito: 2

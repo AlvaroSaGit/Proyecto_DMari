@@ -468,11 +468,13 @@ public class pedidoDAO {
         
         if (idProveedor == 0) {
             // estadisticas globales para administrador.
-            // sum(total_pagar): volumen de ventas bruto.
+            // Usamos SUM(dp.subtotal) para ser consistentes con la granularidad de productos
             // count: numero de transacciones exitosas.
             // sum(* 0.05): calculo de ingresos por comision para la plataforma.
-            sql = "SELECT SUM(total_pagar) as total, COUNT(id_pedido_pk) as conteo, SUM(total_pagar * 0.05) as comision " +
-                  "FROM pedido WHERE estado_pedido = 'Entregado'";
+            sql = "SELECT SUM(dp.subtotal) as total, COUNT(DISTINCT p.id_pedido_pk) as conteo, SUM(dp.subtotal * 0.05) as comision " +
+                  "FROM pedido p " +
+                  "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
+                  "WHERE p.estado_pedido = 'Entregado'";
         } else {
             // estadisticas privadas para el proveedor.
             // sum(dp.subtotal): suma solo el dinero de sus propios productos.

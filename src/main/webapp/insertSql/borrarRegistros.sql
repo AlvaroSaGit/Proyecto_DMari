@@ -21,8 +21,7 @@ truncate table solicitud_categoria;
 -- ==========================================================
 truncate table pago;
 truncate table detalle_pedido;
-truncate table pedido;
-truncate table productos_confirmados;
+truncate table pedido; 
 truncate table detalle_carrito;
 truncate table carrito;
 

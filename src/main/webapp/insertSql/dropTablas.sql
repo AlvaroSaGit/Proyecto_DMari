@@ -21,8 +21,7 @@ drop table if exists solicitud_categoria;
 -- ==========================================================
 drop table if exists pago;
 drop table if exists detalle_pedido;
-drop table if exists pedido;
-drop table if exists productos_confirmados;
+drop table if exists pedido; 
 drop table if exists detalle_carrito;
 drop table if exists carrito;
 

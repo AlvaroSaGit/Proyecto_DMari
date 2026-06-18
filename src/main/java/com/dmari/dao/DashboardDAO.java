@@ -15,11 +15,12 @@ public class DashboardDAO {
     // el administrador ve los ingresos globales de toda la plataforma
     public DashboardEstadistica obtenerEstadisticasGlobales() {
         DashboardEstadistica est = new DashboardEstadistica();
-        // sumamos los ingresos brutos y las comisiones reales cobradas en la tabla pago
-        String sql = "SELECT SUM(p.total_pagar) as ingresos, COUNT(p.id_pedido_pk) as pedidos, " +
-                     "(SELECT SUM(cantidad) FROM detalle_pedido) as productos, " +
+        String sql = "SELECT SUM(dp.subtotal) as ingresos, COUNT(DISTINCT p.id_pedido_pk) as pedidos, " +
+                     "SUM(dp.cantidad) as productos, " +
                      "SUM(pg.comision_dmari) as comisiones " +
-                     "FROM pedido p INNER JOIN pago pg ON p.id_pedido_pk = pg.id_pedido_fk " +
+                     "FROM pedido p " +
+                     "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
+                     "INNER JOIN pago pg ON p.id_pedido_pk = pg.id_pedido_fk " +
                      "WHERE p.estado_pedido = 'Entregado'";
 
         try (Connection con = db.conectar();
