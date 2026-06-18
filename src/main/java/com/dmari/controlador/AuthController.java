@@ -161,7 +161,10 @@ public class AuthController extends HttpServlet {
                 }
 
                 // getsession(true) fuerza la creacion de un espacio en memoria para guardar quien es el usuario.
-                request.getSession(true).setAttribute("usuarioLogueado", usuarioLogueado);
+                HttpSession session = request.getSession(true);
+                session.setAttribute("usuarioLogueado", usuarioLogueado);
+                session.setAttribute("rolUsuario", usuarioLogueado.getIdRol());
+                session.setAttribute("idUsuario", usuarioLogueado.getIdUsuario());
                 
                 // devolvemos el id del rol en formato json para que javascript sepa a donde redirigir
                 response.setContentType("application/json;charset=UTF-8");

@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Map;
 
 import com.dmari.helper.databaseHelper;
 import com.dmari.modelo.VentaEstadisticaDTO;
@@ -599,6 +601,137 @@ public class pedidoDAO {
             }
         } catch (SQLException e) {
             System.out.println("error en obtener ventas mensuales proveedor: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    /**
+     * 10. obtener total de productos vendidos globalmente (admin)
+     * suma la cantidad de todos los productos en pedidos entregados.
+     * 
+     * @return long: cantidad total de productos vendidos.
+     */
+    public long obtenerTotalProductosVendidosGlobales() {
+        long total = 0;
+        String sql = "SELECT SUM(dp.cantidad) as total_productos " +
+                     "FROM detalle_pedido dp " +
+                     "INNER JOIN pedido p ON dp.id_pedido_fk = p.id_pedido_pk " +
+                     "WHERE p.estado_pedido = 'Entregado'";
+
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                total = rs.getLong("total_productos");
+            }
+        } catch (SQLException e) {
+            System.out.println("error en obtener total productos vendidos globales: " + e.getMessage());
+        }
+        return total;
+    }
+
+    /**
+     * 11. obtener total de productos vendidos por proveedor
+     * suma la cantidad de productos vendidos que pertenecen a un proveedor específico.
+     * 
+     * @param idProveedor int: id del usuario con rol proveedor.
+     * @return long: cantidad total de productos vendidos por el proveedor.
+     */
+    public long obtenerTotalProductosVendidosProveedor(int idProveedor) {
+        long total = 0;
+        String sql = "SELECT SUM(dp.cantidad) as total_productos " +
+                     "FROM detalle_pedido dp " +
+                     "INNER JOIN pedido p ON dp.id_pedido_fk = p.id_pedido_pk " +
+                     "INNER JOIN proveedor_producto pp ON dp.id_producto_fk = pp.id_producto_fk " +
+                     "WHERE pp.id_proveedor_fk = ? AND p.estado_pedido = 'Entregado'";
+
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idProveedor);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    total = rs.getLong("total_productos");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("error en obtener total productos vendidos por proveedor: " + e.getMessage());
+        }
+        return total;
+    }
+
+    /**
+     * 12. Obtiene un resumen de ventas por cada proveedor para el administrador.
+     * Incluye el total de ingresos, cantidad de pedidos y productos vendidos por proveedor.
+     *
+     * @return ArrayList<Map<String, Object>>: Lista de mapas con datos de cada proveedor.
+     */
+    public ArrayList<Map<String, Object>> obtenerResumenVentasPorProveedorGlobales() {
+        ArrayList<Map<String, Object>> lista = new ArrayList<>();
+        String sql = "SELECT u.nombre AS nombre_proveedor, " +
+                     "SUM(dp.subtotal) AS total_ingresos_proveedor, " +
+                     "COUNT(DISTINCT p.id_pedido_pk) AS cantidad_pedidos_proveedor, " +
+                     "SUM(dp.cantidad) AS total_productos_vendidos_proveedor " +
+                     "FROM pedido p " +
+                     "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
+                     "INNER JOIN proveedor_producto pp ON dp.id_producto_fk = pp.id_producto_fk " +
+                     "INNER JOIN proveedor prov ON pp.id_proveedor_fk = prov.id_proveedor_pk " +
+                     "INNER JOIN usuario u ON prov.id_proveedor_pk = u.id_usuario_pk " +
+                     "WHERE p.estado_pedido = 'Entregado' " +
+                     "GROUP BY u.nombre " +
+                     "ORDER BY total_ingresos_proveedor DESC";
+
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Map<String, Object> proveedorStats = new HashMap<>();
+                proveedorStats.put("nombre_proveedor", rs.getString("nombre_proveedor"));
+                proveedorStats.put("total_ingresos_proveedor", rs.getDouble("total_ingresos_proveedor"));
+                proveedorStats.put("cantidad_pedidos_proveedor", rs.getLong("cantidad_pedidos_proveedor"));
+                proveedorStats.put("total_productos_vendidos_proveedor", rs.getLong("total_productos_vendidos_proveedor"));
+                lista.add(proveedorStats);
+            }
+        } catch (SQLException e) {
+            System.out.println("error en obtenerResumenVentasPorProveedorGlobales: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    /**
+     * 13. Obtiene los productos más vendidos globalmente para el administrador.
+     *
+     * @param limit int: El número máximo de productos a retornar (ej. 5 para top 5).
+     * @return ArrayList<Map<String, Object>>: Lista de mapas con datos de los productos.
+     */
+    public ArrayList<Map<String, Object>> obtenerTopProductosVendidosGlobales(int limit) {
+        ArrayList<Map<String, Object>> lista = new ArrayList<>();
+        String sql = "SELECT prod.nombre_producto, SUM(dp.cantidad) AS cantidad_vendida, SUM(dp.subtotal) AS ingresos_generados " +
+                     "FROM detalle_pedido dp " +
+                     "INNER JOIN pedido p ON dp.id_pedido_fk = p.id_pedido_pk " +
+                     "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
+                     "WHERE p.estado_pedido = 'Entregado' " +
+                     "GROUP BY prod.nombre_producto " +
+                     "ORDER BY cantidad_vendida DESC " +
+                     "LIMIT ?";
+
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> productoStats = new HashMap<>();
+                    productoStats.put("nombre_producto", rs.getString("nombre_producto"));
+                    productoStats.put("cantidad_vendida", rs.getLong("cantidad_vendida"));
+                    productoStats.put("ingresos_generados", rs.getDouble("ingresos_generados"));
+                    lista.add(productoStats);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("error en obtenerTopProductosVendidosGlobales: " + e.getMessage());
         }
         return lista;
     }

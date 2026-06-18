@@ -17,7 +17,7 @@ import { cargarVistaAdminSolicitudes } from '../views/Administrador/adminSolicit
 import { cargarVistaPerfil } from '../views/Cliente/perfil/perfilController.js';
 
 // importamos las nuevas vistas de estadistica para administrador y proveedor
-import { cargarVistaAdminEstadistica } from '../views/Administrador/estadistica/adminEstadisticaController.js';
+import { cargarVistaAdminDashboard } from '../views/Administrador/estadistica/adminDashboardController.js';
 import { cargarVistaProveedorEstadistica } from '../views/Proveedor/estadistica/proveedorEstadisticaController.js';
 
 // Importamos el servicio de interfaz para poder inyectar la sidebar
@@ -91,7 +91,7 @@ async function manejarRuta() {
     } else if (vista === 'dashboard') {
         // decidimos que controlador de estadistica cargar segun el rol del usuario
         if (rolUsuario === '1') {
-            cargarVistaAdminEstadistica();
+            cargarVistaAdminDashboard();
         } else if (rolUsuario === '4') {
             cargarVistaProveedorEstadistica();
         }

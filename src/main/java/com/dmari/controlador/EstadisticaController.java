@@ -3,6 +3,8 @@ package com.dmari.controlador;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.dmari.dao.pedidoDAO;
 import com.dmari.modelo.VentaEstadisticaDTO;
@@ -39,28 +41,40 @@ public class EstadisticaController extends HttpServlet {
         // recuperamos el objeto de usuario de la sesion para segmentar datos
         usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
         ArrayList<VentaEstadisticaDTO> datos = new ArrayList<>();
+        double[] summaryStats = new double[3]; // [total_ventas, cantidad_pedidos, comisiones_generadas]
+        long totalProductosVendidos = 0;
 
         // modulo 1: aislamiento de datos segun el rol del usuario
         if (user.getIdRol() == 4) {
             // el proveedor (rol 4) solo puede ver el resumen de sus propias ventas
             datos = dao.obtenerVentasMensualesProveedor(user.getIdUsuario());
+            summaryStats = dao.obtenerEstadisticasVentas(user.getIdUsuario());
+            totalProductosVendidos = dao.obtenerTotalProductosVendidosProveedor(user.getIdUsuario());
         } else if (user.getIdRol() == 1) {
             // el administrador (rol 1) puede ver las ventas globales de la plataforma
             datos = dao.obtenerVentasMensualesGlobales();
+            summaryStats = dao.obtenerEstadisticasVentas(0); // 0 para estadisticas globales
+            totalProductosVendidos = dao.obtenerTotalProductosVendidosGlobales();
+            
+            // NUEVOS DATOS PARA EL ADMINISTRADOR
+            // Solo se obtienen si el rol es administrador
+            ArrayList<Map<String, Object>> ventasPorProveedor = dao.obtenerResumenVentasPorProveedorGlobales();
+            ArrayList<Map<String, Object>> topProductos = dao.obtenerTopProductosVendidosGlobales(5); // Top 5 productos
         }
 
         try (PrintWriter out = response.getWriter()) {
-            // Calculamos el total de ingresos sumando los datos obtenidos
-            double totalIngresos = 0;
-            for (VentaEstadisticaDTO d : datos) {
-                totalIngresos += d.getTotal();
-            }
+            // summaryStats[0] = total_ventas
+            // summaryStats[1] = cantidad_pedidos
+            // summaryStats[2] = comisiones_generadas
 
             // Construimos un JSON que incluya los totales para las tarjetas y la lista para la gráfica
             StringBuilder json = new StringBuilder("{");
-            json.append("\"total_ingresos\":").append(totalIngresos).append(",");
-            json.append("\"cantidad_pedidos\":").append(datos.size()).append(","); // Conteo base de meses con pedidos
-            json.append("\"total_productos_vendidos\":").append(0).append(",");     // Espacio para futura implementación
+            json.append("\"total_ingresos\":").append(summaryStats[0]).append(",");
+            json.append("\"cantidad_pedidos\":").append((long) summaryStats[1]).append(","); // Cast a long para el conteo
+            // Agregamos las comisiones, que el frontend de admin espera
+            json.append("\"total_comisiones\":").append(summaryStats[2]).append(",");
+            // Agregamos el total de productos vendidos
+            json.append("\"total_productos_vendidos\":").append(totalProductosVendidos).append(",");
             
             json.append("\"ventas_mensuales\":[");
             for (int i = 0; i < datos.size(); i++) {
@@ -74,5 +88,19 @@ public class EstadisticaController extends HttpServlet {
             out.print(json.toString());
             out.flush();
         }
+    }
+
+    // Helper method to escape JSON strings
+    private String escapeJson(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.replace("\\", "\\\\")
+                   .replace("\"", "\\\"")
+                   .replace("\b", "\\b")
+                   .replace("\f", "\\f")
+                   .replace("\n", "\\n")
+                   .replace("\r", "\\r")
+                   .replace("\t", "\\t");
     }
 }

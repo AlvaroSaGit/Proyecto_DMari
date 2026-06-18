@@ -98,8 +98,8 @@ export async function inicializarAdmin() {
         document.querySelectorAll('.admin-nav-item').forEach(btn => btn.classList.remove('activo'));
 
         // encendemos (iluminamos) unicamente el boton que coincide con la url actual
-        if (hashActual.includes('dashboard') && btnDashboard) {
-            btnDashboard.classList.add('activo');
+        if (hashActual.includes('dashboard')) {
+            if (btnDashboard) btnDashboard.classList.add('activo');
         } else if (hashActual.includes('admin-productos') && btnProductos) {
             btnProductos.classList.add('activo');
         } else if (hashActual.includes('admin-categorias') && btnCategorias) {

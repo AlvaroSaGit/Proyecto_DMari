@@ -13,7 +13,7 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-@WebServlet(name = "DashboardController", urlPatterns = {"/api-estadisticas"})
+@WebServlet(name = "DashboardController", urlPatterns = {"/api-dashboard-resumen"})
 public class DashboardController extends HttpServlet {
 
     @Override
