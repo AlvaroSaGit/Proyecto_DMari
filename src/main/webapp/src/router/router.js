@@ -18,6 +18,8 @@ import { cargarVistaPerfil } from '../views/Cliente/perfil/perfilController.js';
 // importamos las nuevas vistas de estadistica para administrador y proveedor
 import { cargarVistaAdminDashboard } from '../views/Administrador/estadistica/adminDashboardController.js';
 import { cargarVistaProveedorEstadistica } from '../views/Proveedor/estadistica/proveedorEstadisticaController.js';
+// importamos el controlador de solicitud de categoria del proveedor
+import { cargarVistaSolicitudCategoria } from '../views/Proveedor/productos/solicitudProveedorController.js';
 
 // Importamos el servicio de interfaz para poder inyectar la sidebar
 import { cargarComponente } from '../services/uiService.js';
@@ -97,9 +99,12 @@ async function manejarRuta() {
     } else if (vista === 'proveedor-productos') {
         cargarVistaProveedorProductos();
     } else if (vista === 'proveedor-pedidos') {
-        cargarVistaAdminPedidos(); // Reutilizamos la misma vista porque la base de datos se encarga de filtrar
+        cargarVistaAdminPedidos(); // reutilizamos la misma vista porque la base de datos se encarga de filtrar
+    } else if (vista === 'proveedor-estadistica') {
+        // ruta directa para que el proveedor pueda ver sus estadisticas de ventas desde el sidebar
+        cargarVistaProveedorEstadistica();
     } else {
-        cargarVistaInicio(); // Por defecto carga el inicio
+        cargarVistaInicio(); // por defecto carga el inicio
     }
 }
 
@@ -109,76 +114,87 @@ async function manejarRuta() {
  * @param {string|null} rol - ID del rol del usuario ('1', '2', '4' o null).
  */
 async function adaptarHeaderSegunRol(rol) {
-    const bloqueCategoria = document.getElementById('header-bloque-categoria');
     const btnCarrito = document.getElementById('btn-carrito-header');
-    const btnCerrarSesion = document.getElementById('btn-cerrar-sesion');
     const btnPerfil = document.getElementById('btn-usuario-perfil');
-    const logoHeader = document.getElementById('component-logo');
-    const footerContainer = document.getElementById('footer-container');
 
-    // Convertimos el rol a string seguro para evitar fallos de comprobación
+    // convertimos el rol a string seguro para evitar fallos de comparacion
     const rolActivo = rol ? String(rol).trim() : null;
 
-    if (rolActivo === '1' || rolActivo === '4') {
+    if (rolActivo === '1') {
+        // --- MODO ADMINISTRADOR: sidebar tipo panel fijo de dos columnas ---
+        // movemos el boton de perfil al nav del header para tenerlo accesible
         const headerNav = document.querySelector('.header-navegacion');
         if (btnPerfil && headerNav) {
-            headerNav.appendChild(btnPerfil); // Movemos tu perfil a la extrema izquierda
+            headerNav.appendChild(btnPerfil);
         }
-        
 
-        // --- LOGICA DE LA SIDEBAR TIPO DASHBOARD ---
-        // Le aplicamos una clase al body que convierte toda la pagina en una estructura de Panel de Control
-        document.body.classList.add('layout-dashboard'); 
-        
-        // Creamos dinámicamente el "hueco" (div) donde vivirá el menú lateral.
-        // Usamos un ID diferente para el admin y para el proveedor.
-        const containerId = rolActivo === '1' ? 'contenedor-sidebar-admin' : 'contenedor-sidebar-proveedor';
-        let sidebarContainer = document.getElementById(containerId);
+        // activamos el modo dashboard que convierte el layout en dos columnas
+        document.body.classList.add('layout-dashboard');
 
-        // Si el contenedor no existe, lo creamos.
-        if (!sidebarContainer) {
-            // Primero, removemos el contenedor del otro rol si existiera, para evitar duplicados.
-            const otherContainerId = rolActivo === '1' ? 'contenedor-sidebar-proveedor' : 'contenedor-sidebar-admin';
-            const otherContainer = document.getElementById(otherContainerId);
-            if (otherContainer) otherContainer.remove();
+        // buscamos el contenedor del sidebar del admin en el index.html
+        let sidebarAdminContainer = document.getElementById('contenedor-sidebar-admin');
 
-            sidebarContainer = document.createElement('div');
-            sidebarContainer.id = containerId;
-            sidebarContainer.classList.add('dashboard-sidebar-container'); // ¡CLASE UNIFICADORA!
-            // Insertamos la nueva sidebar directamente en el body para un posicionamiento más robusto.
-            document.body.appendChild(sidebarContainer);
-        }
-        
-        // Si el hueco de la sidebar esta vacio, inicializamos el controlador del Dashboard
-        if (sidebarContainer.innerHTML.trim() === '') {
-            if (rolActivo === '1') {
-                await inicializarAdmin();
-            } else if (rolActivo === '4') {
-                await inicializarProveedor();
-                // ¡CONEXIÓN CLAVE! Le damos al botón del header la orden de abrir el panel de proveedor.
-                if (typeof conectarBotonHeaderProveedor === 'function') {
-                    conectarBotonHeaderProveedor();
-                } else {
-                    console.warn('conectarBotonHeaderProveedor no está disponible en el módulo actual');
-                }
-
+        // si el contenedor no existe en el dom, lo creamos y lo anclamos al body
+        if (!sidebarAdminContainer) {
+            sidebarAdminContainer = document.createElement('div');
+            sidebarAdminContainer.id = 'contenedor-sidebar-admin';
+            // la clase le aplica los estilos del panel fijo de dos columnas
+            sidebarAdminContainer.classList.add('dashboard-sidebar-container');
+            // lo insertamos antes del layout-container para que quede a la izquierda
+            const layoutContainer = document.querySelector('.layout-container');
+            if (layoutContainer) {
+                document.body.insertBefore(sidebarAdminContainer, layoutContainer);
+            } else {
+                document.body.prepend(sidebarAdminContainer);
             }
         }
-    } else {
-        const headerAction = document.querySelector('.header-accion');
-        if (btnPerfil && headerAction && btnCarrito) {
-            headerAction.insertBefore(btnPerfil, btnCarrito); // Regresamos el perfil a la derecha
+
+        // solo cargamos el html del sidebar si el contenedor esta vacio
+        if (sidebarAdminContainer.innerHTML.trim() === '') {
+            await inicializarAdmin();
         }
 
-        // DESMONTAJE DEL DASHBOARD: Si el admin cerro sesion, destruimos toda su estructura especial
-        // para que la tienda vuelva a verse limpia para el cliente
-        document.body.classList.remove('layout-dashboard');
-        // Removemos ambos posibles contenedores de sidebar para una limpieza completa.
-        const sidebarAdminContainer = document.getElementById('contenedor-sidebar-admin');
-        if (sidebarAdminContainer) sidebarAdminContainer.remove();
-        
+    } else if (rolActivo === '4') {
+        // --- MODO PROVEEDOR: sidebar tipo drawer deslizante (igual que el carrito) ---
+        // el proveedor NO usa el layout de dos columnas. su sidebar es un panel
+        // que se desliza desde la izquierda con position:fixed, igual que el carrito.
+        // por eso NO agregamos la clase layout-dashboard al body.
+
+        // movemos el boton de perfil al nav para que el proveedor lo vea facilmente
+        const headerNav = document.querySelector('.header-navegacion');
+        if (btnPerfil && headerNav) {
+            headerNav.appendChild(btnPerfil);
+        }
+
+        // buscamos el contenedor del drawer del proveedor (ya existe en el index.html)
         const sidebarProvContainer = document.getElementById('contenedor-sidebar-proveedor');
-        if (sidebarProvContainer) sidebarProvContainer.remove();
+
+        // solo inicializamos el drawer si el contenedor esta vacio (evita duplicados)
+        if (sidebarProvContainer && sidebarProvContainer.innerHTML.trim() === '') {
+            await inicializarProveedor();
+            // conectamos el boton del header para que al hacer clic abra el drawer
+            if (typeof conectarBotonHeaderProveedor === 'function') {
+                conectarBotonHeaderProveedor();
+            }
+        }
+
+    } else {
+        // --- MODO CLIENTE O VISITANTE: layout normal de tienda ---
+        const headerAction = document.querySelector('.header-accion');
+        if (btnPerfil && headerAction && btnCarrito) {
+            // regresamos el boton de perfil a su lugar original en el header de cliente
+            headerAction.insertBefore(btnPerfil, btnCarrito);
+        }
+
+        // desmontamos el modo dashboard si el admin cerro sesion
+        document.body.classList.remove('layout-dashboard');
+
+        // eliminamos el contenedor dinamico de la sidebar del admin si existe
+        const sidebarAdminContainer = document.getElementById('contenedor-sidebar-admin');
+        if (sidebarAdminContainer && sidebarAdminContainer.classList.contains('dashboard-sidebar-container')) {
+            // solo eliminamos el que fue creado dinamicamente, no el del index.html
+            sidebarAdminContainer.remove();
+        }
     }
 }
 

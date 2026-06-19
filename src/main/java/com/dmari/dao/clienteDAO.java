@@ -27,15 +27,16 @@ public class clienteDAO {
      */
     public perfilCliente obtenerPerfil(int idUsuario) {
         perfilCliente perfil = null;
-        // Se usan alias (AS) para simplificar los nombres de las columnas y hacerlos consistentes.
+        // el espacio al final de la linea del subquery es OBLIGATORIO para separarlo del FROM
+        // sin ese espacio, mysql recibe "...telefono_secundarioFROM..." y lanza un error de sintaxis
         String sql = "SELECT d.direccion, c.referencia_ubicacion, d.direccion_detallada AS direccion_detalle, t.numero_telefonico AS telefono, co.correo, " +
-                     "(SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = u.id_usuario_pk AND id_telefono_pk != t.id_telefono_pk LIMIT 1) AS telefono_secundario" +
+                     "(SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = u.id_usuario_pk AND id_telefono_pk != t.id_telefono_pk LIMIT 1) AS telefono_secundario " +
                      "FROM usuario u " +
                      "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
                      "LEFT JOIN direccion d ON u.id_usuario_pk = d.id_usuario_fk AND d.direccion_primario = 1 " +
                      "LEFT JOIN telefono t ON u.id_usuario_pk = t.id_usuario_fk " + 
                      "LEFT JOIN correo co ON u.id_usuario_pk = co.id_usuario_fk " +
-                     "WHERE u.id_usuario_pk = ?";
+                     "WHERE u.id_usuario_pk = ? LIMIT 1";
         
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -77,53 +78,57 @@ public class clienteDAO {
         // La tabla cliente solo maneja la referencia de ubicación.
         String sqlCliente = "UPDATE cliente SET referencia_ubicacion = ? WHERE id_cliente_pk = ?";
                             
-        // 2. preparamos la instruccion sql para la tabla direccion.
-        // Si ya existe una dirección primaria para el usuario, la actualiza. Si no, la crea.
-        String sqlDireccion = "INSERT INTO direccion (id_usuario_fk, direccion, direccion_detallada, direccion_primario) " +
-                              "VALUES (?, ?, ?, 1) " +
-                              "ON DUPLICATE KEY UPDATE direccion = VALUES(direccion), direccion_detallada = VALUES(direccion_detallada)";
-                              
-        // INSERT IGNORE previene errores si el teléfono ya existe para otro usuario, priorizando la integridad.
-        String sqlTelefono = "INSERT IGNORE INTO telefono (id_usuario_fk, numero_telefonico) " +
-                             "VALUES (?, ?)";
+        // 2. estrategia correcta para direccion: intentamos actualizar primero.
+        // si el usuario no tiene una direccion primaria aun (filas = 0), entonces insertamos una nueva.
+        // no usamos ON DUPLICATE KEY UPDATE porque la tabla direccion no tiene indice UNIQUE en id_usuario_fk.
+        String sqlActualizarDireccion = "UPDATE direccion SET direccion = ?, direccion_detallada = ? " +
+                                        "WHERE id_usuario_fk = ? AND direccion_primario = 1";
+        String sqlInsertarDireccion  = "INSERT INTO direccion (id_usuario_fk, direccion, direccion_detallada, direccion_primario) " +
+                                       "VALUES (?, ?, ?, 1)";
 
         Connection con = null;
         try {
             con = db.conectar();
-            // Desactivamos el autocommit para iniciar una transacción manual.
-            // Esto garantiza que si una inserción falla, las demás se revierten.
+            // desactivamos el autocommit para iniciar una transaccion manual.
+            // esto garantiza que si una insercion falla, las demas se revierten.
             con.setAutoCommit(false);
 
-            // Bloque 1: Actualizar la tabla 'cliente' con la referencia de ubicación.
+            // bloque 1: actualizar la tabla cliente con la referencia de ubicacion.
             try (PreparedStatement psCli = con.prepareStatement(sqlCliente)) {
                 psCli.setString(1, referencia);
                 psCli.setInt(2, idUsuario);
                 psCli.executeUpdate();
             }
 
-            // Bloque 2: Insertar o actualizar la dirección principal.
-            try (PreparedStatement psDir = con.prepareStatement(sqlDireccion)) {
-                psDir.setInt(1, idUsuario);
-                psDir.setString(2, direccionPrimaria);
-                psDir.setString(3, direccionDetalle);
-                psDir.executeUpdate();
+            // bloque 2: intentar actualizar la direccion primaria existente del usuario.
+            try (PreparedStatement psDir = con.prepareStatement(sqlActualizarDireccion)) {
+                psDir.setString(1, direccionPrimaria);
+                psDir.setString(2, direccionDetalle);
+                psDir.setInt(3, idUsuario);
+                int filasDireccion = psDir.executeUpdate();
+                
+                // si el update no afecto filas, el usuario no tiene direccion aun: insertamos una nueva.
+                if (filasDireccion == 0) {
+                    try (PreparedStatement psDirIns = con.prepareStatement(sqlInsertarDireccion)) {
+                        psDirIns.setInt(1, idUsuario);
+                        psDirIns.setString(2, direccionPrimaria);
+                        psDirIns.setString(3, direccionDetalle);
+                        psDirIns.executeUpdate();
+                    }
+                }
             }
 
-            // Bloque 3: Actualizar el teléfono principal.
+            // bloque 3: actualizar el telefono principal del usuario.
+            // si el usuario no tiene telefono aun (filas = 0), insertamos uno nuevo.
             String sqlActualizarTelefono = "UPDATE telefono SET numero_telefonico = ? WHERE id_usuario_fk = ?";
+            // insert ignore previene el error de unique constraint si el numero ya existe en otro usuario
+            String sqlTelefono = "INSERT IGNORE INTO telefono (id_usuario_fk, numero_telefonico) VALUES (?, ?)";
             try (PreparedStatement psTelUpd = con.prepareStatement(sqlActualizarTelefono)) {
                 psTelUpd.setString(1, numeroTelefono);
                 psTelUpd.setInt(2, idUsuario);
                 int filas = psTelUpd.executeUpdate();
-                
-                if (telefonoSecundario != null && !telefonoSecundario.trim().isEmpty()) {
-                    // TODO: Implementar lógica para un segundo teléfono.
-                    // Se podría añadir una columna 'tipo' en la tabla 'telefono'
-                    // o manejar una segunda fila para el mismo usuario.
-                }
 
-                // Si el UPDATE no afectó filas, significa que el usuario no tenía un teléfono
-                // registrado, por lo que procedemos a insertarlo.
+                // si el update no afecto filas, el usuario no tiene telefono: lo insertamos.
                 if (filas == 0) {
                     try (PreparedStatement psTelIns = con.prepareStatement(sqlTelefono)) {
                         psTelIns.setInt(1, idUsuario);

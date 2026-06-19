@@ -326,14 +326,6 @@ INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comis
 -- ==========================================================
 -- 18. GESTIÓN DE DEVOLUCIONES (Sobre pedidos existentes)
 -- ==========================================================
--- Ahora que los pedidos han sido creados arriba, podemos insertar las devoluciones
--- Laura (ID 7) solicita devolucion del Oso Gigante (Pedido de Transaccion 2)
-insert into devolucion (id_pedido_fk, id_cliente_fk, motivo, estado_devolucion) 
-values (@last_pedido_id - 1, 7, 'El peluche oso gigante tiene una costura suelta en la espalda.', 'solicitada');
-
--- Maria (ID 2) solicita devolucion de las Donas (Pedido de la seccion de estadisticas)
-insert into devolucion (id_pedido_fk, id_cliente_fk, motivo, estado_devolucion) 
-values (8, 2, 'Las donas llegaron con el glaseado pegado a la caja y aplastadas.', 'solicitada');
 
 -- Transacción 4: Carrito abandonado por Maria
 INSERT INTO carrito (id_cliente_fk, estado) VALUES (2, 'Activo');

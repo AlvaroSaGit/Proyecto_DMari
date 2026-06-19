@@ -15,7 +15,9 @@ import java.sql.SQLException;
 public class databaseHelper {
 
     // final indica que estas variables son constantes y nadie puede modificarlas mientras el programa corre
-    private static final String URL = "jdbc:mysql://localhost:3306/DMari";
+    // agregar useUnicode y characterEncoding es OBLIGATORIO para que AES_DECRYPT de MySQL
+    // pueda comparar su resultado binario con el String que Java envia correctamente
+    private static final String URL = "jdbc:mysql://localhost:3306/DMari?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=UTC";
     private static final String USUARIO = "root";
     private static final String CLAVE = "";
     
@@ -27,7 +29,6 @@ public class databaseHelper {
             
             // drivermanager.getconnection usa las credenciales para llamar a la base de datos y mantener la linea abierta
             conexion = DriverManager.getConnection(URL, USUARIO, CLAVE);
-            System.out.println("Conexion realizada a la base de datos dmari");
             
         }catch (ClassNotFoundException error){
             System.out.println("No se encontro el driver de mysql - "+error.getMessage());

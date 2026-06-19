@@ -147,11 +147,14 @@ public class usuarioDAO {
         // el inner join con correo permite buscar por email (que es unico)
         // el inner join con credenciales permite acceder al blob encriptado para compararlo
         // la condicion aes_decrypt(..., llave) = ? es la que valida la contraseña en el motor de la base de datos
+        // cast(aes_decrypt(...) as char) convierte el resultado binario del desencriptado
+        // a texto plano (varchar) antes de compararlo con el parametro string que java envia.
+        // sin este cast, la comparacion entre blob y varchar puede fallar silenciosamente.
         String sql = "SELECT u.id_usuario_pk, u.nombre, u.apellido, u.id_rol_fk, c.correo, u.estado_cuenta " +
                      "FROM usuario u " +
                      "INNER JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk " +
                      "INNER JOIN credenciales cr ON u.id_usuario_pk = cr.id_usuario " +
-                     "WHERE c.correo = ? AND AES_DECRYPT(cr.passwd_encript, ?) = ?";
+                     "WHERE c.correo = ? AND CAST(AES_DECRYPT(cr.passwd_encript, ?) AS CHAR) = ?";
                      
         usuario usuarioLogueado = null;
         

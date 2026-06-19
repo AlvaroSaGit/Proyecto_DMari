@@ -93,7 +93,7 @@ create table correo(
 -- Credenciales de acceso
 create table credenciales(
     id_usuario int primary key,
-    passwd_encript varbinary(255) not null,
+    passwd_encript varchar(255) not null,
     foreign key (id_usuario) references usuario(id_usuario_pk)
 );
 
@@ -227,7 +227,7 @@ create table pago(
 
 
 -- ==========================================================
--- 5. tablas de solicitudes y devoluciones
+-- 5. tablas de solicitudes 
 -- ==========================================================
 
 -- solicitudes de categorias sugeridas por proveedores
@@ -239,17 +239,4 @@ create table solicitud_categoria (
     estado_solicitud enum('pendiente', 'aprobada', 'rechazada') default 'pendiente',
     fecha_creacion timestamp default current_timestamp,
     foreign key (id_proveedor_fk) references proveedor(id_proveedor_pk)
-);
-
--- gestion de solicitudes de devolucion de pedidos entregados
-create table devolucion (
-    id_devolucion_pk int auto_increment primary key,
-    id_pedido_fk int not null,
-    id_cliente_fk int not null,
-    motivo text not null,
-    estado_devolucion enum('solicitada', 'aprobada', 'rechazada') default 'solicitada',
-    fecha_solicitud timestamp default current_timestamp,
-    fecha_resolucion timestamp null,
-    foreign key (id_pedido_fk) references pedido(id_pedido_pk),
-    foreign key (id_cliente_fk) references cliente(id_cliente_pk)
 );

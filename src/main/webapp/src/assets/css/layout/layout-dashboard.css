@@ -1,0 +1,109 @@
+/* ================================================================= */
+/* LAYOUT EXCLUSIVO PARA EL PANEL DE CONTROL (ADMIN Y PROVEEDOR)     */
+/* Se activa cuando el router agrega la clase "layout-dashboard"      */
+/* al body. Transforma la pagina en un panel de dos columnas.         */
+/* ================================================================= */
+
+/* cuando el body tiene esta clase, la pagina entera se convierte en  */
+/* un panel de control con barra lateral fija y contenido al costado. */
+body.layout-dashboard {
+    /* usamos flexbox para poner la sidebar y el contenido lado a lado */
+    display: flex;
+    /* la sidebar va a la izquierda, el contenido al a derecha         */
+    flex-direction: row;
+    /* ocupamos toda la pantalla disponible verticalmente              */
+    min-height: 100vh;
+    /* color de fondo oscuro del panel de administracion               */
+    background-color: #0f0f1a;
+    /* quitamos el margen y padding del body para que no haya huecos   */
+    margin: 0;
+    padding: 0;
+}
+
+/* ================================================================= */
+/* CONTENEDOR DE LA SIDEBAR DEL ADMIN (panel fijo izquierdo)          */
+/* ================================================================= */
+
+/* este es el "cajón" que recibe el html del adminSideBar.html        */
+/* el router lo crea con la clase "dashboard-sidebar-container"       */
+.dashboard-sidebar-container {
+    /* ancho fijo de la barra lateral                                  */
+    width: 260px;
+    /* siempre visible, nunca se encoge aunque el contenido sea grande */
+    flex-shrink: 0;
+    /* color de fondo oscuro azul marino para la sidebar del admin     */
+    background-color: #16213e;
+    /* ocupa toda la altura de la pantalla                             */
+    min-height: 100vh;
+    /* sombra sutil para dar profundidad visual                        */
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4);
+    /* se queda pegada aunque el usuario haga scroll en el contenido  */
+    position: sticky;
+    top: 0;
+    /* altura exacta de la ventana del navegador para no salirse       */
+    height: 100vh;
+    /* si el menu tiene muchos items, permite hacer scroll interno     */
+    overflow-y: auto;
+}
+
+/* ================================================================= */
+/* LAYOUT INTERNO DEL BODY EN MODO DASHBOARD                          */
+/* ================================================================= */
+
+/* en modo dashboard ocultamos el header y footer que usa el cliente  */
+/* el admin usa su propia barra lateral como navegacion principal      */
+body.layout-dashboard .main-header {
+    /* quitamos el header de flujo normal. el nav va en la sidebar     */
+    display: none;
+}
+
+body.layout-dashboard .main-footer {
+    /* el footer tampoco aplica en el panel de administracion          */
+    display: none;
+}
+
+/* el layout-container envuelve header+main+footer. en modo dashboard  */
+/* lo hacemos crecer para ocupar todo el espacio restante junto a la  */
+/* sidebar. flex: 1 hace exactamente eso.                              */
+body.layout-dashboard .layout-container {
+    /* el contenedor principal ocupa el resto del espacio horizontal   */
+    flex: 1;
+    /* quitamos el grid del layout de cliente y usamos bloque normal   */
+    display: block;
+    /* evitamos que el contenido se desborde de su contenedor          */
+    overflow-x: hidden;
+    /* fondo mas claro para el area de contenido del panel             */
+    background-color: #0a0a14;
+}
+
+/* el div de main ocupa todo el espacio disponible en el panel        */
+body.layout-dashboard .main {
+    /* ocupamos todo el ancho del area de contenido                    */
+    width: 100%;
+    /* el padding da espacio entre el borde y el contenido del panel   */
+    padding: 20px;
+    /* el min-height garantiza que el fondo se vea en toda la pagina   */
+    min-height: 100vh;
+    /* caja de contenido que evita desbordamiento horizontal           */
+    box-sizing: border-box;
+}
+
+/* ================================================================= */
+/* RESPONSIVE: EN PANTALLAS PEQUENAS LA SIDEBAR SE OCULTA            */
+/* ================================================================= */
+
+@media (max-width: 768px) {
+    /* en pantallas de tablet hacia abajo, apilamos sidebar y contenido */
+    body.layout-dashboard {
+        flex-direction: column;
+    }
+    
+    /* la sidebar ocupa el ancho completo de la pantalla en movil     */
+    .dashboard-sidebar-container {
+        width: 100%;
+        height: auto;
+        /* quitamos el sticky en movil para que fluya naturalmente    */
+        position: relative;
+        min-height: auto;
+    }
+}
