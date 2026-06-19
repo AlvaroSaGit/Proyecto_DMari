@@ -7,7 +7,7 @@ import { navegarA } from '../../../router/router.js';
 export async function inicializarProveedor() {
     // Cargamos el HTML del sidebar en el contenedor específico (debe existir en el index.html)
     // ¡CORRECCIÓN DEFINITIVA! Apuntamos a la ruta completa desde la raíz del proyecto web.
-    await cargarComponente('contenedor-sidebar-proveedor', './src/views/Proveedor/sidebar/proveedorSidebar.html');
+    await cargarComponente('contenedor-sidebar-proveedor', './src/views/Proveedor/sidebar/proveedorSideBar.html');
     
     const btnCerrar = document.getElementById('btn-cerrar-prov');
     const overlay = document.getElementById('overlay-prov');
