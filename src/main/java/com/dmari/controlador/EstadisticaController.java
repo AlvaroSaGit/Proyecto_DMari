@@ -3,7 +3,6 @@ package com.dmari.controlador;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 import com.dmari.dao.pedidoDAO;
@@ -47,9 +46,20 @@ public class EstadisticaController extends HttpServlet {
         // modulo 1: aislamiento de datos segun el rol del usuario
         if (user.getIdRol() == 4) {
             // el proveedor (rol 4) solo puede ver el resumen de sus propias ventas
-            datos = dao.obtenerVentasMensualesProveedor(user.getIdUsuario());
-            summaryStats = dao.obtenerEstadisticasVentas(user.getIdUsuario());
-            totalProductosVendidos = dao.obtenerTotalProductosVendidosProveedor(user.getIdUsuario());
+            // primero obtenemos su id de proveedor usando el metodo del dao
+            int idProveedor = dao.obtenerIdProveedorPorUsuario(user.getIdUsuario());
+            
+            if (idProveedor > 0) {
+                // si tenemos un id de proveedor valido, consultamos sus estadisticas
+                datos = dao.obtenerVentasMensualesProveedor(idProveedor);
+                summaryStats = dao.obtenerEstadisticasVentas(idProveedor);
+                totalProductosVendidos = dao.obtenerTotalProductosVendidosProveedor(idProveedor);
+            } else {
+                // si el usuario proveedor no tiene registro en la tabla proveedor, devolvemos datos vacios
+                datos = new ArrayList<>();
+                summaryStats = new double[]{0, 0, 0};
+                totalProductosVendidos = 0;
+            }
         } else if (user.getIdRol() == 1) {
             // el administrador (rol 1) puede ver las ventas globales de la plataforma
             datos = dao.obtenerVentasMensualesGlobales();

@@ -85,7 +85,8 @@ export function mostrarErrorCampo(inputId, mensaje) {
 export function limpiarErrorCampo(inputId) {
     const input = document.getElementById(inputId);
     if (input) {
-        input.style.borderColor = ''; // Restaurar borde original
+        input.style.borderColor = '#ddd'; // Restaurar borde original (gris claro)
+        input.classList.remove('input-error'); // Remover clase de error si existe
     }
     const errorExistente = document.getElementById(`error-${inputId}`);
     if (errorExistente) {

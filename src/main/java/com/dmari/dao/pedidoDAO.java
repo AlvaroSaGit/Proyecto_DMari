@@ -4,8 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.dmari.helper.databaseHelper;
@@ -736,5 +736,31 @@ public class pedidoDAO {
             System.out.println("error en obtenerTopProductosVendidosGlobales: " + e.getMessage());
         }
         return lista;
+    }
+
+    /**
+     * 14. Obtiene el ID del proveedor a partir del ID del usuario
+     * Método auxiliar para convertir id_usuario en id_proveedor
+     *
+     * @param idUsuario int: El ID del usuario (proveedor)
+     * @return int: El ID del proveedor, o 0 si no existe
+     */
+    public int obtenerIdProveedorPorUsuario(int idUsuario) {
+        int idProveedor = 0;
+        String sql = "SELECT id_proveedor_pk FROM proveedor WHERE id_usuario_fk = ?";
+
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idUsuario);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    idProveedor = rs.getInt("id_proveedor_pk");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al obtener ID de proveedor por usuario: " + e.getMessage());
+        }
+        return idProveedor;
     }
 }

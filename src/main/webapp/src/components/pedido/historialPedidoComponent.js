@@ -6,6 +6,61 @@
 */
 import { mostrarModal, cerrarModalGeneral } from '../../services/uiService.js';
 
+/**
+ * Muestra una notificación elegante en lugar de usar alert()
+ * @param {string} mensaje - Texto del mensaje
+ * @param {string} tipo - Tipo: 'success', 'error', 'warning', 'info'
+ */
+function mostrarNotificacion(mensaje, tipo = 'info') {
+    const colores = {
+        success: { bg: '#d4edda', border: '#c3e6cb', text: '#155724', icon: '✓' },
+        error: { bg: '#f8d7da', border: '#f5c6cb', text: '#721c24', icon: '✕' },
+        warning: { bg: '#fff3cd', border: '#ffeeba', text: '#856404', icon: '⚠' },
+        info: { bg: '#d1ecf1', border: '#bee5eb', text: '#0c5460', icon: 'ℹ' }
+    };
+    
+    const estilo = colores[tipo] || colores.info;
+    
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${estilo.bg};
+        border: 2px solid ${estilo.border};
+        color: ${estilo.text};
+        padding: 15px 20px;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        font-size: 0.95rem;
+        z-index: 10000;
+        max-width: 400px;
+        animation: slideIn 0.3s ease-in-out;
+    `;
+    
+    notif.innerHTML = `<strong>${estilo.icon}</strong> ${mensaje}`;
+    document.body.appendChild(notif);
+    
+    // Agregar estilos de animación si no existen
+    if (!document.getElementById('notif-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notif-styles';
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(450px); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Auto-remover después de 3 segundos
+    setTimeout(() => {
+        notif.style.animation = 'slideIn 0.3s ease-in-out reverse';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+}
+
 export function crearBloquePedido(pedido) {
     // se define un color por defecto (gris oscuro) para estados desconocidos
     let colorEstado = '#333';
@@ -131,7 +186,7 @@ function mostrarModalCancelacionCliente(idPedido) {
     document.getElementById('btn-confirmar-cancelacion-cliente').addEventListener('click', async () => {
         const motivo = document.getElementById('motivo-cancelacion-cliente').value.trim();
         if (motivo.length < 5) {
-            alert('Por favor ingresa un motivo válido (mínimo 5 caracteres).');
+            mostrarNotificacion('Por favor ingresa un motivo válido (mínimo 5 caracteres).', 'warning');
             return;
         }
         
@@ -147,14 +202,13 @@ function mostrarModalCancelacionCliente(idPedido) {
         try { 
             const respuesta = await fetch('pedido', { method: 'POST', body: parametros }); 
             if (respuesta.ok) {
-                alert('Tu pedido ha sido cancelado exitosamente.'); 
-                // Recargar página para reflejar cambios
-                window.location.reload();
+                mostrarNotificacion('Tu pedido ha sido cancelado exitosamente.', 'success'); 
+                setTimeout(() => window.location.reload(), 1500);
             } else {
-                alert('Error al procesar la cancelación en el servidor');
+                mostrarNotificacion('Error al procesar la cancelación en el servidor', 'error');
             }
         } catch(err) { 
-            alert('Error de conexión.'); 
+            mostrarNotificacion('Error de conexión.', 'error'); 
         }
     });
 }
@@ -188,7 +242,7 @@ function mostrarModalDevolucionCliente(idPedido) {
     document.getElementById('btn-confirmar-devolucion').addEventListener('click', async () => {
         const motivo = document.getElementById('motivo-devolucion-cliente').value.trim();
         if (motivo.length < 10) {
-            alert('Por favor ingresa un motivo detallado (mínimo 10 caracteres).');
+            mostrarNotificacion('Por favor ingresa un motivo detallado (mínimo 10 caracteres).', 'warning');
             return;
         }
         
@@ -202,13 +256,13 @@ function mostrarModalDevolucionCliente(idPedido) {
         try { 
             const respuesta = await fetch('devoluciones', { method: 'POST', body: parametros }); 
             if (respuesta.ok) {
-                alert('Solicitud enviada exitosamente.'); 
-                window.location.reload();
+                mostrarNotificacion('Solicitud enviada exitosamente. Revisaremos tu devolución.', 'success'); 
+                setTimeout(() => window.location.reload(), 1500);
             } else {
-                alert('Error al procesar la solicitud en el servidor');
+                mostrarNotificacion('Error al procesar la solicitud en el servidor', 'error');
             }
         } catch(err) { 
-            alert('Error de conexión.'); 
+            mostrarNotificacion('Error de conexión.', 'error'); 
         }
     });
 }

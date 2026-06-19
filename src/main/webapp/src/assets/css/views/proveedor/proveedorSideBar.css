@@ -1,0 +1,159 @@
+/* ========================================= */
+/* ESTILOS DE LA SIDEBAR DEL PROVEEDOR      */
+/* ========================================= */
+
+#overlay-prov {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#overlay-prov.activo {
+    display: block;
+    opacity: 1;
+}
+
+#sidebar-proveedor {
+    position: fixed;
+    left: -350px;
+    top: 0;
+    height: 100vh;
+    width: 300px;
+    background-color: #1a1a2e;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    transition: left 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+#sidebar-proveedor.activo {
+    left: 0;
+}
+
+.sidebar-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.sidebar-header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.sidebar-header h3 {
+    color: #fff;
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.btn-icon:hover {
+    color: #e94560;
+}
+
+.sidebar-content {
+    flex: 1;
+    padding: 15px 0;
+    overflow-y: auto;
+}
+
+.prov-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 14px 20px;
+    color: #a0a0b0;
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.prov-item:hover {
+    color: #fff;
+    background-color: rgba(233, 30, 99, 0.1);
+    border-left-color: #e91e63;
+}
+
+.prov-item.activo {
+    color: #fff;
+    background-color: rgba(233, 30, 99, 0.15);
+    border-left-color: #e91e63;
+}
+
+.prov-item span {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.prov-item p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid var(--color_gris);
+    flex-shrink: 0;
+}
+
+.sidebar-footer .prov-item {
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #sidebar-proveedor {
+        width: 280px;
+        left: -280px;
+    }
+}
+
+@media (max-width: 480px) {
+    #sidebar-proveedor {
+        width: 100%;
+        left: -100%;
+    }
+    
+    .sidebar-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .prov-item {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+        gap: 12px;
+    }
+}

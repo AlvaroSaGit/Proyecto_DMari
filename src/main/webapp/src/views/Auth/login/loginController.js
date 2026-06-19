@@ -57,11 +57,9 @@ function prepararFormularioLogin() {
         // Validación avanzada usando el helper importado
         let esValido = true;
 
-        // Ahora estas funciones no darán ReferenceError porque están importadas al inicio
-        if (typeof limpiarErrorCampo === 'function') {
-            limpiarErrorCampo('login-correo');
-            limpiarErrorCampo('login-password');
-        }
+        // Limpiar errores previos
+        limpiarErrorCampo('login-correo');
+        limpiarErrorCampo('login-password');
 
         if (!validarCorreo(correo)) {
             mostrarErrorCampo('login-correo', 'El formato del correo es invalido.');

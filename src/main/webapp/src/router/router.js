@@ -156,7 +156,12 @@ async function adaptarHeaderSegunRol(rol) {
             } else if (rolActivo === '4') {
                 await inicializarProveedor();
                 // ¡CONEXIÓN CLAVE! Le damos al botón del header la orden de abrir el panel de proveedor.
-                conectarBotonHeaderProveedor();
+                if (typeof conectarBotonHeaderProveedor === 'function') {
+                    conectarBotonHeaderProveedor();
+                } else {
+                    console.warn('conectarBotonHeaderProveedor no está disponible en el módulo actual');
+                }
+
             }
         }
     } else {
