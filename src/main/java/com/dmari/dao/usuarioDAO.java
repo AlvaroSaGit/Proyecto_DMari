@@ -142,40 +142,41 @@ public class usuarioDAO {
      */
     public usuario verificarLogin(String correo, String password) {
         
-        // aes_decrypt hace el proceso inverso: usa la llave secreta para destrabar el blob y lo compara con el texto digitado.
-        // traemos tambien el estado_cuenta para validarlo desde java y poder darle un mensaje especifico al usuario
-        // el inner join con correo permite buscar por email (que es unico)
-        // el inner join con credenciales permite acceder al blob encriptado para compararlo
-        // la condicion aes_decrypt(..., llave) = ? es la que valida la contraseña en el motor de la base de datos
-        // cast(aes_decrypt(...) as char) convierte el resultado binario del desencriptado
-        // a texto plano (varchar) antes de compararlo con el parametro string que java envia.
-        // sin este cast, la comparacion entre blob y varchar puede fallar silenciosamente.
-        String sql = "SELECT u.id_usuario_pk, u.nombre, u.apellido, u.id_rol_fk, c.correo, u.estado_cuenta " +
+        // extraemos los datos del usuario y ademas desencriptamos la contrasena en formato texto (cast as char)
+        // en lugar de comparar la contrasena en la base de datos, la compararemos en java para evitar problemas de charset
+        String sql = "SELECT u.id_usuario_pk, u.nombre, u.apellido, u.id_rol_fk, c.correo, u.estado_cuenta, " +
+                     "CAST(AES_DECRYPT(cr.passwd_encript, ?) AS CHAR) as dec_passwd " +
                      "FROM usuario u " +
                      "INNER JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk " +
                      "INNER JOIN credenciales cr ON u.id_usuario_pk = cr.id_usuario " +
-                     "WHERE c.correo = ? AND CAST(AES_DECRYPT(cr.passwd_encript, ?) AS CHAR) = ?";
+                     "WHERE c.correo = ?";
                      
         usuario usuarioLogueado = null;
         
         try (Connection con = db.conectar();
             PreparedStatement ps = con.prepareStatement(sql)) {
             
-            ps.setString(1, correo);
-            ps.setString(2, LLAVE_SECRETA);
-            ps.setString(3, password);
+            // seteamos la llave secreta para aes_decrypt
+            ps.setString(1, LLAVE_SECRETA);
+            // seteamos el correo
+            ps.setString(2, correo);
             
             try (ResultSet rs = ps.executeQuery()) {
-                // condicional: si el cursor avanza, encontro coincidencias exactas.
-                // si no avanza, significa que el correo no existe o la clave esta mal.
+                // si el cursor avanza, significa que encontro el correo
                 if (rs.next()) {
-                    usuarioLogueado = new usuario();
-                    usuarioLogueado.setIdUsuario(rs.getInt("id_usuario_pk"));
-                    usuarioLogueado.setNombre(rs.getString("nombre"));
-                    usuarioLogueado.setApellido(rs.getString("apellido"));
-                    usuarioLogueado.setCorreo(rs.getString("correo"));
-                    usuarioLogueado.setIdRol(rs.getInt("id_rol_fk"));
-                    usuarioLogueado.setEstadoCuenta(rs.getBoolean("estado_cuenta"));
+                    // extraemos la contrasena desencriptada que devolvio mysql
+                    String decPasswd = rs.getString("dec_passwd");
+                    
+                    // comparamos en java (password.equals) que es mas seguro contra fallos de collation
+                    if (decPasswd != null && decPasswd.equals(password)) {
+                        usuarioLogueado = new usuario();
+                        usuarioLogueado.setIdUsuario(rs.getInt("id_usuario_pk"));
+                        usuarioLogueado.setNombre(rs.getString("nombre"));
+                        usuarioLogueado.setApellido(rs.getString("apellido"));
+                        usuarioLogueado.setCorreo(rs.getString("correo"));
+                        usuarioLogueado.setIdRol(rs.getInt("id_rol_fk"));
+                        usuarioLogueado.setEstadoCuenta(rs.getBoolean("estado_cuenta"));
+                    }
                 }
             }
             

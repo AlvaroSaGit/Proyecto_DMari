@@ -93,7 +93,7 @@ create table correo(
 -- Credenciales de acceso
 create table credenciales(
     id_usuario int primary key,
-    passwd_encript varchar(255) not null,
+    passwd_encript varbinary(255) not null,
     foreign key (id_usuario) references usuario(id_usuario_pk)
 );
 
