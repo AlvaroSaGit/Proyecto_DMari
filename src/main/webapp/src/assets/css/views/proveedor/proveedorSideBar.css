@@ -46,9 +46,7 @@
 }
 
 .sidebar-header {
-    background-color: #0f3460;
     padding: 20px;
-    border-bottom: 2px solid #e94560;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -126,8 +124,8 @@
 }
 
 .sidebar-footer {
-    padding: 15px 0;
-    border-top: 1px solid #2d2d3a;
+    padding: 20px;
+    border-top: 1px solid var(--color_gris);
     flex-shrink: 0;
 }
 
