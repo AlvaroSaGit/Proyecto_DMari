@@ -145,9 +145,8 @@ async function adaptarHeaderSegunRol(rol) {
             sidebarContainer = document.createElement('div');
             sidebarContainer.id = containerId;
             sidebarContainer.classList.add('dashboard-sidebar-container'); // ¡CLASE UNIFICADORA!
-            const main = document.getElementById('component-main');
-            // Insertamos la nueva sidebar en el arbol de HTML, justo antes del contenedor principal
-            if (main) main.parentNode.insertBefore(sidebarContainer, main); 
+            // Insertamos la nueva sidebar directamente en el body para un posicionamiento más robusto.
+            document.body.appendChild(sidebarContainer);
         }
         
         // Si el hueco de la sidebar esta vacio, inicializamos el controlador del Dashboard
