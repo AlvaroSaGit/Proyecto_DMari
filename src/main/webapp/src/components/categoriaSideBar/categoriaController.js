@@ -9,6 +9,7 @@ import { navegarA } from '../../router/router.js';
  */
 export async function inicializarCategoria() {
     // pedimos al servicio ui que cargue el archivo html dentro del div especificado
+    // Corregimos la ruta para que sea absoluta desde la raíz del proyecto web.
     await cargarComponente('contenedor-sidebar-categoria', './src/components/categoriaSideBar/categoriaSidebar.html');
     
     // capturamos los elementos visuales de cierre desde el dom

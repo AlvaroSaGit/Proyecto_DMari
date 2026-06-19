@@ -142,6 +142,7 @@ function mostrarModalCancelacionCliente(idPedido) {
         parametros.append('id', idPedido);
         parametros.append('estado', 'Cancelado_por_Cliente');
         parametros.append('motivo', motivo);
+        // NOTA: Asumimos que el ID del usuario está en sessionStorage. Si no, el backend lo tomará de la HttpSession.
         
         try { 
             const respuesta = await fetch('pedido', { method: 'POST', body: parametros }); 

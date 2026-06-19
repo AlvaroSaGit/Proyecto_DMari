@@ -6,6 +6,7 @@ import { navegarA } from '../../router/router.js';
 // funcion principal que inyecta el sidebar de usuario oculto en el index al inicio
 export async function inicializarUsuario() {
     // cargamos el componente en su contenedor especifico
+    // Aseguramos que la ruta sea consistente con el resto de la aplicación.
     await cargarComponente('contenedor-sidebar-usuario', './src/components/usuarioSideBar/usuarioSideBar.html');
     
     // capturamos los elementos para cerrar el menu y la capa oscura
@@ -21,15 +22,11 @@ export async function inicializarUsuario() {
     if (btnCerrar) btnCerrar.addEventListener('click', cerrarUsuario);
     if (overlay) overlay.addEventListener('click', cerrarUsuario);
 
-    // capturamos el boton del header para abrir el panel de usuario
-    const btnPerfilHeader = document.getElementById('btn-usuario-perfil');
-    if (btnPerfilHeader) btnPerfilHeader.addEventListener('click', abrirUsuario);
-
     // configuramos la navegacion de los botones del menu
-    // cada boton cierra primero el sidebar y luego carga la vista solicitada
+    // Asignamos los eventos de navegación a los botones.
     if (btnLogin) btnLogin.addEventListener('click', () => { cerrarUsuario(); navegarA('login'); });
     if (btnRegistro) btnRegistro.addEventListener('click', () => { cerrarUsuario(); navegarA('registro'); });
-    if (btnConfiguracion) btnConfiguracion.addEventListener('click', () => { cerrarUsuario(); navegarA('configuracion'); });
+    if (btnConfiguracion) btnConfiguracion.addEventListener('click', () => { cerrarUsuario(); navegarA('perfil'); });
 
     // Validamos la sesion especificamente para configurar el menu del sidebar
     try {
@@ -38,6 +35,10 @@ export async function inicializarUsuario() {
             // 1. Ocultamos las opciones que solo son para invitados
             if (btnLogin) btnLogin.style.display = 'none';
             if (btnRegistro) btnRegistro.style.display = 'none';
+
+            // Renombramos el botón de configuración a "Mi Perfil" solo para usuarios logueados
+            if (btnConfiguracion) btnConfiguracion.innerHTML = "<i class='bx bx-user-circle'></i> Mi Perfil";
+            if (btnConfiguracion) btnConfiguracion.style.display = 'flex';
 
             // 1.5 creamos dinamicamente el boton de historial de pedidos
             let btnPedidos = document.getElementById('btn-nav-historial');
@@ -55,24 +56,6 @@ export async function inicializarUsuario() {
                 
                 // le damos la orden para navegar al historial al hacer clic
                 btnPedidos.addEventListener('click', () => { cerrarUsuario(); navegarA('historial'); });
-            }
-
-            // 1.6 creamos dinamicamente el boton de mi perfil
-            let btnPerfilUsuario = document.getElementById('btn-nav-perfil-usuario');
-            if (!btnPerfilUsuario) {
-                btnPerfilUsuario = document.createElement('button');
-                btnPerfilUsuario.className = 'btn-usuario-item'; 
-                btnPerfilUsuario.id = 'btn-nav-perfil-usuario';
-                // icono de usuario para mantener el diseno visual (boxicons)
-                btnPerfilUsuario.innerHTML = "<i class='bx bx-user'></i> mi perfil";
-                
-                // lo insertamos en el menu, justo antes de configuracion
-                if (btnConfiguracion && btnConfiguracion.parentNode) {
-                    btnConfiguracion.parentNode.insertBefore(btnPerfilUsuario, btnConfiguracion);
-                }
-                
-                // le damos la orden para navegar al perfil al hacer clic
-                btnPerfilUsuario.addEventListener('click', () => { cerrarUsuario(); navegarA('perfil'); });
             }
 
             // 2. creamos y agregamos dinamicamente el boton de cerrar sesion
@@ -106,10 +89,26 @@ export async function inicializarUsuario() {
                 sessionStorage.setItem('vistaActual', 'inicio'); // Volvemos al inicio tras salir
                 window.location.reload();
             });
+        } else {
+            // Si no hay sesión (invitado), ocultamos los botones de usuario logueado
+            if (btnConfiguracion) btnConfiguracion.style.display = 'none';
+            const btnPedidos = document.getElementById('btn-nav-historial');
+            if (btnPedidos) btnPedidos.style.display = 'none';
+            const btnSalir = document.getElementById('btn-nav-salir');
+            if (btnSalir) btnSalir.style.display = 'none';
         }
     } catch (error) {
         console.error('Error comprobando sesion en el sidebar:', error);
     }
+}
+
+/**
+ * Engancha el evento de apertura al botón del header.
+ * Se debe llamar DESPUÉS de que el header se haya cargado.
+ */
+export function conectarBotonHeaderUsuario() {
+    const btnPerfilHeader = document.getElementById('btn-usuario-perfil');
+    if (btnPerfilHeader) btnPerfilHeader.addEventListener('click', abrirUsuario);
 }
 
 // funcion para mostrar el menu lateral deslizando su contenedor

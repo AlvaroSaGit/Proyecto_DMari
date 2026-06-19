@@ -28,13 +28,12 @@ public class usuarioDAO {
      * usuario, correo y credenciales (encriptando la clave).
      * 
      * @param nuevoUsuario usuario: objeto con los datos digitados en el registro.
-     * @return boolean: true si las 3 inserciones tuvieron exito, false si fallo.
+     * @return int: el ID del usuario generado si fue exitoso, o 0 si falló.
      */
-    public boolean registrarUsuario(usuario nuevoUsuario) {
+    public int registrarUsuario(usuario nuevoUsuario) {
         // consulta para la tabla principal de usuario.
-        // usamos un select anidado para buscar el id del rol cliente automaticamente.
-        // esto evita tener que conocer el id numerico del rol desde el codigo java
-        String sqlUsuario = "INSERT INTO usuario (nombre, id_rol_fk, estado_cuenta) VALUES (?, (SELECT id_rol_pk FROM rol WHERE tipo_rol = 'cliente' LIMIT 1), 1)";
+        // Ahora acepta nombre, apellido y el rol dinámicamente.
+        String sqlUsuario = "INSERT INTO usuario (nombre, apellido, id_rol_fk, estado_cuenta) VALUES (?, ?, ?, 1)";
         
         // consulta para insertar el correo vinculado al usuario
         // vincula el id del usuario recien creado con su direccion de email principal
@@ -62,6 +61,8 @@ public class usuarioDAO {
             // insertamos el usuario y pedimos que nos devuelva el id autoincrementable que acaba de crear.
             try (PreparedStatement psUsuario = con.prepareStatement(sqlUsuario, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 psUsuario.setString(1, nuevoUsuario.getNombre());
+                psUsuario.setString(2, nuevoUsuario.getApellido());
+                psUsuario.setInt(3, nuevoUsuario.getIdRol());
                 psUsuario.executeUpdate();
                 try (ResultSet rs = psUsuario.getGeneratedKeys()) {
                     // condicional: verifica si mysql le otorgo un id unico al usuario.
@@ -96,14 +97,14 @@ public class usuarioDAO {
                 // si llegamos aqui sin errores, confirmamos todos los cambios en la base de datos
                 // confirmamos que todo salio perfecto y aplicamos los cambios definitivamente.
                 con.commit(); 
-                return true;
+                return idGenerado;
             }
             
             // rollback es el boton de panico. si no se genero id, deshace cualquier insert que se haya hecho en este intento.
             // si no hubo id, cancelamos cualquier cambio previo por seguridad
             // si no se genero id, cancelamos cualquier cambio previo por seguridad.
             con.rollback(); 
-            return false;
+            return 0;
             
         } catch (SQLException e) {
             // en caso de fallo, intentamos deshacer lo que se haya alcanzado a insertar
@@ -116,7 +117,7 @@ public class usuarioDAO {
             System.err.println("Motivo: " + e.getMessage());
             System.err.println("==================================\n");
             System.err.println("error al registrar: " + e.getMessage());
-            return false;
+            return 0;
         } finally {
             // cerramos los recursos para liberar memoria del servidor
             try { 

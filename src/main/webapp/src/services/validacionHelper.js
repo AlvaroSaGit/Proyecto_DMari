@@ -31,6 +31,25 @@ export function validarCorreo(email) {
 }
 
 /**
+ * Valida un campo de input en tiempo real para permitir solo dígitos numéricos.
+ * @param {Event} e - El evento 'input' del campo de texto.
+ */
+export function validarSoloNumeros(e) {
+    // Reemplaza cualquier caracter que no sea un número por una cadena vacía
+    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+}
+
+/**
+ * Valida que un número de teléfono tenga entre 7 y 15 dígitos.
+ * @param {string} telefono - El número de teléfono a validar.
+ * @returns {boolean} - True si es válido, false en caso contrario.
+ */
+export function validarTelefono(telefono) {
+    if (!telefono) return false;
+    const regex = /^[0-9]{7,15}$/;
+    return regex.test(telefono.trim());
+}
+/**
  * Muestra un mensaje de error debajo del input especificado
  * @param {string} inputId - ID del input HTML
  * @param {string} mensaje - Mensaje de error a mostrar

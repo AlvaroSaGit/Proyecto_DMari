@@ -79,18 +79,20 @@ insert into credenciales (id_usuario, passwd_encript) values
 -- ==========================================================
 -- 6. perfiles de clientes
 -- ==========================================================
-insert into cliente (id_cliente_pk, referencia_ubicacion) values 
-(2, 'casa blanca esquinera'),
-(7, 'edificio torres del sol'),
-(8, 'frente al parque'),
-(9, 'conjunto cerrado'),
-(10, 'casa rejas negras'),
-(6, 'cerca a la estacion de transporte'),
-(11, 'apartamento residencial piso 2'),
-(12, 'al lado de la tienda de la esquina'),
-(13, 'frente al colegio principal'),
-(14, 'barrio nuevo sector b'),
-(15, 'conjunto residencial bloques del norte');
+-- Se inserta un perfil de cliente para CADA usuario que tiene el rol 2.
+-- La referencia_ubicacion se puede actualizar desde el perfil.
+insert into cliente (id_cliente_pk) values 
+(2),
+(6),
+(7),
+(8),
+(9),
+(10),
+(11),
+(12),
+(13),
+(14),
+(15);
 
 -- ==========================================================
 -- 7. perfiles de proveedores

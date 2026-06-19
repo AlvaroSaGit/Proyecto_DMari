@@ -1,10 +1,7 @@
-// importamos el servicio de ui para inyectar componentes
 import { cargarComponente } from '../../../services/uiService.js';
-// importamos el enrutador
 import { navegarA } from '../../../router/router.js';
-import { validarNombre, validarPassword, validarCorreo, mostrarErrorCampo, limpiarErrorCampo } from '../../../services/validacionHelper.js';
+import { validarNombre, validarCorreo, validarPassword, mostrarErrorCampo, limpiarErrorCampo } from '../../../services/validacionHelper.js';
 
-// funcion principal encargada de mostrar el formulario de registro en pantalla
 export async function cargarVistaRegistro() {
     // inyectamos el html de registro en la caja fuerte del main
     await cargarComponente('component-main', './src/views/Auth/registro/registro.html');
@@ -13,7 +10,6 @@ export async function cargarVistaRegistro() {
     prepararFormularioRegistro();
 }
 
-// funcion interna para configurar eventos y capturar los datos ingresados
 function prepararFormularioRegistro() {
     // buscamos el formulario (soporta busqueda por id o por clase para evitar fallos silenciosos)
     const formulario = document.getElementById('form-registro') || document.querySelector('.formulario-registro');
@@ -83,23 +79,22 @@ function prepararFormularioRegistro() {
             parametros.append('banco', banco);
             parametros.append('tipoCuenta', tipoCuenta);
         }
-        
-        // validación avanzada usando el helper
-        let esValido = true;
 
-        // Limpiar errores previos
+        // --- Bloque de Validación ---
         limpiarErrorCampo('reg-nombre');
         limpiarErrorCampo('reg-apellido');
         limpiarErrorCampo('reg-correo');
         limpiarErrorCampo('reg-password');
         limpiarErrorCampo('reg-confirm-password');
 
+        let esValido = true;
+
         if (!validarNombre(nombre)) {
-            mostrarErrorCampo('reg-nombre', 'El nombre debe contener al menos 3 letras y sin numeros.');
+            mostrarErrorCampo('reg-nombre', 'El nombre es inválido o muy corto.');
             esValido = false;
         }
         if (!validarNombre(apellido)) {
-            mostrarErrorCampo('reg-apellido', 'El apellido debe contener al menos 3 letras y sin numeros.');
+            mostrarErrorCampo('reg-apellido', 'El apellido es inválido o muy corto.');
             esValido = false;
         }
         if (!validarCorreo(correo)) {
@@ -107,18 +102,15 @@ function prepararFormularioRegistro() {
             esValido = false;
         }
         if (!validarPassword(password)) {
-            mostrarErrorCampo('reg-password', 'La contraseña debe tener al menos 8 caracteres, una mayúscula y un número.');
+            mostrarErrorCampo('reg-password', 'Debe tener 8+ caracteres, 1 mayúscula y 1 número.');
             esValido = false;
         }
-
         if (password !== confirmPassword) {
-            mostrarErrorCampo('reg-confirm-password', 'Las contraseñas no coinciden');
+            mostrarErrorCampo('reg-confirm-password', 'Las contraseñas no coinciden.');
             esValido = false;
         }
 
-        if (!esValido) {
-            return;
-        }
+        if (!esValido) return;
         
         // envolvemos en un trycatch para atajar problemas de internet o de base de datos
         try {
@@ -136,7 +128,8 @@ function prepararFormularioRegistro() {
             } else {
                 // capturamos el mensaje de error que viene desde el validacionhelper de java
                 const mensajeError = await respuesta.text();
-                alert(mensajeError || 'error al registrarse');
+                // Mostramos el error (ej: "correo ya en uso") debajo del campo de correo
+                mostrarErrorCampo('reg-correo', mensajeError || 'Error al registrarse. Intenta de nuevo.');
             }
         } catch (error) {
             // si falla la promesa de java caera aqui sin crashear la pagina

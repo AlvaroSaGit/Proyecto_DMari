@@ -18,6 +18,8 @@ public class validacionHelper {
     private static final String REGEX_CORREO = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
     // exige al menos 8 caracteres, una mayuscula y un numero para coincidir con la seguridad del frontend
     private static final String REGEX_PASSWORD = "^(?=.*[0-9])(?=.*[A-Z]).{8,}$";
+    // exige entre 7 y 15 digitos numericos para telefonos
+    private static final String REGEX_TELEFONO = "^[0-9]{7,15}$";
 
     // verifica que un texto contenga unicamente letras y espacios (util para nombres y apellidos).
     // @param texto cadena recibida desde el formulario de registro o perfil.
@@ -51,6 +53,16 @@ public class validacionHelper {
     public static boolean validarSoloNumeros(String texto) {
         if (texto == null) return false;
         return Pattern.matches(REGEX_SOLO_NUMEROS, texto);
+    }
+
+    /**
+     * Verifica que un teléfono contenga solo números y tenga una longitud válida.
+     * @param telefono Cadena que representa el número de teléfono.
+     * @return true si cumple con el formato (7-15 dígitos).
+     */
+    public static boolean validarTelefono(String telefono) {
+        if (telefono == null || telefono.trim().isEmpty()) return false;
+        return Pattern.matches(REGEX_TELEFONO, telefono.trim());
     }
 
     // valida que un precio sea un numero positivo mayor a cero.

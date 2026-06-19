@@ -1,25 +1,32 @@
-<nav class="admin-sidebar-menu">
-    <!-- Boton para ir al panel de estadisticas -->
-    <button id="btn-nav-prov-dashboard" class="admin-nav-item">
-        <i class='bx bx-grid-alt'></i>
-        <span>Dashboard</span>
-    </button>
+<div id="overlay-prov" class="overlay-sidebar"></div>
+<div id="sidebar-proveedor" class="sidebar-container">
+    <div class="sidebar-header">
+        <h3>Panel de Proveedor</h3>
+        <button id="btn-cerrar-prov" class="btn-icon">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
+    
+    <div class="sidebar-content">
+        <div class="prov-item" data-go="proveedor-productos">
+            <span class="material-symbols-outlined">inventory_2</span>
+            <p>Mis Productos</p>
+        </div>
+        <div class="prov-item" data-go="proveedor-pedidos">
+            <span class="material-symbols-outlined">shopping_bag</span>
+            <p>Mis Pedidos</p>
+        </div>
+        <div class="prov-item" data-go="proveedor-estadistica">
+            <span class="material-symbols-outlined">monitoring</span>
+            <p>Estadísticas de Ventas</p>
+        </div>
+    </div>
 
-    <!-- Boton para ir a la vista del inventario propio -->
-    <button id="btn-nav-prov-productos" class="admin-nav-item activo">
-        <i class='bx bx-box'></i>
-        <span>Mis Productos</span>
-    </button>
-    
-    <!-- Boton para revisar los pedidos donde compraron sus productos -->
-    <button id="btn-nav-prov-pedidos" class="admin-nav-item">
-        <i class='bx bx-receipt'></i>
-        <span>Mis Pedidos</span>
-    </button>
-    
-    <div class="admin-sidebar-divisor"></div>
-    <button id="btn-nav-prov-salir" class="admin-nav-item">
-        <i class='bx bx-log-out'></i>
-        <span>Cerrar Sesion</span>
-    </button>
-</nav>
+    <!-- Pie de página del sidebar para el botón de logout -->
+    <div class="sidebar-footer">
+        <button id="btn-cerrar-sesion" class="prov-item" style="color: #ff4d4d; width: 100%;">
+            <span class="material-symbols-outlined">logout</span>
+            <p>Cerrar Sesión</p>
+        </button>
+    </div>
+</div>

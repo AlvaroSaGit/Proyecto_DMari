@@ -1,8 +1,8 @@
 /*
-    objetivo de este archivo:
-    data access object (dao) para gestionar el perfil del cliente.
-    abarca la lectura y escritura en 3 tablas: cliente, direccion y telefono.
-*/
+ * OBJETIVO:
+ * Data Access Object (DAO) para gestionar el perfil logístico del cliente.
+ * Orquesta la lectura y escritura en las tablas satélite: cliente, direccion y telefono.
+ */
 package com.dmari.dao;
 
 import java.sql.Connection;
@@ -18,18 +18,22 @@ public class clienteDAO {
     databaseHelper db = new databaseHelper();
 
     /**
-     * metodo de lectura que cruza las 3 tablas satelite vinculadas al perfil.
+     * Obtiene el perfil logístico completo de un usuario.
+     * Realiza un cruce de tablas (JOIN) para consolidar la dirección principal,
+     * el teléfono principal y un teléfono secundario opcional.
      * 
-     * @param idUsuario int: el id del usuario del cual extraera los datos.
-     * @return perfilcliente: el objeto de transporte (dto) lleno con los atributos del domicilio.
+     * @param idUsuario El ID del usuario a consultar.
+     * @return Un objeto perfilCliente con los datos, o null si no se encuentra.
      */
     public perfilCliente obtenerPerfil(int idUsuario) {
         perfilCliente perfil = null;
-        String sql = "SELECT d.direccion, c.referencia_ubicacion, c.telefono_secundario, d.direccion_detallada, t.numero_telefonico, co.correo " +
+        // Se usan alias (AS) para simplificar los nombres de las columnas y hacerlos consistentes.
+        String sql = "SELECT d.direccion, c.referencia_ubicacion, d.direccion_detallada AS direccion_detalle, t.numero_telefonico AS telefono, co.correo, " +
+                     "(SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = u.id_usuario_pk AND id_telefono_pk != t.id_telefono_pk LIMIT 1) AS telefono_secundario" +
                      "FROM usuario u " +
                      "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
                      "LEFT JOIN direccion d ON u.id_usuario_pk = d.id_usuario_fk AND d.direccion_primario = 1 " +
-                     "LEFT JOIN telefono t ON u.id_usuario_pk = t.id_usuario_fk " +
+                     "LEFT JOIN telefono t ON u.id_usuario_pk = t.id_usuario_fk " + 
                      "LEFT JOIN correo co ON u.id_usuario_pk = co.id_usuario_fk " +
                      "WHERE u.id_usuario_pk = ?";
         
@@ -37,15 +41,14 @@ public class clienteDAO {
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idUsuario);
             try (ResultSet rs = ps.executeQuery()) {
-                // condicional: verifica si existe ese usuario en las tablas hijas.
-                // si entra, inicializa la clase modelo e inyecta uno a uno los strings.
+                // Si el ResultSet tiene al menos una fila, se encontró el perfil.
                 if (rs.next()) {
                     perfil = new perfilCliente();
-                    perfil.setDireccion(rs.getString("direccion"));
-                    perfil.setDireccionDetalle(rs.getString("direccion_detallada"));
-                    perfil.setTelefono(rs.getString("numero_telefonico"));
+                    perfil.setDireccion(rs.getString("direccion")); // Columna original
+                    perfil.setDireccionDetalle(rs.getString("direccion_detalle")); // Usamos el alias
+                    perfil.setTelefono(rs.getString("telefono")); // Usamos el alias
                     perfil.setTelefonoSecundario(rs.getString("telefono_secundario"));
-                    perfil.setReferencia(rs.getString("referencia_ubicacion"));
+                    perfil.setReferencia(rs.getString("referencia_ubicacion")); // Columna original
                     perfil.setCorreo(rs.getString("correo"));
                     return perfil;
                 }
@@ -57,53 +60,48 @@ public class clienteDAO {
     }
         
     /**
-     * realiza un volcado maestro distribuyendo la nueva informacion hacia las tres
-     * tablas del modelo de datos de perfil, garantizando integridad.
+     * Guarda o actualiza el perfil logístico de un cliente de forma transaccional.
+     * Esta operación "todo o nada" asegura que los datos del perfil se guarden
+     * en las tablas 'cliente', 'direccion' y 'telefono' de manera consistente.
      * 
-     * @param idUsuario int: dueno de los registros
-     * @param direccionPrimaria string: texto de la calle principal
-     * @param direccionDetalle string: notas de ubicacion
-     * @param numeroTelefono string: telefono a insertar o cambiar
-     * @param telefonoSecundario string: telefono opcional
-     * @param referencia string: informacion logistica de punto de entrega
-     * @return boolean: true si las 3 operaciones sql salieron a la perfeccion, false si hubo error.
+     * @param idUsuario ID del usuario cuyo perfil se está modificando.
+     * @param direccionPrimaria Dirección principal de entrega.
+     * @param direccionDetalle Información adicional de la dirección (apto, torre).
+     * @param numeroTelefono Teléfono principal de contacto.
+     * @param telefonoSecundario Teléfono alternativo (opcional).
+     * @param referencia Indicaciones para la entrega (ej. "casa esquinera").
+     * @return true si la transacción fue exitosa (commit), false si falló (rollback).
      */
     public boolean guardarOActualizarPerfil(int idUsuario, String direccionPrimaria, String direccionDetalle, String numeroTelefono, String telefonoSecundario, String referencia) {
         
-        // 1. preparamos la instruccion sql para la tabla cliente (referencias generales)
-        // usamos on duplicate key update para insertar si es nuevo, o actualizar si ya existe, ahorrando consultas extra
-        String sqlCliente = "INSERT INTO cliente (id_cliente_pk, direccion_envio, telefono_secundario, referencia_ubicacion) " +
-                            "VALUES (?, ?, ?, ?) " +
-                            "ON DUPLICATE KEY UPDATE direccion_envio = VALUES(direccion_envio), telefono_secundario = VALUES(telefono_secundario), referencia_ubicacion = VALUES(referencia_ubicacion)";
+        // La tabla cliente solo maneja la referencia de ubicación.
+        String sqlCliente = "UPDATE cliente SET referencia_ubicacion = ? WHERE id_cliente_pk = ?";
                             
-        // 2. preparamos la instruccion sql para la tabla direccion
-        // forzamos el 1 logico en direccion_primaria. actualiza solo la direccion principal de este usuario especifico.
+        // 2. preparamos la instruccion sql para la tabla direccion.
+        // Si ya existe una dirección primaria para el usuario, la actualiza. Si no, la crea.
         String sqlDireccion = "INSERT INTO direccion (id_usuario_fk, direccion, direccion_detallada, direccion_primario) " +
                               "VALUES (?, ?, ?, 1) " +
                               "ON DUPLICATE KEY UPDATE direccion = VALUES(direccion), direccion_detallada = VALUES(direccion_detallada)";
                               
-        // 3. preparamos la instruccion sql para la tabla telefono (el numero telefonico es unique en el esquema)
-        // usamos insert ignore para evitar que mysql explote si el telefono ya existe para otro usuario
+        // INSERT IGNORE previene errores si el teléfono ya existe para otro usuario, priorizando la integridad.
         String sqlTelefono = "INSERT IGNORE INTO telefono (id_usuario_fk, numero_telefonico) " +
                              "VALUES (?, ?)";
 
         Connection con = null;
         try {
             con = db.conectar();
-            // apagamos el guardado automatico (autocommit) para iniciar un bloque transaccional.
-            // esto garantiza que si una insercion falla, las demas se anulan para mantener la base de datos limpia.
+            // Desactivamos el autocommit para iniciar una transacción manual.
+            // Esto garantiza que si una inserción falla, las demás se revierten.
             con.setAutoCommit(false);
 
-            // ejecucion del bloque 1: actualizacion de la tabla central del cliente
+            // Bloque 1: Actualizar la tabla 'cliente' con la referencia de ubicación.
             try (PreparedStatement psCli = con.prepareStatement(sqlCliente)) {
-                psCli.setInt(1, idUsuario);
-                psCli.setString(2, direccionPrimaria);
-                psCli.setString(3, telefonoSecundario);
-                psCli.setString(4, referencia);
+                psCli.setString(1, referencia);
+                psCli.setInt(2, idUsuario);
                 psCli.executeUpdate();
             }
 
-            // ejecucion del bloque 2: actualizacion de la tabla satelite de direccion
+            // Bloque 2: Insertar o actualizar la dirección principal.
             try (PreparedStatement psDir = con.prepareStatement(sqlDireccion)) {
                 psDir.setInt(1, idUsuario);
                 psDir.setString(2, direccionPrimaria);
@@ -111,16 +109,21 @@ public class clienteDAO {
                 psDir.executeUpdate();
             }
 
-            // ejecucion del bloque 3: actualizacion de la tabla satelite de telefono
-            // primero intentamos actualizar el registro asumiendo que el usuario ya tenia telefono asignado
+            // Bloque 3: Actualizar el teléfono principal.
             String sqlActualizarTelefono = "UPDATE telefono SET numero_telefonico = ? WHERE id_usuario_fk = ?";
             try (PreparedStatement psTelUpd = con.prepareStatement(sqlActualizarTelefono)) {
                 psTelUpd.setString(1, numeroTelefono);
                 psTelUpd.setInt(2, idUsuario);
                 int filas = psTelUpd.executeUpdate();
-                // validacion de filas afectadas: comprobamos si mysql realmente sobreescribio algo.
-                // si filas == 0, significa que el usuario no tenia telefono previo, asi que 
-                // procedemos a inyectarle uno completamente nuevo.
+                
+                if (telefonoSecundario != null && !telefonoSecundario.trim().isEmpty()) {
+                    // TODO: Implementar lógica para un segundo teléfono.
+                    // Se podría añadir una columna 'tipo' en la tabla 'telefono'
+                    // o manejar una segunda fila para el mismo usuario.
+                }
+
+                // Si el UPDATE no afectó filas, significa que el usuario no tenía un teléfono
+                // registrado, por lo que procedemos a insertarlo.
                 if (filas == 0) {
                     try (PreparedStatement psTelIns = con.prepareStatement(sqlTelefono)) {
                         psTelIns.setInt(1, idUsuario);
@@ -130,16 +133,16 @@ public class clienteDAO {
                 }
             }
 
-            // si todo el codigo anterior fluyo sin lanzar excepciones, guardamos los datos definitivamente
+            // Si todas las operaciones fueron exitosas, confirmamos los cambios.
             con.commit();
             return true;
         } catch (SQLException e) {
-            // si algo exploto en medio de la transaccion, deshacemos cualquier cambio incompleto
+            // Si ocurre cualquier error, revertimos todos los cambios hechos en esta transacción.
             try { if (con != null) con.rollback(); } catch (SQLException ex) {}
             System.out.println("Error al guardar perfil del cliente: " + e.getMessage());
             return false;
         } finally {
-            // limpieza de memoria: volvemos a encender el autocommit y cerramos la tuberia a la base de datos
+            // En cualquier caso, restauramos el autocommit y cerramos la conexión.
             try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
         }
     }

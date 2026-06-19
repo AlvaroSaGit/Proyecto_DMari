@@ -7,7 +7,7 @@
 */
 
 // importamos el servicio necesario para inyectar la vista html en la pantalla
-import { cargarComponente } from '../../../services/uiService.js';
+import { cargarComponente, mostrarMensaje } from '../../../services/uiService.js';
 // importamos el enrutador para redireccionar al usuario si no tiene permisos
 import { navegarA } from '../../../router/router.js';
 
@@ -131,25 +131,4 @@ async function prepararFormularioPerfil() {
             } catch (error) { console.error('error al cambiar pass:', error); }
         });
     }
-}
-
-/**
- * Crea una notificación minimalista acorde a los colores de la tienda (Oscuros).
- * Reemplaza los molestos alert() y evita el uso de colores rojos agresivos.
- */
-function mostrarMensaje(mensaje, tipo) {
-    const toast = document.createElement('div');
-    const icono = tipo === 'exito' ? '✓ ' : '⚠ ';
-    toast.innerText = icono + mensaje;
-    
-    // Usamos colores grises/oscuros elegantes (naturaleza de la pagina) en lugar de rojos
-    const colorFondo = tipo === 'exito' ? '#212529' : '#343a40'; 
-    toast.style.cssText = `position: fixed; bottom: 30px; right: 30px; background: ${colorFondo}; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-weight: 500; font-family: sans-serif; z-index: 10000; transition: opacity 0.5s ease;`;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 500);
-    }, 3500);
 }

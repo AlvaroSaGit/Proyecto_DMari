@@ -79,3 +79,25 @@ export function cerrarModalGeneral() {
     const modal = document.getElementById('modal-general');
     if (modal) modal.style.display = 'none';
 }
+
+/**
+ * Crea una notificación minimalista acorde a los colores de la tienda (Oscuros).
+ * Reemplaza los molestos alert() y evita el uso de colores rojos agresivos.
+ * @param {string} mensaje - El texto a mostrar.
+ * @param {'exito'|'error'} tipo - Define el color y el ícono.
+ */
+export function mostrarMensaje(mensaje, tipo) {
+    const toast = document.createElement('div');
+    const icono = tipo === 'exito' ? '✓ ' : '⚠ ';
+    toast.innerText = icono + mensaje;
+    
+    const colorFondo = tipo === 'exito' ? '#212529' : '#343a40'; 
+    toast.style.cssText = `position: fixed; bottom: 30px; right: 30px; background: ${colorFondo}; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-weight: 500; font-family: sans-serif; z-index: 10000; transition: opacity 0.5s ease;`;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
+    }, 3500);
+}

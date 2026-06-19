@@ -1,6 +1,5 @@
 // importamos todos los controladores de vistas del sistema
 import { cargarVistaInicio } from '../views/Cliente/inicioCliente/inicioController.js';
-import { cargarVistaConfiguracion } from '../views/Cliente/configuracion/configuracionController.js';
 import { cargarVistaLogin } from '../views/Auth/login/loginController.js';
 import { cargarVistaRegistro } from '../views/Auth/registro/registroController.js';
 import { cargarVistaHistorialPedidos } from '../views/Cliente/historialPedidos/historialPedidosController.js';
@@ -8,8 +7,8 @@ import { cargarVistaCatalogo } from '../views/Cliente/catalogo/productosControll
 import { cargarVistaAdminProductos } from '../views/Administrador/productos/adminProductosController.js';
 import { cargarVistaProveedorProductos } from '../views/Proveedor/productos/proveedorProductosController.js';
 import { inicializarAdmin } from '../views/Administrador/sidebar/adminSideBarController.js';
+import { conectarBotonHeaderProveedor, inicializarProveedor } from '../views/Proveedor/sidebar/proveedorSideBarController.js';
 import { cargarVistaAdminCategorias } from '../views/Administrador/categorias/adminCategoriasController.js';
-import { inicializarProveedor } from '../views/Proveedor/sidebar/proveedorSideBarController.js';
 import { cargarVistaAdminUsuarios } from '../views/Administrador/usuarios/adminusuariosController.js';
 import { cargarVistaAdminPedidos } from '../views/Administrador/adminPedido/adminPedidosController.js';
 import { cargarVistaAdminDevoluciones } from '../views/Administrador/devoluciones/adminDevolucionesController.js';
@@ -64,9 +63,7 @@ async function manejarRuta() {
     }
 
     // SWITCH DE RUTAS: Ejecutamos el controlador específico según la ruta solicitada
-    if (vista === 'configuracion') {
-        cargarVistaConfiguracion();
-    } else if (vista === 'login') {
+    if (vista === 'login') {
         cargarVistaLogin();
     } else if (vista === 'registro') {
         cargarVistaRegistro();
@@ -133,23 +130,34 @@ async function adaptarHeaderSegunRol(rol) {
         // Le aplicamos una clase al body que convierte toda la pagina en una estructura de Panel de Control
         document.body.classList.add('layout-dashboard'); 
         
-        // Creamos dinamicamente el "hueco" (div) donde vivira el menu lateral negro del Administrador
-        let sidebarAdmin = document.getElementById('contenedor-sidebar-admin');
-        if (!sidebarAdmin) {
-            sidebarAdmin = document.createElement('div');
-            sidebarAdmin.id = 'contenedor-sidebar-admin';
+        // Creamos dinámicamente el "hueco" (div) donde vivirá el menú lateral.
+        // Usamos un ID diferente para el admin y para el proveedor.
+        const containerId = rolActivo === '1' ? 'contenedor-sidebar-admin' : 'contenedor-sidebar-proveedor';
+        let sidebarContainer = document.getElementById(containerId);
+
+        // Si el contenedor no existe, lo creamos.
+        if (!sidebarContainer) {
+            // Primero, removemos el contenedor del otro rol si existiera, para evitar duplicados.
+            const otherContainerId = rolActivo === '1' ? 'contenedor-sidebar-proveedor' : 'contenedor-sidebar-admin';
+            const otherContainer = document.getElementById(otherContainerId);
+            if (otherContainer) otherContainer.remove();
+
+            sidebarContainer = document.createElement('div');
+            sidebarContainer.id = containerId;
+            sidebarContainer.classList.add('dashboard-sidebar-container'); // ¡CLASE UNIFICADORA!
             const main = document.getElementById('component-main');
             // Insertamos la nueva sidebar en el arbol de HTML, justo antes del contenedor principal
-            if (main) main.parentNode.insertBefore(sidebarAdmin, main); 
+            if (main) main.parentNode.insertBefore(sidebarContainer, main); 
         }
         
         // Si el hueco de la sidebar esta vacio, inicializamos el controlador del Dashboard
-        // Usamos trim() para asegurar que no nos enganen espacios en blanco fantasmas
-        if (sidebarAdmin.innerHTML.trim() === '') {
+        if (sidebarContainer.innerHTML.trim() === '') {
             if (rolActivo === '1') {
                 await inicializarAdmin();
             } else if (rolActivo === '4') {
                 await inicializarProveedor();
+                // ¡CONEXIÓN CLAVE! Le damos al botón del header la orden de abrir el panel de proveedor.
+                conectarBotonHeaderProveedor();
             }
         }
     } else {
@@ -161,10 +169,12 @@ async function adaptarHeaderSegunRol(rol) {
         // DESMONTAJE DEL DASHBOARD: Si el admin cerro sesion, destruimos toda su estructura especial
         // para que la tienda vuelva a verse limpia para el cliente
         document.body.classList.remove('layout-dashboard');
-        const sidebarAdmin = document.getElementById('contenedor-sidebar-admin');
-        if (sidebarAdmin) {
-            sidebarAdmin.remove(); 
-        }
+        // Removemos ambos posibles contenedores de sidebar para una limpieza completa.
+        const sidebarAdminContainer = document.getElementById('contenedor-sidebar-admin');
+        if (sidebarAdminContainer) sidebarAdminContainer.remove();
+        
+        const sidebarProvContainer = document.getElementById('contenedor-sidebar-proveedor');
+        if (sidebarProvContainer) sidebarProvContainer.remove();
     }
 }
 

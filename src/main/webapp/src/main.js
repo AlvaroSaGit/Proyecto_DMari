@@ -9,7 +9,7 @@ import { inicializarCategoria, abrirCategoria } from './components/categoriaSide
 // importamos el controlador del usuario
 import { inicializarUsuario, abrirUsuario } from './components/usuarioSideBar/usuarioSideBarController.js';
 // importamos el controlador del sidebar de proveedor
-// import { inicializarProveedor } from './views/Proveedor/sidebar/proveedorSideBarController.js';
+import { inicializarProveedor, abrirProveedor } from './views/Proveedor/sidebar/proveedorSideBarController.js';
 
 /* 
     El addEventListener mantiene pendiente cuando ocurra el suceso
@@ -65,7 +65,12 @@ function configurarBotonesHeader() {
 
     if (btnUsuario) {
         btnUsuario.addEventListener('click', function() {
-            abrirUsuario();
+            // si el usuario es un proveedor, abre su panel. si no, abre el de cliente.
+            if (sessionStorage.getItem('rolUsuario') == "4") {
+                abrirProveedor();
+            } else {
+                abrirUsuario();
+            }
         });
     }
 
@@ -101,6 +106,11 @@ async function verificarSesion() {
                 sessionStorage.setItem('rolUsuario', datos.idRol);
             } else if (datos.rol !== undefined) {
                 sessionStorage.setItem('rolUsuario', datos.rol);
+            }
+
+            // Si el usuario es un proveedor (Rol 4), inicializamos su panel lateral
+            if (sessionStorage.getItem('rolUsuario') == "4") {
+                inicializarProveedor();
             }
             
             // Evento Forzado: Disparamos un cambio de Hash falso para obligar al Enrutador a redibujar el header

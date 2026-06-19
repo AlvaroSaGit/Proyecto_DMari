@@ -3,6 +3,7 @@ package com.dmari.controlador;
 import java.io.IOException;
 
 import com.dmari.dao.usuarioDAO;
+import com.dmari.dao.solicitudProveedorDAO; // Verificamos que este import esté presente
 import com.dmari.helper.validacionHelper;
 import com.dmari.modelo.usuario;
 
@@ -90,11 +91,12 @@ public class AuthController extends HttpServlet {
             String nombre = request.getParameter("nombre");
             String correo = request.getParameter("correo");
             String password = request.getParameter("password");
+            String rol = request.getParameter("rol");
 
             // validamos el nombre campo por campo para enviar mensajes precisos
             if (!validacionHelper.validarNombre(nombre)) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().print("el nombre solo puede contener letras y espacios");
+                response.getWriter().print("El nombre es inválido o muy corto.");
                 return;
             }
             // validamos el correo buscando el @ y el punto com
@@ -106,21 +108,44 @@ public class AuthController extends HttpServlet {
             // validamos que la contrasena sea segura segun nuestras reglas
             if (!validacionHelper.validarPassword(password)) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().print("la contrasena requiere 8 caracteres y al menos un numero");
+                response.getWriter().print("La contraseña requiere 8+ caracteres, 1 mayúscula y 1 número.");
                 return;
             }
 
             usuario nuevoUsuario = new usuario();
             nuevoUsuario.setNombre(nombre);
+            nuevoUsuario.setApellido(request.getParameter("apellido"));
             nuevoUsuario.setCorreo(correo);
             nuevoUsuario.setPassword(password);
+            nuevoUsuario.setIdRol(Integer.parseInt(rol));
 
             // condicional de insercion: si fue exitoso (correo no repetido) devuelve 200
-            if (dao.registrarUsuario(nuevoUsuario)) {
+            int idUsuarioGenerado = dao.registrarUsuario(nuevoUsuario);
+            if (idUsuarioGenerado > 0) {
+                // Si el registro es de un proveedor, guardamos su solicitud
+                if ("4".equals(rol)) {
+                    String nit = request.getParameter("nit");
+                    String marca = request.getParameter("marca");
+                    String cuenta = request.getParameter("cuenta");
+                    String banco = request.getParameter("banco");
+                    String tipoCuenta = request.getParameter("tipoCuenta");
+
+                    // Validaciones básicas para los campos de proveedor
+                    if (nit == null || nit.trim().isEmpty() || marca == null || marca.trim().isEmpty()) {                        
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        response.getWriter().print("El NIT y el nombre de la marca son obligatorios para proveedores.");
+                        // Opcional: podrías borrar el usuario recién creado para consistencia
+                        return;
+                    }
+
+                    solicitudProveedorDAO solicitudDao = new solicitudProveedorDAO();
+                    solicitudDao.crearSolicitud(idUsuarioGenerado, nit, marca, cuenta, banco, tipoCuenta);
+                }
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 // sc_bad_request (400) indica que la peticion fallo (ej. correo ya registrado).
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST); 
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().print("Este correo electrónico ya está en uso.");
             }
 
         } else if ("/login".equals(ruta)) {

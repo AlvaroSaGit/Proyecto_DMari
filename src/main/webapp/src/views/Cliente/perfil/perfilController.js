@@ -5,6 +5,7 @@
     y enviarlos de vuelta cuando el usuario los actualice.
 */
 import { cargarComponente } from '../../../services/uiService.js';
+import { validarSoloNumeros, validarTelefono, mostrarErrorCampo, limpiarErrorCampo, validarPassword } from '../../../services/validacionHelper.js';
 
 // funcion de arranque, llamada por el enrutador
 export async function cargarVistaPerfil() {
@@ -16,11 +17,21 @@ export async function cargarVistaPerfil() {
 
 async function prepararFormularioPerfil() {
     const formulario = document.getElementById('form-perfil-cliente');
+    const formPassword = document.getElementById('form-cambiar-password');
     
     // verificacion de integridad de la vista cargada
     if (!formulario) {
         console.warn('Advertencia: no se encontro el <form id="form-perfil-cliente"> en el html. Revisa el nombre.');
     }
+
+    // --- VALIDACIÓN EN TIEMPO REAL PARA CAMPOS DE TELÉFONO ---
+    const inTelefono = document.getElementById('perfil-telefono');
+    const inTelSec = document.getElementById('perfil-telefono-sec');
+
+    if (inTelefono) inTelefono.addEventListener('input', validarSoloNumeros);
+    if (inTelSec) inTelSec.addEventListener('input', validarSoloNumeros);
+    // --- FIN DE LA VALIDACIÓN ---
+
 
     // 1. cargar datos actuales del cliente al abrir la pagina
     try {
@@ -71,6 +82,34 @@ async function prepararFormularioPerfil() {
                 btnGuardar.disabled = true; // previene doble clic accidental
             }
     
+            // --- BLOQUE DE VALIDACIÓN CON MENSAJES DE ERROR ---
+            let esValido = true;
+            const telefono = document.getElementById('perfil-telefono')?.value || '';
+            const telefonoSec = document.getElementById('perfil-telefono-sec')?.value || '';
+
+            // Limpiamos los errores previos antes de volver a validar
+            limpiarErrorCampo('perfil-telefono');
+            limpiarErrorCampo('perfil-telefono-sec');
+
+            // Validamos el teléfono principal
+            if (!validarTelefono(telefono)) {
+                mostrarErrorCampo('perfil-telefono', 'El teléfono principal debe tener entre 7 y 15 dígitos.');
+                esValido = false;
+            }
+
+            // El teléfono secundario es opcional, pero si se ingresa, debe ser válido.
+            // Usamos telefonoSec (la variable con el valor) para no validar un campo vacío.
+            if (telefonoSec && !validarTelefono(telefonoSec)) {
+                mostrarErrorCampo('perfil-telefono-sec', 'El teléfono alternativo debe tener entre 7 y 15 dígitos.');
+                esValido = false;
+            }
+
+            if (!esValido) {
+                // Si hay errores, restauramos el botón y detenemos el envío.
+                if(btnGuardar) { btnGuardar.innerText = 'Guardar Perfil'; btnGuardar.disabled = false; }
+                return;
+            }
+
             // empaquetamos los datos usando urlsearchparams para que java los pueda
             // atrapar facilmente usando request.getparameter("nombre_campo");
             const params = new URLSearchParams();
@@ -105,4 +144,68 @@ async function prepararFormularioPerfil() {
             }
         });
     }
+
+    // 3. escuchar cuando el usuario intente cambiar su contraseña
+    if (formPassword) {
+        formPassword.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const passActual = document.getElementById('pass-actual').value;
+            const passNueva = document.getElementById('pass-nueva').value;
+            const passConfirm = document.getElementById('pass-confirm').value;
+
+            // --- Bloque de Validación de Contraseña ---
+            limpiarErrorCampo('pass-nueva');
+            limpiarErrorCampo('pass-confirm');
+            let esValido = true;
+
+            if (!validarPassword(passNueva)) {
+                mostrarErrorCampo('pass-nueva', 'Debe tener 8+ caracteres, 1 mayúscula y 1 número.');
+                esValido = false;
+            }
+
+            if (passNueva !== passConfirm) {
+                mostrarErrorCampo('pass-confirm', 'Las contraseñas nuevas no coinciden.');
+                esValido = false;
+            }
+
+            if (!esValido) {
+                return;
+            }
+            const parametros = new URLSearchParams();
+            parametros.append('passActual', passActual);
+            parametros.append('passNueva', passNueva);
+
+            try {
+                const respuesta = await fetch('cambiar-password', { method: 'POST', body: parametros });
+                if (respuesta.ok) {
+                    alert('¡Tu contraseña ha sido cambiada con éxito!');
+                    formPassword.reset();
+                } else {
+                    alert('La contraseña actual es incorrecta o hubo un error.');
+                }
+            } catch (error) { console.error('error al cambiar pass:', error); }
+        });
+    }
+}
+
+/**
+ * Crea una notificación minimalista acorde a los colores de la tienda (Oscuros).
+ * Reemplaza los molestos alert() y evita el uso de colores rojos agresivos.
+ */
+function mostrarMensaje(mensaje, tipo) {
+    const toast = document.createElement('div');
+    const icono = tipo === 'exito' ? '✓ ' : '⚠ ';
+    toast.innerText = icono + mensaje;
+    
+    // Usamos colores grises/oscuros elegantes (naturaleza de la pagina) en lugar de rojos
+    const colorFondo = tipo === 'exito' ? '#212529' : '#343a40'; 
+    toast.style.cssText = `position: fixed; bottom: 30px; right: 30px; background: ${colorFondo}; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-weight: 500; font-family: sans-serif; z-index: 10000; transition: opacity 0.5s ease;`;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
+    }, 3500);
 }

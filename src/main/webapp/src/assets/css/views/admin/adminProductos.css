@@ -338,8 +338,8 @@ body.layout-dashboard #btn-cerrar-sesion:hover {
 }
 
 /* 4. Corregir la Sidebar para que no monte el Header ni el Footer */
-body.layout-dashboard #contenedor-sidebar-admin {
-    position: fixed;
+/* Hacemos el selector genérico para que funcione con Admin y Proveedor */
+body.layout-dashboard .dashboard-sidebar-container {
     top: 80px; /* Debe ser exactamente igual al 'min-height' del Header */
     left: 0;
     width: 250px;
