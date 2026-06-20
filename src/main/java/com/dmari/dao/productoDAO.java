@@ -43,6 +43,7 @@ public class productoDAO {
              // extraemos el texto de la categoria para que el usuario no vea solo un numero
              "c.nombre AS nombre_categoria, " +
              "(SELECT GROUP_CONCAT(e.nombre_etiqueta SEPARATOR ',') FROM producto_etiqueta pe INNER JOIN etiqueta e ON pe.id_etiqueta = e.id_etiqueta_pk WHERE pe.id_producto = p.id_producto_pk) AS etiquetas_str, " +
+             "prov.id_proveedor_pk, " +
              "prov.nombre_marca, " +
              "tel.numero_telefonico AS contacto_tel, " +
              "cor.correo AS contacto_correo " +
@@ -85,6 +86,7 @@ public class productoDAO {
                 prod.setCategoria(cat != null ? cat : "General");
                 
                 // extraemos los datos de contacto y marca del proveedor vinculados
+                prod.setIdProveedorFk(rs.getInt("id_proveedor_pk"));
                 String marca = rs.getString("nombre_marca");
                 prod.setProveedorMarca(marca != null ? marca : "DMari Oficial");
                 String tel = rs.getString("contacto_tel");
@@ -137,8 +139,9 @@ public class productoDAO {
              "i.url_ruta, " +
              // nombre de la categoria
              "c.nombre AS nombre_categoria, " +
-             // aplicamos la misma subconsulta para el panel del proveedor
-             "(SELECT GROUP_CONCAT(e.nombre_etiqueta SEPARATOR ',') FROM producto_etiqueta pe INNER JOIN etiqueta e ON pe.id_etiqueta = e.id_etiqueta_pk WHERE pe.id_producto = p.id_producto_pk) AS etiquetas_str " +
+             "(SELECT GROUP_CONCAT(e.nombre_etiqueta SEPARATOR ',') FROM producto_etiqueta pe INNER JOIN etiqueta e ON pe.id_etiqueta = e.id_etiqueta_pk WHERE pe.id_producto = p.id_producto_pk) AS etiquetas_str, " +
+             "pr.id_proveedor_pk, " +
+             "pr.nombre_marca " +
              // arrancamos en producto
              "FROM producto p " +
              "LEFT JOIN imagenes i ON p.id_producto_pk = i.id_producto_fk AND i.imagen_principal = 1 " +
@@ -184,6 +187,9 @@ public class productoDAO {
                          }
                      }
                      prod.setEtiquetas(listaTags);
+                     
+                     prod.setIdProveedorFk(rs.getInt("id_proveedor_pk"));
+                     prod.setProveedorMarca(rs.getString("nombre_marca"));
                      
                      lista.add(prod);
                  }

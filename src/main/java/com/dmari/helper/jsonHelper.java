@@ -49,7 +49,7 @@ public class jsonHelper {
             json.append("\"estado\":").append(p.isEstado()).append(",");
             json.append("\"categoria\":\"").append(p.getCategoria() != null ? p.getCategoria() : "Sin categoria").append("\",");
             json.append("\"proveedorMarca\":\"").append(p.getProveedorMarca() != null ? escaparTexto(p.getProveedorMarca()) : "DMari Oficial").append("\",");
-            json.append("\"id_proveedor_fk\":").append(p.getProveedorMarca() != null ? "1" : "null").append(",");
+            json.append("\"id_proveedor_fk\":").append(p.getIdProveedorFk() > 0 ? p.getIdProveedorFk() : "null").append(",");
             
             json.append("\"etiquetas\":[");
             ArrayList<String> tags = p.getEtiquetas();

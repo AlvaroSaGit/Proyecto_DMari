@@ -51,6 +51,9 @@ public class producto {
     // absorbe la marca del proveedor desde la base de datos
     private String proveedorMarca;
     
+    // id del proveedor si existe, util para identificar al creador del articulo
+    private int idProveedorFk;
+    
     // datos de contacto del proveedor para visibilidad del cliente
     private String proveedorTelefono;
     private String proveedorCorreo;
@@ -171,6 +174,9 @@ public class producto {
     public void setProveedorMarca(String proveedorMarca) {
         this.proveedorMarca = proveedorMarca;
     }
+
+    public int getIdProveedorFk() { return idProveedorFk; }
+    public void setIdProveedorFk(int idProveedorFk) { this.idProveedorFk = idProveedorFk; }
 
     public String getProveedorTelefono() { return proveedorTelefono; }
     public void setProveedorTelefono(String proveedorTelefono) { this.proveedorTelefono = proveedorTelefono; }

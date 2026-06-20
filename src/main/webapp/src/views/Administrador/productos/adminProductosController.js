@@ -438,7 +438,7 @@ async function cargarListaProductos(idProveedor = '') {
             const nombreCategoria = prod.categoria || prod.nombre_categoria || prod.nombreCategoria || 'Sin categoria';
             // capturamos el nombre del proveedor si viene en el json, de lo contrario es dmari
             const esPropio = !prod.id_proveedor_fk; 
-            const nombreVendedor = prod.nombre_vendedor || prod.nombreVendedor || prod.marca || (esPropio ? '📦 DMari Oficial' : 'Proveedor Externo');
+            const nombreVendedor = prod.proveedorMarca || prod.nombre_vendedor || prod.nombreVendedor || prod.marca || (esPropio ? '📦 DMari Oficial' : 'Proveedor Externo');
             const colorOwner = esPropio ? '#e91e63' : '#2c3e50'; // rosa para dmari, oscuro para artesanos
 
             // verificamos si las etiquetas vienen como array o como texto simple
