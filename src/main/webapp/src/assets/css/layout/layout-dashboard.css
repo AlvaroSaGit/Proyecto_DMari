@@ -54,6 +54,8 @@ body.layout-dashboard {
 body.layout-dashboard .main-header {
     /* mostramos el header (antes estaba oculto) */
     display: flex;
+    align-items: center;
+    padding: 15px 20px; /* Engrosar el header para que no se vea delgado */
     box-shadow: 0 2px 10px rgba(0,0,0,0.05); /* Separacion visual del header */
     z-index: 10;
 }

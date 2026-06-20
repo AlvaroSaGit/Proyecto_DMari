@@ -117,22 +117,27 @@ public class clienteDAO {
                 }
             }
 
-            // bloque 3: actualizar el telefono principal del usuario.
-            // LIMIT 1 es critico: evita que el UPDATE afecte multiples filas cuando el usuario tiene
-            // mas de un telefono guardado, lo cual causaria un error UNIQUE por numero duplicado.
-            String sqlActualizarTelefono = "UPDATE telefono SET numero_telefonico = ? WHERE id_usuario_fk = ? LIMIT 1";
-            String sqlTelefono = "INSERT IGNORE INTO telefono (id_usuario_fk, numero_telefonico) VALUES (?, ?)";
-            try (PreparedStatement psTelUpd = con.prepareStatement(sqlActualizarTelefono)) {
-                psTelUpd.setString(1, numeroTelefono);
-                psTelUpd.setInt(2, idUsuario);
-                int filas = psTelUpd.executeUpdate();
-
-                if (filas == 0) {
-                    try (PreparedStatement psTelIns = con.prepareStatement(sqlTelefono)) {
-                        psTelIns.setInt(1, idUsuario);
-                        psTelIns.setString(2, numeroTelefono);
-                        psTelIns.executeUpdate();
-                    }
+            // bloque 3: manejar telefonos (borrar existentes e insertar nuevos)
+            String sqlDeleteTel = "DELETE FROM telefono WHERE id_usuario_fk = ?";
+            String sqlInsertTel = "INSERT INTO telefono (id_usuario_fk, numero_telefonico) VALUES (?, ?)";
+            
+            try (PreparedStatement psDel = con.prepareStatement(sqlDeleteTel)) {
+                psDel.setInt(1, idUsuario);
+                psDel.executeUpdate();
+            }
+            
+            try (PreparedStatement psIns = con.prepareStatement(sqlInsertTel)) {
+                // Insertar el principal
+                if (numeroTelefono != null && !numeroTelefono.trim().isEmpty()) {
+                    psIns.setInt(1, idUsuario);
+                    psIns.setString(2, numeroTelefono.trim());
+                    psIns.executeUpdate();
+                }
+                // Insertar el secundario
+                if (telefonoSecundario != null && !telefonoSecundario.trim().isEmpty() && !telefonoSecundario.trim().equals(numeroTelefono.trim())) {
+                    psIns.setInt(1, idUsuario);
+                    psIns.setString(2, telefonoSecundario.trim());
+                    psIns.executeUpdate();
                 }
             }
 

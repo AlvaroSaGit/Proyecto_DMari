@@ -16,7 +16,7 @@ async function cargarListaSolicitudes() {
     if (!tbody) return;
 
     try {
-        const respuesta = await fetch('solicitudes-categorias');
+        const respuesta = await fetch('solicitudes-proveedor');
         if (!respuesta.ok) throw new Error('Error al obtener solicitudes');
         
         const solicitudes = await respuesta.json();
@@ -24,22 +24,29 @@ async function cargarListaSolicitudes() {
         tbody.innerHTML = ''; 
 
         if (solicitudes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No hay solicitudes pendientes</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No hay solicitudes pendientes</td></tr>';
             return;
         }
 
         solicitudes.forEach(solicitud => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>#00${solicitud.id_solicitud_pk}</td>
-                <td>${solicitud.nombre_proveedor}</td>
-                <td><strong>${solicitud.nombre_sugerido}</strong></td>
-                <td><small>${solicitud.justificacion || 'Sin justificación'}</small></td>
-                <td><span class="badge-estado ${solicitud.estado_solicitud === 'PENDIENTE' ? 'badge-pendiente' : (solicitud.estado_solicitud === 'APROBADA' ? 'badge-activo' : 'badge-inactivo')}">${solicitud.estado_solicitud}</span></td>
+                <td>#00${solicitud.id}</td>
                 <td>
-                    ${solicitud.estado_solicitud === 'PENDIENTE' ? `
-                        <button class="btn-aprobar" data-id="${solicitud.id_solicitud_pk}" data-nombre="${solicitud.nombre_sugerido}"><i class='bx bx-check'></i> Aprobar</button>
-                        <button class="btn-rechazar" data-id="${solicitud.id_solicitud_pk}"><i class='bx bx-x'></i> Rechazar</button>
+                    <strong>${solicitud.usuarioNombre}</strong><br>
+                    <small style="color: #666;">${solicitud.usuarioCorreo}</small>
+                </td>
+                <td>${solicitud.nit}</td>
+                <td><strong>${solicitud.marca}</strong></td>
+                <td>
+                    ${solicitud.banco}<br>
+                    <small style="color: #666;">Cta ${solicitud.tipoCuenta}: ${solicitud.cuenta}</small>
+                </td>
+                <td><span class="badge-estado ${solicitud.estado === 'pendiente' ? 'badge-pendiente' : (solicitud.estado === 'aprobada' ? 'badge-activo' : 'badge-inactivo')}">${solicitud.estado}</span></td>
+                <td>
+                    ${solicitud.estado === 'pendiente' ? `
+                        <button class="btn-aprobar" data-id="${solicitud.id}" data-nombre="${solicitud.marca}"><i class='bx bx-check'></i> Aprobar</button>
+                        <button class="btn-rechazar" data-id="${solicitud.id}"><i class='bx bx-x'></i> Rechazar</button>
                     ` : '<span>-</span>'}
                 </td>
             `;
@@ -101,7 +108,7 @@ function asignarEventosBotones(tbody) {
 
 async function procesarSolicitud(parametros) {
     try {
-        const respuesta = await fetch('solicitudes-categorias', {
+        const respuesta = await fetch('solicitudes-proveedor', {
             method: 'POST',
             body: parametros
         });

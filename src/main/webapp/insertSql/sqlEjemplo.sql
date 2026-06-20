@@ -219,8 +219,8 @@ INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, selecciona
 (@last_carrito_id, 2, 1, TRUE);
 
 -- Cabecera del pedido (ahora vincula correctamente el id_carrito_fk)
-INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES 
-(2, @last_carrito_id, 1, 40500.00, 'Pendiente');
+INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) VALUES 
+(2, @last_carrito_id, 1, 40500.00, 'Pendiente', CURRENT_TIMESTAMP);
 SET @last_pedido_id = LAST_INSERT_ID();
 
 -- Detalle inmutable del pedido
