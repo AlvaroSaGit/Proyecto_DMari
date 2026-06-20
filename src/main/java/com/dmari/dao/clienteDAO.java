@@ -118,9 +118,9 @@ public class clienteDAO {
             }
 
             // bloque 3: actualizar el telefono principal del usuario.
-            // OJO: Si el numero ya pertenece a otra persona, lanzara un IntegrityConstraintViolation, lo que dispara un 500.
-            String sqlActualizarTelefono = "UPDATE telefono SET numero_telefonico = ? WHERE id_usuario_fk = ?";
-            // insert ignore previene el error si el UPDATE fallo porque la fila no existia, pero igual valida UNIQUE.
+            // LIMIT 1 es critico: evita que el UPDATE afecte multiples filas cuando el usuario tiene
+            // mas de un telefono guardado, lo cual causaria un error UNIQUE por numero duplicado.
+            String sqlActualizarTelefono = "UPDATE telefono SET numero_telefonico = ? WHERE id_usuario_fk = ? LIMIT 1";
             String sqlTelefono = "INSERT IGNORE INTO telefono (id_usuario_fk, numero_telefonico) VALUES (?, ?)";
             try (PreparedStatement psTelUpd = con.prepareStatement(sqlActualizarTelefono)) {
                 psTelUpd.setString(1, numeroTelefono);

@@ -456,4 +456,24 @@ public class usuarioDAO {
             try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
         }
     }
+
+    /**
+     * metodo complementario: desactiva la cuenta de usuario.
+     * utilizado principalmente cuando un proveedor se registra y queda en estado "pendiente".
+     *
+     * @param idUsuario identificador del usuario en mysql.
+     * @return boolean true si la operacion afecto filas.
+     */
+    public boolean desactivarCuentaParaRevision(int idUsuario) {
+        // el usuario sigue existiendo en el sistema pero estado_cuenta pasa a 0 (desactivado)
+        String sql = "UPDATE usuario SET estado_cuenta = 0 WHERE id_usuario_pk = ?";
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idUsuario);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error al desactivar cuenta de usuario: " + e.getMessage());
+            return false;
+        }
+    }
 }

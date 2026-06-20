@@ -118,7 +118,7 @@ export function crearBloquePedido(pedido) {
             ${htmlProductos}
         </div>
         
-        ${pedido.estado.toLowerCase() === 'pendiente' ? `
+        ${pedido.estado.toLowerCase().includes('pendiente') ? `
         <div style="margin-top: 15px; text-align: right; border-top: 1px solid #eee; padding-top: 10px;">
             <button class="btn-cancelar-pedido" data-id="${pedido.id}" style="background: white; color: #dc3545; border: 1px solid #dc3545; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">Cancelar Pedido</button>
         </div>

@@ -58,6 +58,12 @@ body.layout-dashboard .main-header {
     z-index: 10;
 }
 
+/* mejoramos el espaciado del boton de perfil del usuario para que no se vea angosto */
+body.layout-dashboard .btn-usuario-perfil {
+    margin-right: 20px;
+    padding: 8px 15px;
+}
+
 /* ocultamos los elementos que no aplican en el panel de control */
 body.layout-dashboard .header-logo,
 body.layout-dashboard .header-categoria,

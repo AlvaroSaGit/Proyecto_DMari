@@ -249,18 +249,16 @@ public class pedidoDAO {
         // usa left joins con pago y metodo para ver la forma de pago.
         // filtra por el id del cliente logueado.
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, p.motivo_cancelacion, " +
-                     // traemos el nombre del producto, sus datos monetarios y el metodo de pago
-                     "prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal, mp.descripcion_pago " +
-                     // comenzamos desde la tabla maestra de pedidos
+                     "prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal, mp.descripcion_pago, " +
+                     "COALESCE(prov.nombre_marca, u_prov.nombre) AS nombre_proveedor " +
                      "FROM pedido p " +
-                     // join 1: cruzamos con el detalle para sacar los productos de cada factura
                      "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
-                     // join 2: cruzamos con producto para saber el nombre de lo que compro
                      "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
-                     // joins de pago: para mostrar como pago este pedido
+                     "LEFT JOIN proveedor_producto pp ON prod.id_producto_pk = pp.id_producto_fk " +
+                     "LEFT JOIN proveedor prov ON pp.id_proveedor_fk = prov.id_proveedor_pk " +
+                     "LEFT JOIN usuario u_prov ON prov.id_proveedor_pk = u_prov.id_usuario_pk " +
                      "LEFT JOIN pago pg ON p.id_pedido_pk = pg.id_pedido_fk " +
                      "LEFT JOIN metodo_pago mp ON pg.id_metodo_pago_fk = mp.id_metodo_pago_pk " +
-                     // filtramos para traer solo los pedidos del cliente que esta consultando, del mas nuevo al mas viejo
                      "WHERE p.id_cliente_fk = ? ORDER BY p.fecha DESC";
                      
         try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -279,6 +277,7 @@ public class pedidoDAO {
                      dp.setMotivoCancelacion(rs.getString("motivo_cancelacion"));
                      
                      dp.setNombreProducto(rs.getString("nombre_producto"));
+                     dp.setNombreProveedor(rs.getString("nombre_proveedor"));
                      dp.setCantidad(rs.getInt("cantidad"));
                      dp.setPrecioUnitario(rs.getDouble("precio_unitario"));
                      dp.setSubtotal(rs.getDouble("subtotal"));
@@ -747,7 +746,7 @@ public class pedidoDAO {
      */
     public int obtenerIdProveedorPorUsuario(int idUsuario) {
         int idProveedor = 0;
-        String sql = "SELECT id_proveedor_pk FROM proveedor WHERE id_usuario_fk = ?";
+        String sql = "SELECT id_proveedor_pk FROM proveedor WHERE id_proveedor_pk = ?";
 
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {

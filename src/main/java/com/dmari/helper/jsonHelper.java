@@ -39,32 +39,28 @@ public class jsonHelper {
         for (int i = 0; i < lista.size(); i++) {
             producto p = lista.get(i);
 
-            // iniciamos la estructura del objeto json para cada producto
             json.append("{");
             json.append("\"id\":").append(p.getIdProductoPk()).append(",");
+            json.append("\"id_categoria_pk\":").append(p.getIdCategoriaFk()).append(",");
             json.append("\"nombre\":\"").append(escaparTexto(p.getNombreProducto())).append("\",");
             json.append("\"descripcion\":\"").append(escaparTexto(p.getDescripcion())).append("\",");
-            // agregamos los valores numericos y booleanos sin comillas
             json.append("\"precio\":").append(p.getPrecio()).append(",");
             json.append("\"stock\":").append(p.getStock()).append(",");
             json.append("\"estado\":").append(p.isEstado()).append(",");
-            // verificamos si la categoria es nula para poner un texto por defecto
             json.append("\"categoria\":\"").append(p.getCategoria() != null ? p.getCategoria() : "Sin categoria").append("\",");
+            json.append("\"proveedorMarca\":\"").append(p.getProveedorMarca() != null ? escaparTexto(p.getProveedorMarca()) : "DMari Oficial").append("\",");
+            json.append("\"id_proveedor_fk\":").append(p.getProveedorMarca() != null ? "1" : "null").append(",");
             
-            // abrimos la lista de etiquetas como un sub arreglo json
             json.append("\"etiquetas\":[");
             ArrayList<String> tags = p.getEtiquetas();
-            // procesamos la coleccion de tags si no es nula
             if (tags != null) {
                 for(int j = 0; j < tags.size(); j++){
                     json.append("\"").append(tags.get(j)).append("\"");
-                    // colocamos la coma de separacion entre tags internos
                     if(j < tags.size() - 1) json.append(",");
                 }
             }
             json.append("],");
             
-            // incluimos la ruta de la imagen y cerramos el objeto del producto
             json.append("\"imagen\":\"").append(p.getUrlRuta() != null ? p.getUrlRuta() : "").append("\"");
             json.append("}");
 
@@ -146,14 +142,14 @@ public class jsonHelper {
             json.append("\"fecha\":\"").append(dp.getFechaPedido() != null ? dp.getFechaPedido() : "").append("\",");
             json.append("\"estado\":\"").append(dp.getEstadoPedido() != null ? dp.getEstadoPedido() : "").append("\",");
             json.append("\"motivo_cancelacion\":\"").append(dp.getMotivoCancelacion() != null ? escaparTexto(dp.getMotivoCancelacion()) : "").append("\",");
-            json.append("\"producto\":\"").append(dp.getNombreProducto() != null ? dp.getNombreProducto() : "").append("\",");
+            json.append("\"producto\":\"").append(dp.getNombreProducto() != null ? escaparTexto(dp.getNombreProducto()) : "").append("\",");
+            json.append("\"proveedor\":\"").append(dp.getNombreProveedor() != null ? escaparTexto(dp.getNombreProveedor()) : "DMari Oficial").append("\",");
             json.append("\"cantidad\":").append(dp.getCantidad()).append(",");
             json.append("\"precio\":").append(dp.getPrecioUnitario()).append(",");
             json.append("\"subtotal\":").append(dp.getSubtotal());
             
-            // incluimos el nombre del cliente opcionalmente si el reporte lo requiere
             if (dp.getNombreCliente() != null) {
-                json.append(",\"cliente\":\"").append(dp.getNombreCliente()).append("\"");
+                json.append(",\"cliente\":\"").append(escaparTexto(dp.getNombreCliente())).append("\"");
             }
             json.append("}");
             

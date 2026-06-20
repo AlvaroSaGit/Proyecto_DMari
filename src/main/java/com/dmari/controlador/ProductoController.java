@@ -61,26 +61,27 @@ public class ProductoController extends HttpServlet {
         
         PrintWriter out = response.getWriter();
         try {
-            // leemos de la url si debemos filtrar solo los activos
             String paramActivos = request.getParameter("activos");
             boolean soloActivos = paramActivos != null && paramActivos.equals("true");
             
-            // leemos si la peticion viene exclusivamente de un proveedor
             String paramProveedor = request.getParameter("proveedor");
             boolean esProveedor = paramProveedor != null && paramProveedor.equals("true");
+            
+            String paramIdProveedor = request.getParameter("id_proveedor");
+            boolean filtrarPorProveedor = paramIdProveedor != null && !paramIdProveedor.isEmpty();
             
             productoDAO dao = new productoDAO();
             ArrayList<producto> lista = new ArrayList<>();
             
             if (esProveedor) {
-                // obtenemos la sesion actual sin crear una nueva
                 HttpSession sesion = request.getSession(false);
                 if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
                     usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
                     lista = dao.listarProductosPorProveedor(user.getIdUsuario());
                 }
+            } else if (filtrarPorProveedor) {
+                lista = dao.listarProductosPorProveedor(Integer.parseInt(paramIdProveedor));
             } else {
-                // si no es proveedor, aplicamos la logica del cliente (activos) o admin (todos)
                 lista = dao.listarProductos(soloActivos);
             }
             // instanciamos nuestro nuevo helper para construir la respuesta limpia

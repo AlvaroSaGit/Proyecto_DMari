@@ -88,6 +88,9 @@ function prepararFormularioLogin() {
                 // Guardamos el rol en la memoria del navegador para que el enrutador sepa quién está navegando
                 sessionStorage.setItem('rolUsuario', datos.idRol);
                 
+                // Limpiamos el carrito local para asegurar que se descargue el del servidor
+                localStorage.removeItem('carritoDMari');
+                
                 alert('¡inicio de sesion exitoso!');
                 formulario.reset();
                 
@@ -103,7 +106,9 @@ function prepararFormularioLogin() {
                 
                 window.location.reload();
             } else if (respuesta.status === 403) {
-                const msj = 'Tu cuenta ha sido bloqueada por un administrador.';
+                // Mensaje capturado del AuthController, o uno generico en caso de fallo
+                const errorBody = await respuesta.text();
+                const msj = errorBody || 'Tu cuenta está en revisión o ha sido bloqueada. Por favor espera a que un administrador la apruebe.';
                 if (mensajeErrorGlobal) { 
                     mensajeErrorGlobal.textContent = msj; 
                     mensajeErrorGlobal.style.display = 'block'; 
