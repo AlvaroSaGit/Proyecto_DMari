@@ -76,11 +76,12 @@ public class clienteDAO {
     public boolean guardarOActualizarPerfil(int idUsuario, String direccionPrimaria, String direccionDetalle, String numeroTelefono, String telefonoSecundario, String referencia) {
         
         // La tabla cliente solo maneja la referencia de ubicación.
-        String sqlCliente = "UPDATE cliente SET referencia_ubicacion = ? WHERE id_cliente_pk = ?";
+        // Ahora usamos INSERT ON DUPLICATE KEY UPDATE. Si el usuario se registró pero no tenía fila en 'cliente', la creamos.
+        // Si ya existe, simplemente actualizamos su referencia.
+        String sqlCliente = "INSERT INTO cliente (id_cliente_pk, referencia_ubicacion) VALUES (?, ?) " +
+                            "ON DUPLICATE KEY UPDATE referencia_ubicacion = VALUES(referencia_ubicacion)";
                             
         // 2. estrategia correcta para direccion: intentamos actualizar primero.
-        // si el usuario no tiene una direccion primaria aun (filas = 0), entonces insertamos una nueva.
-        // no usamos ON DUPLICATE KEY UPDATE porque la tabla direccion no tiene indice UNIQUE en id_usuario_fk.
         String sqlActualizarDireccion = "UPDATE direccion SET direccion = ?, direccion_detallada = ? " +
                                         "WHERE id_usuario_fk = ? AND direccion_primario = 1";
         String sqlInsertarDireccion  = "INSERT INTO direccion (id_usuario_fk, direccion, direccion_detallada, direccion_primario) " +
@@ -89,14 +90,12 @@ public class clienteDAO {
         Connection con = null;
         try {
             con = db.conectar();
-            // desactivamos el autocommit para iniciar una transaccion manual.
-            // esto garantiza que si una insercion falla, las demas se revierten.
             con.setAutoCommit(false);
 
-            // bloque 1: actualizar la tabla cliente con la referencia de ubicacion.
+            // bloque 1: crear o actualizar la tabla cliente con la referencia de ubicacion.
             try (PreparedStatement psCli = con.prepareStatement(sqlCliente)) {
-                psCli.setString(1, referencia);
-                psCli.setInt(2, idUsuario);
+                psCli.setInt(1, idUsuario);
+                psCli.setString(2, referencia);
                 psCli.executeUpdate();
             }
 
@@ -119,16 +118,15 @@ public class clienteDAO {
             }
 
             // bloque 3: actualizar el telefono principal del usuario.
-            // si el usuario no tiene telefono aun (filas = 0), insertamos uno nuevo.
+            // OJO: Si el numero ya pertenece a otra persona, lanzara un IntegrityConstraintViolation, lo que dispara un 500.
             String sqlActualizarTelefono = "UPDATE telefono SET numero_telefonico = ? WHERE id_usuario_fk = ?";
-            // insert ignore previene el error de unique constraint si el numero ya existe en otro usuario
+            // insert ignore previene el error si el UPDATE fallo porque la fila no existia, pero igual valida UNIQUE.
             String sqlTelefono = "INSERT IGNORE INTO telefono (id_usuario_fk, numero_telefonico) VALUES (?, ?)";
             try (PreparedStatement psTelUpd = con.prepareStatement(sqlActualizarTelefono)) {
                 psTelUpd.setString(1, numeroTelefono);
                 psTelUpd.setInt(2, idUsuario);
                 int filas = psTelUpd.executeUpdate();
 
-                // si el update no afecto filas, el usuario no tiene telefono: lo insertamos.
                 if (filas == 0) {
                     try (PreparedStatement psTelIns = con.prepareStatement(sqlTelefono)) {
                         psTelIns.setInt(1, idUsuario);
@@ -138,13 +136,15 @@ public class clienteDAO {
                 }
             }
 
-            // Si todas las operaciones fueron exitosas, confirmamos los cambios.
+            // Si todo fue exitoso, guardamos cambios permanentemente.
             con.commit();
             return true;
         } catch (SQLException e) {
             // Si ocurre cualquier error, revertimos todos los cambios hechos en esta transacción.
             try { if (con != null) con.rollback(); } catch (SQLException ex) {}
-            System.out.println("Error al guardar perfil del cliente: " + e.getMessage());
+            System.err.println("=== ERROR SQL AL GUARDAR PERFIL ===");
+            System.err.println("Mensaje: " + e.getMessage());
+            e.printStackTrace();
             return false;
         } finally {
             // En cualquier caso, restauramos el autocommit y cerramos la conexión.

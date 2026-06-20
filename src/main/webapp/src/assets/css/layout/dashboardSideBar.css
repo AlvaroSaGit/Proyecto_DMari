@@ -1,5 +1,5 @@
 /* ========================================= */
-/* ESTILOS DEL MENU LATERAL DEL ADMIN        */
+/* ESTILOS DEL MENU LATERAL DEL ADMIN Y PROVEEDOR */
 /* ========================================= */
 
 .admin-sidebar-menu {
@@ -41,7 +41,8 @@
     border-left: 4px solid #4ade80; /* Resalte verde elegante */
 }
 
-.admin-nav-item i {
+.admin-nav-item i,
+.admin-nav-item span.material-symbols-outlined {
     font-size: 1.4rem;
 }
 

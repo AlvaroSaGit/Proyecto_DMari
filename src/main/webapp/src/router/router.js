@@ -120,8 +120,8 @@ async function adaptarHeaderSegunRol(rol) {
     // convertimos el rol a string seguro para evitar fallos de comparacion
     const rolActivo = rol ? String(rol).trim() : null;
 
-    if (rolActivo === '1') {
-        // --- MODO ADMINISTRADOR: sidebar tipo panel fijo de dos columnas ---
+    if (rolActivo === '1' || rolActivo === '4') {
+        // --- MODO PANEL DE CONTROL (Admin y Proveedor) ---
         // movemos el boton de perfil al nav del header para tenerlo accesible
         const headerNav = document.querySelector('.header-navegacion');
         if (btnPerfil && headerNav) {
@@ -131,50 +131,31 @@ async function adaptarHeaderSegunRol(rol) {
         // activamos el modo dashboard que convierte el layout en dos columnas
         document.body.classList.add('layout-dashboard');
 
-        // buscamos el contenedor del sidebar del admin en el index.html
-        let sidebarAdminContainer = document.getElementById('contenedor-sidebar-admin');
+        // buscamos el contenedor del sidebar global en el index.html
+        let sidebarDashboardContainer = document.getElementById('contenedor-sidebar-dashboard');
 
         // si el contenedor no existe en el dom, lo creamos y lo anclamos al body
-        if (!sidebarAdminContainer) {
-            sidebarAdminContainer = document.createElement('div');
-            sidebarAdminContainer.id = 'contenedor-sidebar-admin';
+        if (!sidebarDashboardContainer) {
+            sidebarDashboardContainer = document.createElement('div');
+            sidebarDashboardContainer.id = 'contenedor-sidebar-dashboard';
             // la clase le aplica los estilos del panel fijo de dos columnas
-            sidebarAdminContainer.classList.add('dashboard-sidebar-container');
+            sidebarDashboardContainer.classList.add('dashboard-sidebar-container');
             // lo insertamos antes del layout-container para que quede a la izquierda
             const layoutContainer = document.querySelector('.layout-container');
             if (layoutContainer) {
-                document.body.insertBefore(sidebarAdminContainer, layoutContainer);
+                document.body.insertBefore(sidebarDashboardContainer, layoutContainer);
             } else {
-                document.body.prepend(sidebarAdminContainer);
+                document.body.prepend(sidebarDashboardContainer);
             }
         }
 
-        // solo cargamos el html del sidebar si el contenedor esta vacio
-        if (sidebarAdminContainer.innerHTML.trim() === '') {
-            await inicializarAdmin();
-        }
-
-    } else if (rolActivo === '4') {
-        // --- MODO PROVEEDOR: sidebar tipo drawer deslizante (igual que el carrito) ---
-        // el proveedor NO usa el layout de dos columnas. su sidebar es un panel
-        // que se desliza desde la izquierda con position:fixed, igual que el carrito.
-        // por eso NO agregamos la clase layout-dashboard al body.
-
-        // movemos el boton de perfil al nav para que el proveedor lo vea facilmente
-        const headerNav = document.querySelector('.header-navegacion');
-        if (btnPerfil && headerNav) {
-            headerNav.appendChild(btnPerfil);
-        }
-
-        // buscamos el contenedor del drawer del proveedor (ya existe en el index.html)
-        const sidebarProvContainer = document.getElementById('contenedor-sidebar-proveedor');
-
-        // solo inicializamos el drawer si el contenedor esta vacio (evita duplicados)
-        if (sidebarProvContainer && sidebarProvContainer.innerHTML.trim() === '') {
-            await inicializarProveedor();
-            // conectamos el boton del header para que al hacer clic abra el drawer
-            if (typeof conectarBotonHeaderProveedor === 'function') {
-                conectarBotonHeaderProveedor();
+        // inyectamos el HTML correspondiente a cada rol en el contenedor unificado
+        if (sidebarDashboardContainer.innerHTML.trim() === '') {
+            if (rolActivo === '1') {
+                await inicializarAdmin();
+            } else if (rolActivo === '4') {
+                await inicializarProveedor();
+                // si el proveedor requiere alguna logica extra al inicializar, se hace aqui
             }
         }
 
@@ -186,14 +167,13 @@ async function adaptarHeaderSegunRol(rol) {
             headerAction.insertBefore(btnPerfil, btnCarrito);
         }
 
-        // desmontamos el modo dashboard si el admin cerro sesion
+        // desmontamos el modo dashboard si se cerro sesion
         document.body.classList.remove('layout-dashboard');
 
-        // eliminamos el contenedor dinamico de la sidebar del admin si existe
-        const sidebarAdminContainer = document.getElementById('contenedor-sidebar-admin');
-        if (sidebarAdminContainer && sidebarAdminContainer.classList.contains('dashboard-sidebar-container')) {
-            // solo eliminamos el que fue creado dinamicamente, no el del index.html
-            sidebarAdminContainer.remove();
+        // eliminamos el contenedor dinamico de la sidebar del dashboard si existe
+        const sidebarDashboardContainer = document.getElementById('contenedor-sidebar-dashboard');
+        if (sidebarDashboardContainer) {
+            sidebarDashboardContainer.remove();
         }
     }
 }

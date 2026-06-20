@@ -14,11 +14,11 @@
  * @returns {Promise<boolean>} - true si el pedido se proceso con exito en mysql.
  */
 export async function enviarPedido(carrito, idCarrito, idMetodo, cuenta) {
-    // validacion de seguridad modulo 5: expresion regular para asegurar que la cuenta sea numerica.
-    // permite longitudes de 10 a 15 digitos comunes en cuentas y celulares.
-    const regexCuenta = /^[0-9]{10,15}$/;
+    // validacion de seguridad modulo 5: expresion regular flexible para aceptar 
+    // numeros de cuenta, telefonos (con espacios, + o guiones) entre 4 y 25 caracteres.
+    const regexCuenta = /^[0-9\-\s\+]{4,25}$/;
     if (!regexCuenta.test(cuenta)) {
-        console.error('error: el formato de la cuenta o telefono es invalido en el frontend.');
+        console.error('error: el formato de la cuenta o telefono es invalido en el frontend. Valor ingresado:', cuenta);
         return false;
     }
 

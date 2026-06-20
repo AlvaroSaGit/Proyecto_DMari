@@ -1,33 +1,43 @@
 <!-- vista de rendimiento comercial para el proveedor -->
-<section class="admin-vista-productos">
-    <div class="admin-header-seccion">
-        <h2>mi rendimiento comercial</h2>
+<div class="dashboard-proveedor-container" style="padding: 25px; animation: fadeIn 0.4s ease-in-out;">
+    <!-- encabezado del panel -->
+    <div class="dashboard-header" style="margin-bottom: 30px; border-bottom: 2px solid #f4f4f4; padding-bottom: 15px;">
+        <h2 style="color: #212529; font-size: 1.7rem; margin: 0;">
+            <i class='bx bxs-report' style="margin-right: 10px;"></i>mi rendimiento comercial
+        </h2>
+        <p style="color: #6c757d; margin-top: 5px;">monitoreo de tus ventas y estadisticas como proveedor</p>
     </div>
     
-    <!-- resumen de ganancias propias -->
-    <div class="admin-tabla-contenedor" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px; background: transparent; border: none;">
-        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #d4a373;">
-            <i class='bx bx-trending-up' style="font-size: 2.5rem; color: #d4a373;"></i>
+    <!-- resumen de ganancias propias estandarizado -->
+    <div class="dashboard-cards" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px;">
+        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #4ade80;">
+            <i class='bx bx-trending-up' style="font-size: 2.5rem; color: #4ade80;"></i>
             <h3 style="margin: 10px 0; font-size: 1rem; color: #666;">mis ingresos netos</h3>
             <p id="prov-ingresos" style="font-size: 1.8rem; font-weight: bold; color: #333;">$0.00</p>
         </div>
-        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #d4a373;">
-            <i class='bx bx-cart-alt' style="font-size: 2.5rem; color: #d4a373;"></i>
+        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #4ade80;">
+            <i class='bx bx-cart-alt' style="font-size: 2.5rem; color: #4ade80;"></i>
             <h3 style="margin: 10px 0; font-size: 1rem; color: #666;">mis ventas logradas</h3>
             <p id="prov-pedidos" style="font-size: 1.8rem; font-weight: bold; color: #333;">0</p>
         </div>
-        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #d4a373;">
-            <i class='bx bx-purchase-tag' style="font-size: 2.5rem; color: #d4a373;"></i>
+        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #4ade80;">
+            <i class='bx bx-purchase-tag' style="font-size: 2.5rem; color: #4ade80;"></i>
             <h3 style="margin: 10px 0; font-size: 1rem; color: #666;">unidades despachadas</h3>
             <p id="prov-productos" style="font-size: 1.8rem; font-weight: bold; color: #333;">0</p>
         </div>
     </div>
     
-    <!-- Contenedor para gráfica del proveedor -->
-    <div style="padding: 20px;">
-        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-            <h3 style="margin-top: 0; color: #333;">Evolución de Mis Ventas</h3>
-            <canvas id="graficaVentasProveedor" height="100"></canvas>
+    <!-- Contenedor para gráfica del proveedor estandarizado -->
+    <div class="card-grafica-global" style="background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eef0f2;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 1.2rem; color: #343a40; font-weight: 600;">Evolución de Mis Ventas</h3>
+            <span style="background: #f8f9fa; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; color: #495057; border: 1px solid #dee2e6;">
+                ultimos 6 meses
+            </span>
+        </div>
+        
+        <div style="position: relative; height: 350px; width: 100%;">
+            <canvas id="graficaVentasProveedor"></canvas>
         </div>
     </div>
-</section>
+</div>
