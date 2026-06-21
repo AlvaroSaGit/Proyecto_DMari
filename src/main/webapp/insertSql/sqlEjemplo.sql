@@ -111,36 +111,36 @@ insert into producto (id_categoria_fk, nombre_producto, descripcion, precio, sto
 (2, 'vela decorativa de flores', 'vela artesanal con petalos secos', 22000, 10, true),    
 (3, 'ramo de rosas rojas', 'hermoso arreglo floral para regalar a mama', 65000, 5, true), 
 (1, 'dona rellena de arequipe', 'masa suave con relleno tradicional', 5500, 25, true),    
-(1, 'caja de mini donas', 'set de 6 mini donas surtidas para regalo', 15000, 10, true),   
-(1, 'desayuno feliz', 'bandeja con jugo, sanduche, fruta y globo', 85000, 8, true),       
-(2, 'ancheta cumpleanos', 'dulces surtidos y cervezas', 110000, 4, true),                 
+(2, 'vela de leon', 'vela decorativa infantil en forma de leon', 15000, 10, true),   
+(1, 'ancheta de frutas', 'bandeja con jugo, sanduche y fruta fresca', 85000, 8, true),       
+(2, 'peluche de stitch', 'adorable peluche azul de lilo y stitch', 110000, 4, true),                 
 (1, 'caja de trufas', '12 trufas de chocolate belga', 35000, 20, true),                   
 (2, 'globo helio te amo', 'globo metalizado gigante', 12000, 50, true),                   
 (2, 'peluche oso gigante', 'oso de felpa de 1 metro de alto', 150000, 3, true),           
 (2, 'vino tinto reserva', 'botella de vino tinto importado', 75000, 12, true),            
-(2, 'tarjeta 3d cumpleanos', 'tarjeta artesanal con relieve', 8000, 100, true),           
-(1, 'pastel de chocolate', 'pastel humedo para 10 personas', 55000, 6, true),             
-(1, 'cupcakes decorados', 'caja de 4 cupcakes personalizados', 20000, 15, true);          
+(2, 'tarjeta de regalo especial', 'tarjeta artesanal con relieve para obsequios', 8000, 100, true),           
+(2, 'vela en forma de oso', 'vela artesanal con forma de tierno oso', 55000, 6, true),             
+(2, 'vela de dios', 'vela sagrada para iluminacion espiritual', 20000, 15, true);          
 
 -- ==========================================================
 -- 9. galeria de imagenes
 -- ==========================================================
 insert into imagenes (id_producto_fk, url_ruta, imagen_principal) values 
-(1, 'src/img/productos/default/gato_programador.jpg', 1),
+(1, 'src/img/productos/default/velas.jpg', 1),
 (2, 'src/img/productos/default/gato_programador.jpg', 1),
-(3, 'src/img/productos/default/gato_programador.jpg', 1),
-(4, 'src/img/productos/default/gato_programador.jpg', 1),
-(5, 'src/img/productos/default/gato_programador.jpg', 1),
-(6, 'src/img/productos/default/gato_programador.jpg', 1),
-(7, 'src/img/productos/default/gato_programador.jpg', 1),
-(8, 'src/img/productos/default/gato_programador.jpg', 1),
-(9, 'src/img/productos/default/gato_programador.jpg', 1),
-(10, 'src/img/productos/default/gato_programador.jpg', 1),
-(11, 'src/img/productos/default/gato_programador.jpg', 1),
-(12, 'src/img/productos/default/gato_programador.jpg', 1),
-(13, 'src/img/productos/default/gato_programador.jpg', 1),
-(14, 'src/img/productos/default/gato_programador.jpg', 1),
-(15, 'src/img/productos/default/gato_programador.jpg', 1);
+(3, 'src/img/productos/default/velaFlores.jpg', 1),
+(4, 'src/img/productos/default/ramoFlores.jpeg', 1),
+(5, 'src/img/productos/default/cajadona.jpg', 1),
+(6, 'src/img/productos/default/velaLeon.jpg', 1),
+(7, 'src/img/productos/default/anchetaFrutas.jpg', 1),
+(8, 'src/img/productos/default/stichPeluche.png', 1),
+(9, 'src/img/productos/default/cajaTrufa.jpg', 1),
+(10, 'src/img/productos/default/globoHelio.jpg', 1),
+(11, 'src/img/productos/default/toyOso.jpg', 1),
+(12, 'src/img/productos/default/vino.png', 1),
+(13, 'src/img/productos/default/tarjetaRegalo.png', 1),
+(14, 'src/img/productos/default/velaOso.jpg', 1),
+(15, 'src/img/productos/default/velaSagrada.jpg', 1);
 
 -- ==========================================================
 -- 10. etiquetas de busqueda

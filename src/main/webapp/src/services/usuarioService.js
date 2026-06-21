@@ -5,7 +5,7 @@ let usuariosCache = [];
 // funcion para obtener la lista de usuarios y guardarla en cache
 export async function obtenerUsuarios() {
     try {
-        const respuesta = await fetch('usuarios');
+        const respuesta = await fetch('usuarios?t=' + Date.now());
         if (!respuesta.ok) throw new Error('no se pudo conectar con el servidor');
         usuariosCache = await respuesta.json();
         return usuariosCache;

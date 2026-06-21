@@ -263,7 +263,7 @@ public class pedidoDAO {
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, p.motivo_cancelacion, " +
                      "prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal, mp.descripcion_pago, " +
                      "COALESCE(prov.nombre_marca, u_prov.nombre) AS nombre_proveedor, " +
-                     "(SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = prov.id_proveedor_pk LIMIT 1) AS contacto_proveedor " +
+                     "COALESCE((SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = prov.id_proveedor_pk LIMIT 1), u_prov.correo) AS contacto_proveedor " +
                      "FROM pedido p " +
                      
                      // inner join: es estricto. asegura que el pedido solo se muestre si de verdad tiene productos adentro. 
@@ -298,7 +298,10 @@ public class pedidoDAO {
                      
                      dp.setNombreProducto(rs.getString("nombre_producto"));
                      dp.setNombreProveedor(rs.getString("nombre_proveedor"));
+                     
+                     // atrapamos el numero en nuestra nueva columna de mysql extraida de la subconsulta virtual
                      dp.setContactoProveedor(rs.getString("contacto_proveedor"));
+                     
                      dp.setCantidad(rs.getInt("cantidad"));
                      dp.setPrecioUnitario(rs.getDouble("precio_unitario"));
                      dp.setSubtotal(rs.getDouble("subtotal"));
@@ -428,10 +431,18 @@ public class pedidoDAO {
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 // inyectamos los datos en la consulta incluyendo los campos de auditoria
                 ps.setString(1, nuevoEstado);
-                ps.setString(2, motivo);
-                // validacion: si no hay un id de usuario valido guardamos nulo en la base de datos
-                if (idUsuarioAccion > 0) ps.setInt(3, idUsuarioAccion); 
-                else ps.setNull(3, java.sql.Types.INTEGER);
+                
+                if (nuevoEstado.startsWith("Cancelado")) {
+                    if (motivo != null && !motivo.trim().isEmpty()) ps.setString(2, motivo); 
+                    else ps.setNull(2, java.sql.Types.VARCHAR);
+                    
+                    if (idUsuarioAccion > 0) ps.setInt(3, idUsuarioAccion); 
+                    else ps.setNull(3, java.sql.Types.INTEGER);
+                } else {
+                    ps.setNull(2, java.sql.Types.VARCHAR);
+                    ps.setNull(3, java.sql.Types.INTEGER);
+                }
+                
                 ps.setInt(4, idPedido);
                 int afectadas = ps.executeUpdate();
                 
@@ -496,8 +507,8 @@ public class pedidoDAO {
             // estadisticas globales para administrador.
             // Usamos SUM(dp.subtotal) para ser consistentes con la granularidad de productos
             // count: numero de transacciones exitosas.
-            // sum(* 0.05): calculo de ingresos por comision para la plataforma.
-            sql = "SELECT SUM(dp.subtotal) as total, COUNT(DISTINCT p.id_pedido_pk) as conteo, SUM(dp.subtotal * 0.05) as comision " +
+            // sum(* 0.03): calculo de ingresos por comision para la plataforma (3%).
+            sql = "SELECT SUM(dp.subtotal) as total, COUNT(DISTINCT p.id_pedido_pk) as conteo, SUM(dp.subtotal * 0.03) as comision " +
                   "FROM pedido p " +
                   "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
                   "WHERE p.estado_pedido = 'Entregado'";
@@ -506,7 +517,7 @@ public class pedidoDAO {
             // sum(dp.subtotal): suma solo el dinero de sus propios productos.
             // inner join con proveedor_producto: garantiza el aislamiento de datos.
             // distinct: evita duplicar el conteo de pedidos con multiples items del mismo dueno.
-            sql = "SELECT SUM(dp.subtotal) as total, COUNT(DISTINCT p.id_pedido_pk) as conteo, SUM(dp.subtotal * 0.05) as comision " +
+            sql = "SELECT SUM(dp.subtotal) as total, COUNT(DISTINCT p.id_pedido_pk) as conteo, SUM(dp.subtotal * 0.03) as comision " +
                   "FROM pedido p " +
                   "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
                   "INNER JOIN proveedor_producto pp ON dp.id_producto_fk = pp.id_producto_fk " +

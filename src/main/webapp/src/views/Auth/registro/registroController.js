@@ -111,8 +111,16 @@ function prepararFormularioRegistro() {
         }
 
         if (rol === '4') {
+            const nitVal = parametros.get('nit');
             const marcaVal = parametros.get('marca');
             const cuentaVal = parametros.get('cuenta');
+            
+            if (!nitVal || !/^\d{8,20}$/.test(nitVal.trim())) {
+                mostrarErrorCampo('reg-nit', 'El NIT debe ser estrictamente numérico (entre 8 y 20 dígitos).');
+                esValido = false;
+            } else {
+                limpiarErrorCampo('reg-nit');
+            }
             
             if (!marcaVal || marcaVal.trim().length < 3) {
                 mostrarErrorCampo('reg-marca', 'El nombre de la marca debe tener al menos 3 caracteres.');

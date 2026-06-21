@@ -81,6 +81,10 @@ export async function inicializarCarrito() {
                         <label style="font-weight: 600; font-size: 0.9rem;">Numero de cuenta / celular</label>
                         <input type="text" id="input-cuenta-pago" placeholder="Ej. 3100000000" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none;">
                     </div>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-weight: 600; font-size: 0.9rem;">Celular secundario (opcional)</label>
+                        <input type="text" id="input-secundario-pago" placeholder="Ej. 3200000000" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none;">
+                    </div>
                 </div>
                 
                 <div style="display: flex; justify-content: space-between; margin-top: 25px;">
@@ -103,30 +107,26 @@ export async function inicializarCarrito() {
 
         // validacion en tiempo real ux: solo permite digitos numericos
         // el evento 'input' se dispara cada vez que el valor cambia (pegado, escrito, etc.)
-        const inputCuenta = document.getElementById('input-cuenta-pago');
-        if (inputCuenta) {
-            // forzamos un maximo de 15 digitos (numero de celular colombiano tiene 10)
-            inputCuenta.setAttribute('maxlength', '15');
-            inputCuenta.setAttribute('inputmode', 'numeric'); // muestra teclado numerico en movil
-            inputCuenta.setAttribute('pattern', '[0-9]*');    // refuerzo html5 para movil
-            inputCuenta.addEventListener('input', function(e) {
-                // reemplazamos cualquier caracter que no sea digito 0-9 por nada (cadena vacia)
-                // esto funciona tanto para texto escrito como para texto pegado con ctrl+v
-                const soloNumeros = e.target.value.replace(/[^0-9]/g, '');
-                // solo actualizamos si hay diferencia para no mover el cursor innecesariamente
-                if (e.target.value !== soloNumeros) {
-                    e.target.value = soloNumeros;
-                }
-            });
-            inputCuenta.addEventListener('keydown', function(e) {
-                // permitimos: retroceso (8), suprimir (46), flechas (37-40), tab (9), enter (13)
-                const teclasSistema = [8, 9, 13, 37, 38, 39, 40, 46];
-                // bloqueamos cualquier tecla que no sea un digito ni una tecla de sistema
-                if (!teclasSistema.includes(e.keyCode) && (e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) {
-                    e.preventDefault(); // cancela la pulsacion antes de que llegue al input
-                }
-            });
-        }
+        const inputsNumericos = ['input-cuenta-pago', 'input-secundario-pago'];
+        inputsNumericos.forEach(id => {
+            const inputCuenta = document.getElementById(id);
+            if (inputCuenta) {
+                // forzamos un maximo de 10 digitos (numero de celular colombiano tiene 10)
+                inputCuenta.setAttribute('maxlength', '10');
+                inputCuenta.setAttribute('inputmode', 'numeric'); // muestra teclado numerico en movil
+                inputCuenta.setAttribute('pattern', '[0-9]*');    // refuerzo html5 para movil
+                inputCuenta.addEventListener('input', function(e) {
+                    const soloNumeros = e.target.value.replace(/[^0-9]/g, '');
+                    if (e.target.value !== soloNumeros) e.target.value = soloNumeros;
+                });
+                inputCuenta.addEventListener('keydown', function(e) {
+                    const teclasSistema = [8, 9, 13, 37, 38, 39, 40, 46];
+                    if (!teclasSistema.includes(e.keyCode) && (e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) {
+                        e.preventDefault(); 
+                    }
+                });
+            }
+        });
     }
     
     // al cargar la pagina verificamos si el usuario esta logueado para descargar su carrito de mysql
@@ -289,8 +289,14 @@ async function procesarCompra() {
  */
 async function confirmarPagoSimulado() {
     // extraemos los datos del formulario flotante
-    const cuenta = document.getElementById('input-cuenta-pago').value;
+    let cuenta = document.getElementById('input-cuenta-pago').value;
+    const secundario = document.getElementById('input-secundario-pago').value;
     const idMetodo = document.getElementById('select-metodo-pago').value;
+    
+    // Si se llenó un celular secundario, se concatena con un guión respetando el regex backend
+    if (secundario && secundario.trim() !== '') {
+        cuenta = cuenta + " - " + secundario;
+    }
     
     // validacion estricta el campo de cuenta celular no debe estar vacio
     if (!cuenta || cuenta.trim() === '') {
@@ -298,10 +304,10 @@ async function confirmarPagoSimulado() {
         return;
     }
 
-    // validacion de formato solo permitimos numeros en la cuenta de pago
-    const regexSoloNumeros = /^[0-9]+$/;
-    if (!regexSoloNumeros.test(cuenta)) {
-        alert('error: el numero de cuenta o celular solo debe contener digitos numericos.');
+    // validacion de formato: permitimos numeros, espacios y guiones para soportar multiples telefonos
+    const regexValida = /^[0-9\-\s]+$/;
+    if (!regexValida.test(cuenta)) {
+        alert('error: el numero de cuenta o celular tiene caracteres no permitidos.');
         return;
     }
 

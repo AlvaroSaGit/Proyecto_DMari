@@ -30,7 +30,7 @@ public class SolicitudProveedorController extends HttpServlet {
         // obtenemos la sesion actual sin crear una nueva si no existe
         HttpSession sesion = request.getSession(false);
         // validamos si la sesion es nula, si el rol no esta definido o si no es administrador (rol 1)
-        if (sesion == null || sesion.getAttribute("idRol") == null || (int) sesion.getAttribute("idRol") != 1) {
+        if (sesion == null || sesion.getAttribute("rolUsuario") == null || (int) sesion.getAttribute("rolUsuario") != 1) {
             // devolvemos un codigo de estado 403 de acceso prohibido
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             // terminamos la ejecucion del metodo
@@ -78,7 +78,7 @@ public class SolicitudProveedorController extends HttpServlet {
         // obtenemos la sesion actual sin crear una nueva
         HttpSession sesion = request.getSession(false);
         // verificamos que exista una sesion valida y que corresponda al administrador (rol 1)
-        if (sesion == null || sesion.getAttribute("idRol") == null || (int) sesion.getAttribute("idRol") != 1) {
+        if (sesion == null || sesion.getAttribute("rolUsuario") == null || (int) sesion.getAttribute("rolUsuario") != 1) {
             // denegamos la operacion con un estado 403
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             // finalizamos la ejecucion del metodo
