@@ -55,20 +55,21 @@ async function prepararVistaPedidos() {
 function agruparPorPedido(listaPlana) {
     const agrupado = {};
     listaPlana.forEach(item => {
-        // usamos idpedidofk que es el nombre generado por el dao en java
-        if (!agrupado[item.idPedidoFk]) {
+        // usamos idPedido que es el nombre generado por el jsonHelper en java
+        if (!agrupado[item.idPedido]) {
             const clienteSeguro = item.nombreCliente || item.nombre_cliente || item.cliente || 'Sin información de entrega';
-            agrupado[item.idPedidoFk] = { 
-                id: item.idPedidoFk, 
+            agrupado[item.idPedido] = { 
+                id: item.idPedido, 
                 fecha: item.fecha, 
                 estado: item.estado, 
+                motivo: item.motivo_cancelacion || '',
                 cliente: clienteSeguro,
                 total: 0, 
                 productos: [] 
             };
         }
-        agrupado[item.idPedidoFk].productos.push(item);
-        agrupado[item.idPedidoFk].total += item.subtotal;
+        agrupado[item.idPedido].productos.push(item);
+        agrupado[item.idPedido].total += item.subtotal;
     });
     return Object.values(agrupado).sort((a, b) => b.id - a.id);
 }
@@ -92,7 +93,8 @@ function crearBloquePedidoAdmin(pedido) {
                 <p style="margin:0; color:#888; font-size:0.85rem;">fecha: ${pedido.fecha}</p>
             </div>
             <div style="text-align:right;">
-                <p style="margin:0 0 10px 0; font-size:1.2rem; font-weight:bold;">total: $${pedido.total.toFixed(2)}</p>
+                <p style="margin:0 0 5px 0; font-size:1.2rem; font-weight:bold;">total: $${pedido.total.toFixed(2)}</p>
+                <p style="margin:0 0 10px 0; font-size:0.9rem; color:#28a745; font-weight:bold;">comisión dmari (3%): $${(pedido.total * 0.03).toFixed(2)}</p>
                 <select class="select-estado-pedido" data-id="${pedido.id}" style="padding:8px; border-radius:5px; border:1px solid #ccc; font-weight:bold; cursor:pointer;">
                     <option value="Pendiente" ${pedido.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
                     <option value="Preparando" ${pedido.estado === 'Preparando' ? 'selected' : ''}>Preparando</option>
@@ -102,6 +104,7 @@ function crearBloquePedidoAdmin(pedido) {
                 </select>
             </div>
         </div>
+        ${pedido.estado.startsWith('Cancelado') && pedido.motivo ? `<div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 10px;"><strong>Motivo de cancelación:</strong> ${pedido.motivo}</div>` : ''}
         <div><p style="font-weight:bold; margin-bottom:10px;">productos de la orden:</p>${htmlProductos}</div>
     `;
 

@@ -110,6 +110,33 @@ function prepararFormularioRegistro() {
             esValido = false;
         }
 
+        if (rol === '4') {
+            const nitVal = parametros.get('nit');
+            const marcaVal = parametros.get('marca');
+            const cuentaVal = parametros.get('cuenta');
+            
+            if (!nitVal || !/^\d{8,20}$/.test(nitVal.trim())) {
+                mostrarErrorCampo('reg-nit', 'El NIT debe ser estrictamente numérico (entre 8 y 20 dígitos).');
+                esValido = false;
+            } else {
+                limpiarErrorCampo('reg-nit');
+            }
+            
+            if (!marcaVal || marcaVal.trim().length < 3) {
+                mostrarErrorCampo('reg-marca', 'El nombre de la marca debe tener al menos 3 caracteres.');
+                esValido = false;
+            } else {
+                limpiarErrorCampo('reg-marca');
+            }
+            
+            if (!cuentaVal || !/^\d{5,30}$/.test(cuentaVal)) {
+                mostrarErrorCampo('reg-cuenta', 'La cuenta debe contener entre 5 y 30 dígitos.');
+                esValido = false;
+            } else {
+                limpiarErrorCampo('reg-cuenta');
+            }
+        }
+
         if (!esValido) return;
         
         // envolvemos en un trycatch para atajar problemas de internet o de base de datos
@@ -122,6 +149,8 @@ function prepararFormularioRegistro() {
             
             if (respuesta.ok) {
                 const msj = rol === '4' ? 'Registro enviado con exito. Espere la aprobacion del administrador.' : '¡Registro exitoso! Ahora inicia sesion.';
+                // limpiamos el local storage para evitar arrastrar el carrito anterior
+                localStorage.removeItem('carritoDMari');
                 alert(msj);
                 formulario.reset();
                 navegarA('login');

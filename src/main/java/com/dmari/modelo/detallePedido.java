@@ -49,6 +49,8 @@ public class detallePedido {
     private String metodoPago;
     // codigo o comprobante de la transaccion
     private String referenciaPago;
+    // contacto telefonico del proveedor
+    private String contactoProveedor;
 
     // constructores vacios por defecto
     public detallePedido() {
@@ -133,4 +135,7 @@ public class detallePedido {
 
     public String getReferenciaPago() { return referenciaPago; }
     public void setReferenciaPago(String referenciaPago) { this.referenciaPago = referenciaPago; }
+
+    public String getContactoProveedor() { return contactoProveedor; }
+    public void setContactoProveedor(String contactoProveedor) { this.contactoProveedor = contactoProveedor; }
 }

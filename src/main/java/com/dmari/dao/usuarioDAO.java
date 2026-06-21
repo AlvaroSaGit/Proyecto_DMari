@@ -33,7 +33,8 @@ public class usuarioDAO {
     public int registrarUsuario(usuario nuevoUsuario) {
         // consulta para la tabla principal de usuario.
         // Ahora acepta nombre, apellido y el rol dinámicamente.
-        String sqlUsuario = "INSERT INTO usuario (nombre, apellido, id_rol_fk, estado_cuenta) VALUES (?, ?, ?, 1)";
+        // si el rol es 4 (proveedor) el estado_cuenta inicial sera 0 (inactivo)
+        String sqlUsuario = "INSERT INTO usuario (nombre, apellido, id_rol_fk, estado_cuenta) VALUES (?, ?, ?, ?)";
         
         // consulta para insertar el correo vinculado al usuario
         // vincula el id del usuario recien creado con su direccion de email principal
@@ -63,6 +64,8 @@ public class usuarioDAO {
                 psUsuario.setString(1, nuevoUsuario.getNombre());
                 psUsuario.setString(2, nuevoUsuario.getApellido());
                 psUsuario.setInt(3, nuevoUsuario.getIdRol());
+                // asignamos estado_cuenta = 0 si es proveedor para revision del admin
+                psUsuario.setInt(4, nuevoUsuario.getIdRol() == 4 ? 0 : 1);
                 psUsuario.executeUpdate();
                 try (ResultSet rs = psUsuario.getGeneratedKeys()) {
                     // condicional: verifica si mysql le otorgo un id unico al usuario.
@@ -195,14 +198,26 @@ public class usuarioDAO {
      * @return boolean: true si el correo ya existe en la tabla correo.
      */
     public boolean existeCorreo(String correo) {
+        // consulta sql con marcador de posicion (?) para evitar inyeccion sql.
+        // previene la concatenacion directa de variables de entrada.
         String sql = "SELECT 1 FROM correo WHERE correo = ?";
         
+        // try-with-resources asegura el cierre automatico de la conexion.
+        // connection: gestiona el enlace logico con la base de datos.
+        // preparedstatement: compila la consulta y la protege contra ejecucion de codigo malicioso.
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
+            // asignacion del parametro a la consulta.
+            // setstring neutraliza caracteres especiales o comillas de la variable.
             ps.setString(1, correo);
+            
+            // resultset: almacena el conjunto de datos retornado por mysql.
+            // executequery(): metodo especifico para ejecutar sentencias de lectura (select).
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next(); // devuelve true si encontro el correo
+                // rs.next() desplaza el cursor a la primera fila de resultados.
+                // devuelve true si existe informacion, o false si el conjunto esta vacio.
+                return rs.next();
             }
             
         } catch (SQLException e) {
@@ -454,6 +469,26 @@ public class usuarioDAO {
             return false;
         } finally {
             try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
+        }
+    }
+
+    /**
+     * metodo complementario: desactiva la cuenta de usuario.
+     * utilizado principalmente cuando un proveedor se registra y queda en estado "pendiente".
+     *
+     * @param idUsuario identificador del usuario en mysql.
+     * @return boolean true si la operacion afecto filas.
+     */
+    public boolean desactivarCuentaParaRevision(int idUsuario) {
+        // el usuario sigue existiendo en el sistema pero estado_cuenta pasa a 0 (desactivado)
+        String sql = "UPDATE usuario SET estado_cuenta = 0 WHERE id_usuario_pk = ?";
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idUsuario);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error al desactivar cuenta de usuario: " + e.getMessage());
+            return false;
         }
     }
 }

@@ -134,14 +134,22 @@ public class AuthController extends HttpServlet {
                     if (nit == null || nit.trim().isEmpty() || marca == null || marca.trim().isEmpty()) {                        
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                         response.getWriter().print("El NIT y el nombre de la marca son obligatorios para proveedores.");
-                        // Opcional: podrías borrar el usuario recién creado para consistencia
                         return;
                     }
 
                     solicitudProveedorDAO solicitudDao = new solicitudProveedorDAO();
-                    solicitudDao.crearSolicitud(idUsuarioGenerado, nit, marca, cuenta, banco, tipoCuenta);
+                    boolean solicitudOk = solicitudDao.crearSolicitud(idUsuarioGenerado, nit, marca, cuenta, banco, tipoCuenta);
+                    
+                    if (solicitudOk) {
+                        // desactivamos la cuenta de forma preventiva (estado_cuenta = 0) para que no pueda hacer login
+                        dao.desactivarCuentaParaRevision(idUsuarioGenerado);
+                        response.setStatus(HttpServletResponse.SC_CREATED);
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    }
+                } else {
+                    response.setStatus(HttpServletResponse.SC_OK);
                 }
-                response.setStatus(HttpServletResponse.SC_OK);
             } else {
                 // sc_bad_request (400) indica que la peticion fallo (ej. correo ya registrado).
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

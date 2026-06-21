@@ -87,6 +87,7 @@ export async function inicializarUsuario() {
                 e.preventDefault();
                 await fetch('logout');
                 sessionStorage.setItem('vistaActual', 'inicio'); // Volvemos al inicio tras salir
+                localStorage.removeItem('carritoDMari'); // Limpiamos el carrito local
                 window.location.reload();
             });
         } else {

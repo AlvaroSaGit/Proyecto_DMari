@@ -84,7 +84,7 @@ public class SolicitudCategoriaDAO {
             pstUpdate.executeUpdate();
             
             // paso 2: crear la categoria formal en la tabla de categorias para que aparezca en la tienda
-            String sqlInsert = "INSERT INTO categoria (nombre, estado_activo) VALUES (?, 1)";
+            String sqlInsert = "INSERT INTO categoria (nombre_categoria, estado_activo) VALUES (?, 1)";
             PreparedStatement pstInsert = con.prepareStatement(sqlInsert);
             pstInsert.setString(1, nombreCat);
             pstInsert.executeUpdate();

@@ -50,11 +50,12 @@ function agruparPorPedido(listaPlana) {
     const agrupado = {};
     listaPlana.forEach(item => {
         // si el identificador del pedido no existe aun en el nuevo objeto, se crea su estructura base
-        if (!agrupado[item.idPedidoFk]) {
-            agrupado[item.idPedidoFk] = {
-                id: item.idPedidoFk,
-                fecha: item.fechaPedido || 'fecha no disponible',
-                estado: item.estadoPedido || 'pendiente',
+        if (!agrupado[item.idPedido]) {
+            agrupado[item.idPedido] = {
+                id: item.idPedido,
+                fecha: item.fecha || 'fecha no disponible',
+                estado: item.estado || 'pendiente',
+                motivo_cancelacion: item.motivo_cancelacion || null,
                 // capturamos la informacion de entrega para cuando la vista sea usada por admin/proveedor
                 cliente: item.nombreCliente || null,
                 total: 0,
@@ -62,9 +63,9 @@ function agruparPorPedido(listaPlana) {
             };
         }
         // se inserta el producto actual dentro del sub-arreglo del pedido correspondiente
-        agrupado[item.idPedidoFk].productos.push(item);
+        agrupado[item.idPedido].productos.push(item);
         // se acumula el costo en el total de la factura
-        agrupado[item.idPedidoFk].total += item.subtotal;
+        agrupado[item.idPedido].total += item.subtotal;
     });
     
     // object.values convierte el diccionario agrupado en un arreglo tradicional.
@@ -111,7 +112,7 @@ window.verDetalleFactura = async function(id) {
         detalle.forEach(item => {
             html += `<tr style="border-bottom: 1px solid #eee;">
                         <td style="padding:8px;">${item.producto}</td>
-                        <td style="padding:8px;">${item.proveedor || 'dmari oficial'}</td>
+                        <td style="padding:8px;">${item.proveedor || 'dmari oficial'} ${item.contacto ? '<br><small>Tel: ' + item.contacto + '</small>' : ''}</td>
                         <td style="padding:8px; text-align:center;">${item.cantidad}</td>
                         <td style="padding:8px;">$${item.subtotal.toFixed(2)}</td>
                     </tr>`;

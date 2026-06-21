@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import com.dmari.dao.carritoDAO;
+import com.dmari.dao.clienteDAO;
 import com.dmari.dao.pedidoDAO;
+
 import com.dmari.helper.jsonHelper;
 import com.dmari.modelo.detallePedido;
 import com.dmari.modelo.usuario;
@@ -103,9 +105,10 @@ public class PedidoController extends HttpServlet {
         String idMetodoStr = request.getParameter("idMetodo");
         String cuenta = request.getParameter("cuenta");
         
-        // validacion de seguridad modulo 5: evitamos nulos y verificamos formato numerico de la cuenta.
-        // esto previene fallos de nullpointerexception y ataques de inyeccion de texto.
-        if (idsProductos == null || idsProductos.length == 0 || idMetodoStr == null || cuenta == null || !cuenta.matches("^[0-9]+$")) {
+        // validacion de seguridad: evitamos nulos y verificamos formato de la cuenta.
+        // la regex acepta numeros, guiones, espacios y '+' (igual que el frontend) de 4 a 25 caracteres.
+        // esto previene nullpointerexception y es consistente con la validacion del pedidoService.js
+        if (idsProductos == null || idsProductos.length == 0 || idMetodoStr == null || cuenta == null || !cuenta.matches("^[0-9\\-\\s\\+]{4,25}$")) {
             // sc_bad_request (400): el servidor rechaza la peticion porque faltan datos clave del carrito.
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
@@ -132,15 +135,35 @@ public class PedidoController extends HttpServlet {
             carritoList.add(item);
         }
         
-        // capturamos el id del carrito de forma segura para la base de datos
-        String idCarStr = request.getParameter("id_carrito");
-        int idCarrito = (idCarStr != null && !idCarStr.isEmpty()) ? Integer.parseInt(idCarStr) : 0;
-        int idMetodo = Integer.parseInt(idMetodoStr);
+        // correccion: obtenemos el id del carrito activo directamente desde la base de datos.
+        // antes se esperaba que javascript lo enviara, pero nunca lo enviaba (bug critico).
+        // carritoDAO.obtenerOCrearCarrito busca el carrito activo del cliente. si no existe, lo crea.
+        carritoDAO carritoHelper = new carritoDAO();
+        int idCarrito = carritoHelper.obtenerOCrearCarrito(user.getIdUsuario());
+        int idMetodo  = Integer.parseInt(idMetodoStr);
         
-        // ejecucion del nucleo de datos: agregamos el parametro faltante para que compile
+        // si no se pudo obtener ni crear el carrito, abortamos con error 500
+        if (idCarrito == -1) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            return;
+        }
+        
+        // obtenemos el id de la direccion primaria del cliente desde la base de datos.
+        // la tabla pedido tiene id_direccion_fk NOT NULL, por lo que es obligatorio.
+        // si el cliente no tiene direccion registrada, enviamos 400 para que el frontend lo maneje.
+        clienteDAO cliDao = new clienteDAO();
+        int idDireccion = cliDao.obtenerIdDireccionPrimaria(user.getIdUsuario());
+        if (idDireccion == -1) {
+            // 400: el cliente debe configurar su perfil de envio antes de poder comprar
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+        
+        // ejecucion del nucleo de datos
         pedidoDAO dao = new pedidoDAO();
-        // enviamos los 6 parametros obligatorios en el orden exacto del dao
-        boolean exito = dao.registrarPedido(user.getIdUsuario(), idCarrito, totalPagar, carritoList, idMetodo, cuenta);
+        // enviamos los 7 parametros en el orden exacto del dao actualizado
+        // incluye el nuevo parametro idDireccion que antes no se enviaba y causaba el 500
+        boolean exito = dao.registrarPedido(user.getIdUsuario(), idCarrito, idDireccion, totalPagar, carritoList, idMetodo, cuenta);
         
         // 5. resolucion web y limpieza.
         // condicional critico: confirma si mysql logro insertar todos los componentes.

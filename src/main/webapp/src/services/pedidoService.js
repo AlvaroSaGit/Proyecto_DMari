@@ -13,12 +13,13 @@
  * @param {string} cuenta - numero de cuenta o comprobante ingresado.
  * @returns {Promise<boolean>} - true si el pedido se proceso con exito en mysql.
  */
-export async function enviarPedido(carrito, idCarrito, idMetodo, cuenta) {
-    // validacion de seguridad modulo 5: expresion regular para asegurar que la cuenta sea numerica.
-    // permite longitudes de 10 a 15 digitos comunes en cuentas y celulares.
-    const regexCuenta = /^[0-9]{10,15}$/;
+export async function enviarPedido(carrito, idMetodo, cuenta) {
+    // validacion de seguridad: acepta numeros, guiones, espacios y '+' entre 4 y 25 caracteres.
+    // esta regex es identica a la del PedidoController.java para que ambas capas sean consistentes.
+    // nota: el input visual del modal ya filtra letras en tiempo real, esta es la segunda barrera.
+    const regexCuenta = /^[0-9\-\s\+]{4,25}$/;
     if (!regexCuenta.test(cuenta)) {
-        console.error('error: el formato de la cuenta o telefono es invalido en el frontend.');
+        console.error('error: el formato de la cuenta o telefono es invalido en el frontend. Valor ingresado:', cuenta);
         return false;
     }
 
@@ -52,8 +53,8 @@ export async function enviarPedido(carrito, idCarrito, idMetodo, cuenta) {
     // inyectamos los datos financieros finales.
     // idmetodo: llave foranea hacia la tabla metodo_pago.
     // cuenta: el numero validado anteriormente para la tabla pago.
+    // enviamos el método de pago y la cuenta a procesar
     parametros.append('idMetodo', idMetodo);
-    parametros.append('id_carrito', idCarrito); // enviamos el id del carrito para que java lo procese
     parametros.append('cuenta', cuenta);
     
     // el servlet recibira la lista y debe usar una transaccion para pasar de carrito a detalle_pedido

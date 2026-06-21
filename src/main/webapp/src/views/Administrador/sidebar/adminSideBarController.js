@@ -9,7 +9,7 @@ export async function inicializarAdmin() {
     // cargamos el html del sidebar desde la carpeta de vistas del administrador.
     // agregamos '?t=' + new Date().getTime() para crear una url unica en cada recarga.
     // esto destruye la cache del navegador y nos asegura que siempre cargue la version mas reciente del menu.
-    await cargarComponente('contenedor-sidebar-admin', './src/views/Administrador/sidebar/adminSideBar.html?t=' + new Date().getTime());
+    await cargarComponente('contenedor-sidebar-dashboard', './src/views/Administrador/sidebar/adminSideBar.html?t=' + new Date().getTime());
     
     // extraemos y guardamos en variables los botones de navegacion que acabamos de inyectar en el html
     const btnDashboard = document.getElementById('btn-nav-dashboard'); // asumiendo que el id es este en tu html

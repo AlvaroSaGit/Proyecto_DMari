@@ -9,8 +9,32 @@
         <p style="color: #6c757d; margin-top: 5px;">monitoreo de ingresos y actividad comercial de toda la plataforma dmari</p>
     </div>
 
+    <!-- tarjetas de metricas estandarizadas -->
+    <div class="dashboard-cards" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px;">
+        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #4ade80;">
+            <i class='bx bx-trending-up' style="font-size: 2.5rem; color: #4ade80;"></i>
+            <h3 style="margin: 10px 0; font-size: 1rem; color: #666;">Ingresos Brutos</h3>
+            <p id="admin-total-ingresos" style="font-size: 1.8rem; font-weight: bold; color: #333;">$0.00</p>
+        </div>
+        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #4ade80;">
+            <i class='bx bx-money' style="font-size: 2.5rem; color: #4ade80;"></i>
+            <h3 style="margin: 10px 0; font-size: 1rem; color: #666;">Comisiones Dmari</h3>
+            <p id="admin-total-comisiones" style="font-size: 1.8rem; font-weight: bold; color: #333;">$0.00</p>
+        </div>
+        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #4ade80;">
+            <i class='bx bx-shopping-bag' style="font-size: 2.5rem; color: #4ade80;"></i>
+            <h3 style="margin: 10px 0; font-size: 1rem; color: #666;">Total Pedidos</h3>
+            <p id="admin-cantidad-pedidos" style="font-size: 1.8rem; font-weight: bold; color: #333;">0</p>
+        </div>
+        <div class="stat-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #4ade80;">
+            <i class='bx bx-purchase-tag' style="font-size: 2.5rem; color: #4ade80;"></i>
+            <h3 style="margin: 10px 0; font-size: 1rem; color: #666;">Unidades Vendidas</h3>
+            <p id="admin-total-productos-vendidos" style="font-size: 1.8rem; font-weight: bold; color: #333;">0</p>
+        </div>
+    </div>
+
     <!-- contenedor de la grafica principal -->
-    <div class="card-grafica-global" style="background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #eef0f2;">
+    <div class="card-grafica-global" style="background: #ffffff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eef0f2;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3 style="font-size: 1.2rem; color: #343a40; font-weight: 600;">tendencia mensual de ingresos</h3>
             <span style="background: #f8f9fa; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; color: #495057; border: 1px solid #dee2e6;">
@@ -19,7 +43,7 @@
         </div>
 
         <!-- espacio reservado para que chart.js dibuje la grafica -->
-        <div style="position: relative; height: 450px; width: 100%;">
+        <div style="position: relative; height: 350px; width: 100%;">
             <canvas id="graficaVentasGlobales"></canvas>
         </div>
     </div>

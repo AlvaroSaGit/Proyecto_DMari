@@ -36,9 +36,8 @@ public class carritoDAO {
         // inserta un nuevo encabezado de carrito vinculandolo al cliente
         String sqlInsert = "INSERT INTO carrito (id_cliente_fk, estado) VALUES (?, 'Activo')";
         // salvavidas: asegura que el cliente exista en su tabla para evitar errores de integridad
-        // usa on duplicate key update para que si el cliente ya existe, no genere error de llave primaria
-        // simplemente "toca" el registro sin alterar la direccion si ya estaba escrita
-        String sqlAsegurarCliente = "INSERT INTO cliente (id_cliente_pk, direccion_envio) VALUES (?, 'sin registrar') ON DUPLICATE KEY UPDATE direccion_envio = direccion_envio";
+        // usa on duplicate key update para evitar el error de clave primaria duplicada si ya existía
+        String sqlAsegurarCliente = "INSERT INTO cliente (id_cliente_pk) VALUES (?) ON DUPLICATE KEY UPDATE id_cliente_pk = id_cliente_pk";
 
         try (Connection con = db.conectar()) {
             // paso a: intentamos leer el carrito activo

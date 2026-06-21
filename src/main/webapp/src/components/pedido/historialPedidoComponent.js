@@ -76,10 +76,15 @@ export function crearBloquePedido(pedido) {
     // se itera sobre el sub-arreglo de productos que pertenecen exclusivamente a este pedido
     pedido.productos.forEach(prod => {
         const productoSeguro = prod.nombreProducto || prod.nombre_producto || prod.producto || 'Producto sin nombre';
+        const proveedorSeguro = prod.proveedor || 'DMari Oficial';
+        const contactoSeguro = prod.contacto ? ` - Tel: ${prod.contacto}` : '';
         // se concatena una fila limpia con la cantidad, el nombre y el subtotal formateado a 2 decimales
         htmlProductos += `
             <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:5px 0; font-size:0.9rem;">
-                <span>${prod.cantidad}x ${productoSeguro}</span>
+                <span>
+                    ${prod.cantidad}x ${productoSeguro} <br>
+                    <small style="color:#888;">Vendido por: <b>${proveedorSeguro}</b>${contactoSeguro}</small>
+                </span>
                 <span style="color:#666;">$${prod.subtotal.toFixed(2)}</span>
             </div>
         `;
@@ -118,7 +123,7 @@ export function crearBloquePedido(pedido) {
             ${htmlProductos}
         </div>
         
-        ${pedido.estado.toLowerCase() === 'pendiente' ? `
+        ${pedido.estado.toLowerCase().includes('pendiente') ? `
         <div style="margin-top: 15px; text-align: right; border-top: 1px solid #eee; padding-top: 10px;">
             <button class="btn-cancelar-pedido" data-id="${pedido.id}" style="background: white; color: #dc3545; border: 1px solid #dc3545; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">Cancelar Pedido</button>
         </div>

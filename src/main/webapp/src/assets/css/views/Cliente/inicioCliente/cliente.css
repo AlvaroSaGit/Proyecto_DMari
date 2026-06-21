@@ -34,7 +34,9 @@
 
 /* ESTILOS DEL ADMINISTRADOR */
 @import url("../../admin/adminProductos.css");
-@import url("../../admin/adminSideBar.css");
+
+/* ESTILOS DEL DASHBOARD GENERAL (SIDEBAR) */
+@import url("../../../layout/dashboardSideBar.css");
 
 /* ESTILOS DEL PROVEEDOR */
 @import url("../../proveedor/proveedorProductos.css");
