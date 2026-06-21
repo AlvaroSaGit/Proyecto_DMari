@@ -263,7 +263,7 @@ public class pedidoDAO {
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, p.motivo_cancelacion, " +
                      "prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal, mp.descripcion_pago, " +
                      "COALESCE(prov.nombre_marca, u_prov.nombre) AS nombre_proveedor, " +
-                     "COALESCE((SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = prov.id_proveedor_pk LIMIT 1), u_prov.correo) AS contacto_proveedor " +
+                     "COALESCE((SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = prov.id_proveedor_pk LIMIT 1), (SELECT correo FROM correo WHERE id_usuario_fk = prov.id_proveedor_pk AND correo_primario = true LIMIT 1)) AS contacto_proveedor " +
                      "FROM pedido p " +
                      
                      // inner join: es estricto. asegura que el pedido solo se muestre si de verdad tiene productos adentro. 

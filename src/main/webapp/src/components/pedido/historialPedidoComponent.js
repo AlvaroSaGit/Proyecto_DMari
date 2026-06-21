@@ -77,7 +77,7 @@ export function crearBloquePedido(pedido) {
     pedido.productos.forEach(prod => {
         const productoSeguro = prod.nombreProducto || prod.nombre_producto || prod.producto || 'Producto sin nombre';
         const proveedorSeguro = prod.proveedor || 'DMari Oficial';
-        const contactoSeguro = prod.contacto ? ` - Tel: ${prod.contacto}` : '';
+        const contactoSeguro = prod.contacto ? ` - Contacto: ${prod.contacto}` : '';
         // se concatena una fila limpia con la cantidad, el nombre y el subtotal formateado a 2 decimales
         htmlProductos += `
             <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:5px 0; font-size:0.9rem;">
