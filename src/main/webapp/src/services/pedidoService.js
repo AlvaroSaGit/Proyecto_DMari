@@ -14,8 +14,9 @@
  * @returns {Promise<boolean>} - true si el pedido se proceso con exito en mysql.
  */
 export async function enviarPedido(carrito, idMetodo, cuenta) {
-    // validacion de seguridad modulo 5: expresion regular flexible para aceptar 
-    // numeros de cuenta, telefonos (con espacios, + o guiones) entre 4 y 25 caracteres.
+    // validacion de seguridad: acepta numeros, guiones, espacios y '+' entre 4 y 25 caracteres.
+    // esta regex es identica a la del PedidoController.java para que ambas capas sean consistentes.
+    // nota: el input visual del modal ya filtra letras en tiempo real, esta es la segunda barrera.
     const regexCuenta = /^[0-9\-\s\+]{4,25}$/;
     if (!regexCuenta.test(cuenta)) {
         console.error('error: el formato de la cuenta o telefono es invalido en el frontend. Valor ingresado:', cuenta);

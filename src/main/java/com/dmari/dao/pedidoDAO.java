@@ -30,10 +30,11 @@ public class pedidoDAO {
      * @param numeroCuenta string: texto con el comprobante, cuenta o celular usado.
      * @return boolean: true si el commit general se ejecuta sin errores, false si hubo un rollback.
      */
-    public boolean registrarPedido(int idCliente, int idCarrito, double totalPagar, ArrayList<detallePedido> carrito, int idMetodoPago, String numeroCuenta) {
+    public boolean registrarPedido(int idCliente, int idCarrito, int idDireccion, double totalPagar, ArrayList<detallePedido> carrito, int idMetodoPago, String numeroCuenta) {
         // sql para insertar la cabecera del pedido.
-        // se agrega id_carrito_fk para cumplir con la restriccion de la base de datos
-        String sqlPedido = "INSERT INTO pedido (id_cliente_fk, id_carrito_fk, total_pagar, estado_pedido) VALUES (?, ?, ?, 'Pendiente')";
+        // incluye id_carrito_fk e id_direccion_fk que son NOT NULL en la tabla
+        // el campo id_direccion_fk es obligatorio segun el schema de tablaMysql.sql
+        String sqlPedido = "INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES (?, ?, ?, ?, 'Pendiente')";
         // sql para registrar cada producto comprado.
         // vincula el item al pedido principal usando su id.
         // guarda la cantidad, el precio capturado y el subtotal calculado.
@@ -42,10 +43,10 @@ public class pedidoDAO {
         // resta la cantidad del stock disponible del producto.
         // la clausula stock >= cantidad evita que el inventario sea negativo.
         String sqlDescontarStock = "UPDATE producto SET stock = stock - ? WHERE id_producto_pk = ? AND stock >= ?";
-        // sql para registrar el comprobante de pago simulado.
-        // amarra el pago al pedido generado.
-        // registra la comision de dmari y el monto neto para el proveedor.
-        String sqlPago = "INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, numero_cuenta_ahorro, comision_dmari, monto_total, estado_activo, estado_pago) VALUES (?, ?, ?, ?, ?, 1, 'Aprobado')";
+        // sql para registrar el comprobante de pago.
+        // columna correcta: referencia_transaccion (no numero_cuenta_ahorro que no existe en el schema).
+        // se elimino estado_activo porque tampoco existe en la tabla pago de tablaMysql.sql.
+        String sqlPago = "INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comision_dmari, monto_total, estado_pago) VALUES (?, ?, ?, ?, ?, 'Aprobado')";
         
         Connection con = null;
         try {
@@ -57,12 +58,14 @@ public class pedidoDAO {
             
             // paso 1: insertamos el pedido maestro
             try (PreparedStatement psPedido = con.prepareStatement(sqlPedido, PreparedStatement.RETURN_GENERATED_KEYS)) {
-                // configuramos los parametros incluyendo la referencia al carrito operativo
+                // configuramos los 4 parametros: cliente, carrito, direccion y total
                 psPedido.setInt(1, idCliente);
                 psPedido.setInt(2, idCarrito);
-                psPedido.setDouble(3, totalPagar);
+                // el tercer parametro es el id de la direccion primaria del cliente
+                // antes faltaba este parametro y mysql lanzaba NOT NULL violation
+                psPedido.setInt(3, idDireccion);
+                psPedido.setDouble(4, totalPagar);
                 // enviamos el comando de insercion a la base de datos
-                // ejecucion de la insercion maestra del pedido
                 psPedido.executeUpdate();
                 
                 try (ResultSet rs = psPedido.getGeneratedKeys()) {
@@ -117,13 +120,15 @@ public class pedidoDAO {
                         // vinculamos el pago con el pedido recien creado
                         psPago.setInt(1, idPedidoGenerado);
                         psPago.setInt(2, idMetodoPago);
+                        // columna referencia_transaccion: guardamos el numero de cuenta/celular del pago
+                        // antes esta columna se llamaba incorrectamente numero_cuenta_ahorro
                         psPago.setString(3, numeroCuenta);
-                        // simulamos que dmari retiene el 5% de comision por vender los productos de los proveedores
+                        // calculamos la comision del 5% que dmari retiene por intermediacion
                         double comision = totalPagar * 0.05;
-                        double totalProveedor = totalPagar - comision;
+                        // monto_total es lo que recibe el proveedor despues de la comision
+                        double montoProveedor = totalPagar - comision;
                         psPago.setDouble(4, comision);
-                        // el monto total representa lo que recibe el proveedor tras la comision
-                        psPago.setDouble(5, totalProveedor);
+                        psPago.setDouble(5, montoProveedor);
                         psPago.executeUpdate();
                     }
                 }
@@ -175,16 +180,21 @@ public class pedidoDAO {
         // 7. ordena por fecha mas reciente.
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, p.motivo_cancelacion, u.nombre AS nombre_cliente, " +
                      // traemos la direccion de la tabla satelite para que el proveedor sepa a donde enviar
-                     "d.direccion, d.direccion_detallada, c.telefono_secundario, c.referencia_ubicacion, t.numero_telefonico, prod.nombre_producto, dp.cantidad, dp.subtotal " +
+                     "d.direccion, d.direccion_detallada, c.referencia_ubicacion, " +
+                     // subconsulta 1 (LIMIT 1): trae unicamente el primer telefono que encuentre del usuario.
+                     // esto evita que mysql multiplique las filas del pedido si el cliente tiene varios telefonos.
+                     "(SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = u.id_usuario_pk LIMIT 1) AS numero_telefonico, " +
+                     // subconsulta 2 (LIMIT 1 OFFSET 1): el 'offset 1' le dice a mysql que se salte el primer telefono
+                     // y traiga unicamente el segundo. asi capturamos el telefono alternativo de forma segura.
+                     "(SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = u.id_usuario_pk LIMIT 1 OFFSET 1) AS telefono_secundario, " +
+                     "prod.nombre_producto, dp.cantidad, dp.subtotal " +
                      // tabla principal de la consulta: el pedido maestro
                      "FROM pedido p " +
                      // inner join: el pedido debe tener un usuario real asociado si o si
                      "INNER JOIN usuario u ON p.id_cliente_fk = u.id_usuario_pk " +
                      // left joins: cruzamos con el perfil del cliente y las tablas satelite
                      "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
-                     "LEFT JOIN direccion d ON u.id_usuario_pk = d.id_usuario_fk AND d.direccion_primario = 1 " +
-                     // left join: traemos el telefono principal de la tabla satelite telefono
-                     "LEFT JOIN telefono t ON u.id_usuario_pk = t.id_usuario_fk " +
+                     "LEFT JOIN direccion d ON p.id_direccion_fk = d.id_direccion_pk " +
                      // inner join: estricto para ver que productos exactos compro en esa orden
                      "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
                      "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
@@ -303,12 +313,18 @@ public class pedidoDAO {
         // los left joins en perfil y direccion evitan que la lista falle si el perfil esta incompleto.
         // ordena por el id del pedido de forma descendente para ver lo mas reciente.
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, p.motivo_cancelacion, u.nombre AS nombre_cliente, " +
-                     "d.direccion, d.direccion_detallada, c.telefono_secundario, c.referencia_ubicacion, t.numero_telefonico, prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal, mp.descripcion_pago " +
+                     "d.direccion, d.direccion_detallada, c.referencia_ubicacion, " +
+                     // subconsulta 1: limit 1 garantiza que solo se extraiga un numero (el principal), 
+                     // evitando el bug de duplicacion de pedidos en la vista si hay multiples telefonos.
+                     "(SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = u.id_usuario_pk LIMIT 1) AS numero_telefonico, " +
+                     // subconsulta 2: limit 1 offset 1 descarta el primer numero y captura el segundo (si existe),
+                     // permitiendo mostrar un telefono de respaldo para la logistica del envio.
+                     "(SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = u.id_usuario_pk LIMIT 1 OFFSET 1) AS telefono_secundario, " +
+                     "prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal, mp.descripcion_pago " +
                      "FROM pedido p " +
                      "INNER JOIN usuario u ON p.id_cliente_fk = u.id_usuario_pk " +
                      "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
-                     "LEFT JOIN direccion d ON u.id_usuario_pk = d.id_usuario_fk AND d.direccion_primario = 1 " +
-                     "LEFT JOIN telefono t ON u.id_usuario_pk = t.id_usuario_fk " +
+                     "LEFT JOIN direccion d ON p.id_direccion_fk = d.id_direccion_pk " +
                      "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
                      "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
                      "LEFT JOIN pago pg ON p.id_pedido_pk = pg.id_pedido_fk " +

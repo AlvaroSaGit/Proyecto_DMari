@@ -73,6 +73,35 @@ public class clienteDAO {
      * @param referencia Indicaciones para la entrega (ej. "casa esquinera").
      * @return true si la transacción fue exitosa (commit), false si falló (rollback).
      */
+    /**
+     * obtiene el id de la direccion marcada como primaria del cliente.
+     * este metodo es usado por el PedidoController para cumplir con la
+     * restriccion NOT NULL del campo id_direccion_fk en la tabla pedido.
+     *
+     * @param idUsuario el id del usuario logueado.
+     * @return el id_direccion_pk de la direccion primaria, o -1 si no tiene ninguna.
+     */
+    public int obtenerIdDireccionPrimaria(int idUsuario) {
+        // consultamos solo la columna id_direccion_pk de la fila marcada como primaria
+        String sql = "SELECT id_direccion_pk FROM direccion WHERE id_usuario_fk = ? AND direccion_primario = 1 LIMIT 1";
+        
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            // inyectamos el id del usuario en el marcador de posicion
+            ps.setInt(1, idUsuario);
+            try (ResultSet rs = ps.executeQuery()) {
+                // condicional: si existe al menos una fila, extraemos el id
+                if (rs.next()) {
+                    return rs.getInt("id_direccion_pk");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("error al obtener id de direccion primaria: " + e.getMessage());
+        }
+        // retornamos -1 para indicar que el cliente no tiene direccion configurada
+        return -1;
+    }
+
     public boolean guardarOActualizarPerfil(int idUsuario, String direccionPrimaria, String direccionDetalle, String numeroTelefono, String telefonoSecundario, String referencia) {
         
         // La tabla cliente solo maneja la referencia de ubicación.
