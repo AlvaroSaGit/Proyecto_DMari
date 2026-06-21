@@ -145,6 +145,7 @@ public class jsonHelper {
             json.append("\"motivo_cancelacion\":\"").append(dp.getMotivoCancelacion() != null ? escaparTexto(dp.getMotivoCancelacion()) : "").append("\",");
             json.append("\"producto\":\"").append(dp.getNombreProducto() != null ? escaparTexto(dp.getNombreProducto()) : "").append("\",");
             json.append("\"proveedor\":\"").append(dp.getNombreProveedor() != null ? escaparTexto(dp.getNombreProveedor()) : "DMari Oficial").append("\",");
+            json.append("\"contacto\":\"").append(dp.getContactoProveedor() != null ? escaparTexto(dp.getContactoProveedor()) : "").append("\",");
             json.append("\"cantidad\":").append(dp.getCantidad()).append(",");
             json.append("\"precio\":").append(dp.getPrecioUnitario()).append(",");
             json.append("\"subtotal\":").append(dp.getSubtotal());

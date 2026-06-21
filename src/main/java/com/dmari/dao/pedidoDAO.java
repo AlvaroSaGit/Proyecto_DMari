@@ -255,15 +255,25 @@ public class pedidoDAO {
     public ArrayList<detallePedido> listarPedidosPorCliente(int idCliente) {
         ArrayList<detallePedido> lista = new ArrayList<>();
         // consulta para el historial del cliente.
-        // une pedido con detalle y producto para mostrar que compro.
-        // usa left joins con pago y metodo para ver la forma de pago.
-        // filtra por el id del cliente logueado.
+        // descripcion funcional de las sentencias sql aplicadas:
+        // coalesce: retorna el primer valor no nulo de la lista. si 'nombre_marca' es null, 
+        //           selecciona el 'nombre' de usuario para asegurar que exista un valor legible.
+        // limit 1:  limita el resultado de la subconsulta a una sola fila. previene duplicacion 
+        //           de registros en la consulta principal si el usuario posee multiples telefonos.
         String sql = "SELECT p.id_pedido_pk, p.fecha, p.estado_pedido, p.motivo_cancelacion, " +
                      "prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal, mp.descripcion_pago, " +
-                     "COALESCE(prov.nombre_marca, u_prov.nombre) AS nombre_proveedor " +
+                     "COALESCE(prov.nombre_marca, u_prov.nombre) AS nombre_proveedor, " +
+                     "(SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = prov.id_proveedor_pk LIMIT 1) AS contacto_proveedor " +
                      "FROM pedido p " +
+                     
+                     // inner join: es estricto. asegura que el pedido solo se muestre si de verdad tiene productos adentro. 
+                     // si una orden esta vacia por error, el inner join la esconde por seguridad.
                      "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
                      "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
+                     
+                     // left join: es relajado. intenta buscar el pago o el perfil del proveedor. 
+                     // si todavia no hay pago o perfil asociado, no destruye la orden principal, 
+                     // simplemente rellena esos huecos con valor null pero la orden se sigue mostrando.
                      "LEFT JOIN proveedor_producto pp ON prod.id_producto_pk = pp.id_producto_fk " +
                      "LEFT JOIN proveedor prov ON pp.id_proveedor_fk = prov.id_proveedor_pk " +
                      "LEFT JOIN usuario u_prov ON prov.id_proveedor_pk = u_prov.id_usuario_pk " +
@@ -288,6 +298,7 @@ public class pedidoDAO {
                      
                      dp.setNombreProducto(rs.getString("nombre_producto"));
                      dp.setNombreProveedor(rs.getString("nombre_proveedor"));
+                     dp.setContactoProveedor(rs.getString("contacto_proveedor"));
                      dp.setCantidad(rs.getInt("cantidad"));
                      dp.setPrecioUnitario(rs.getDouble("precio_unitario"));
                      dp.setSubtotal(rs.getDouble("subtotal"));

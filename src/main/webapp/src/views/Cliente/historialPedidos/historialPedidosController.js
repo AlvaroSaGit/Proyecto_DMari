@@ -112,7 +112,7 @@ window.verDetalleFactura = async function(id) {
         detalle.forEach(item => {
             html += `<tr style="border-bottom: 1px solid #eee;">
                         <td style="padding:8px;">${item.producto}</td>
-                        <td style="padding:8px;">${item.proveedor || 'dmari oficial'}</td>
+                        <td style="padding:8px;">${item.proveedor || 'dmari oficial'} ${item.contacto ? '<br><small>Tel: ' + item.contacto + '</small>' : ''}</td>
                         <td style="padding:8px; text-align:center;">${item.cantidad}</td>
                         <td style="padding:8px;">$${item.subtotal.toFixed(2)}</td>
                     </tr>`;

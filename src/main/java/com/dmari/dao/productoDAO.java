@@ -418,15 +418,25 @@ public class productoDAO {
      * @return boolean: true si acerto la instruccion sql.
      */
     public boolean actualizarEstado(int id, boolean nuevoEstado) {
+        // consulta update con parametros parametrizados (?) por seguridad.
+        // previene la alteracion de la consulta original mediante inyeccion sql.
         String sql = "update producto set estado = ? where id_producto_pk = ?";
         
+        // gestion automatica de recursos (try-with-resources) para garantizar el cierre de la conexion.
+        // connection: instancia de enlace persistente con el gestor de base de datos.
+        // preparedstatement: estructura de consulta precompilada que sanitiza las variables de entrada.
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
              
+            // mapeo secuencial de valores hacia los marcadores de posicion de la consulta.
             ps.setBoolean(1, nuevoEstado);
             ps.setInt(2, id);
             
+            // executeupdate: instruccion dedicada a operaciones dml (insert, update, delete).
+            // retorna el numero entero correspondiente al total de filas modificadas en la tabla.
             int filasAfectadas = ps.executeUpdate();
+            
+            // validacion de transaccion: si retorna un valor mayor a cero, la operacion fue exitosa.
             return filasAfectadas > 0;
             
         } catch (SQLException e) {

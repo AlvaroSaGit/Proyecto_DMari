@@ -198,14 +198,26 @@ public class usuarioDAO {
      * @return boolean: true si el correo ya existe en la tabla correo.
      */
     public boolean existeCorreo(String correo) {
+        // consulta sql con marcador de posicion (?) para evitar inyeccion sql.
+        // previene la concatenacion directa de variables de entrada.
         String sql = "SELECT 1 FROM correo WHERE correo = ?";
         
+        // try-with-resources asegura el cierre automatico de la conexion.
+        // connection: gestiona el enlace logico con la base de datos.
+        // preparedstatement: compila la consulta y la protege contra ejecucion de codigo malicioso.
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
+            // asignacion del parametro a la consulta.
+            // setstring neutraliza caracteres especiales o comillas de la variable.
             ps.setString(1, correo);
+            
+            // resultset: almacena el conjunto de datos retornado por mysql.
+            // executequery(): metodo especifico para ejecutar sentencias de lectura (select).
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next(); // devuelve true si encontro el correo
+                // rs.next() desplaza el cursor a la primera fila de resultados.
+                // devuelve true si existe informacion, o false si el conjunto esta vacio.
+                return rs.next();
             }
             
         } catch (SQLException e) {
