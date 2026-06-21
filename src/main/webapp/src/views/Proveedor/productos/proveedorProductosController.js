@@ -59,6 +59,14 @@ function prepararVistaProveedorProductos() {
             if (modal) modal.classList.remove('oculto'); 
         });
     }
+
+    // evento para el boton de sugerir nueva categoria
+    const btnSugerirCategoria = document.getElementById('btn-sugerir-categoria-prov');
+    if (btnSugerirCategoria) {
+        btnSugerirCategoria.addEventListener('click', () => {
+            cargarVistaSolicitudCategoria();
+        });
+    }
     
     // funcion auxiliar para cerrar la ventana emergente agregando la clase 'oculto'
     const cerrarModal = () => { if (modal) modal.classList.add('oculto'); };

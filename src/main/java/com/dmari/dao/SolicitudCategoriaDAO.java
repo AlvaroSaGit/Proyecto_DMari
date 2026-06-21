@@ -78,13 +78,13 @@ public class SolicitudCategoriaDAO {
             con.setAutoCommit(false); // apagamos el autoguardado para iniciar una transaccion segura
             
             // paso 1: actualizar el estado de la solicitud a aprobada
-            String sqlUpdate = "UPDATE solicitud_categoria SET estado_solicitud = 'APROBADA' WHERE id_solicitud_pk = ?";
+            String sqlUpdate = "UPDATE solicitud_categoria SET estado_solicitud = 'aprobada' WHERE id_solicitud_pk = ?";
             PreparedStatement pstUpdate = con.prepareStatement(sqlUpdate);
             pstUpdate.setInt(1, idSolicitud);
             pstUpdate.executeUpdate();
             
             // paso 2: crear la categoria formal en la tabla de categorias para que aparezca en la tienda
-            String sqlInsert = "INSERT INTO categoria (nombre_categoria, estado_activo) VALUES (?, 1)";
+            String sqlInsert = "INSERT INTO categoria (nombre, descripcion, estado_activo) VALUES (?, 'Categoria sugerida por proveedor', 1)";
             PreparedStatement pstInsert = con.prepareStatement(sqlInsert);
             pstInsert.setString(1, nombreCat);
             pstInsert.executeUpdate();

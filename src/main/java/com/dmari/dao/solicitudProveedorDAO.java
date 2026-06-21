@@ -61,7 +61,7 @@ public class solicitudProveedorDAO {
         // sql para consultar la informacion.
         // unimos (inner join) la tabla de solicitudes con la tabla usuario para ver el nombre real de quien la envia.
         // usamos left join con correo por si queremos extraer el email, aunque no lo usemos todo.
-        String sql = "SELECT sp.*, u.nombre, u.correo FROM solicitud_proveedor sp " +
+        String sql = "SELECT sp.*, u.nombre, c.correo FROM solicitud_proveedor sp " +
                      "INNER JOIN usuario u ON sp.id_usuario_fk = u.id_usuario_pk " +
                      "LEFT JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk " +
                      "ORDER BY sp.id_solicitud_pk DESC";

@@ -34,10 +34,10 @@ public class SolicitudCategoriaController extends HttpServlet {
                 SolicitudCategoria s = lista.get(i);
                 json.append("{");
                 json.append("\"id_solicitud_pk\":").append(s.getIdSolicitudPk()).append(",");
-                json.append("\"nombre_proveedor\":\"").append(s.getNombreProveedor()).append("\",");
-                json.append("\"nombre_sugerido\":\"").append(s.getNombreSugerido()).append("\",");
-                json.append("\"justificacion\":\"").append(s.getJustificacion() != null ? s.getJustificacion() : "").append("\",");
-                json.append("\"estado_solicitud\":\"").append(s.getEstadoSolicitud()).append("\",");
+                json.append("\"nombre_proveedor\":\"").append(com.dmari.helper.jsonHelper.escaparTexto(s.getNombreProveedor())).append("\",");
+                json.append("\"nombre_sugerido\":\"").append(com.dmari.helper.jsonHelper.escaparTexto(s.getNombreSugerido())).append("\",");
+                json.append("\"justificacion\":\"").append(s.getJustificacion() != null ? com.dmari.helper.jsonHelper.escaparTexto(s.getJustificacion()) : "").append("\",");
+                json.append("\"estado_solicitud\":\"").append(com.dmari.helper.jsonHelper.escaparTexto(s.getEstadoSolicitud())).append("\",");
                 json.append("\"fecha_creacion\":\"").append(s.getFechaCreacion()).append("\"");
                 json.append("}");
                 if (i < lista.size() - 1) json.append(",");
@@ -64,7 +64,7 @@ public class SolicitudCategoriaController extends HttpServlet {
             String nombre = request.getParameter("nombre");
             exito = dao.aprobarSolicitud(Integer.parseInt(idParam), nombre);
         } else if ("rechazar".equals(accion)) {
-            exito = dao.actualizarEstado(Integer.parseInt(idParam), "RECHAZADA");
+            exito = dao.actualizarEstado(Integer.parseInt(idParam), "rechazada");
         } else if ("crear".equals(accion)) {
             // flujo para el proveedor: extraemos su id directamente de la sesion por seguridad
             HttpSession session = request.getSession(false);
