@@ -18,7 +18,8 @@ public class jsonHelper {
     
     // metodo interno para limpiar textos y evitar que caracteres especiales 
     // rompan la estructura del json en descripciones largas.
-    private String escaparTexto(String texto) {
+    // cambiado a public static para que otros controladores puedan usarlo sin instanciar
+    public static String escaparTexto(String texto) {
         // validamos si el texto es nulo para evitar errores de ejecucion
         if (texto == null) return "";
         // reemplazamos caracteres de escape de forma encadenada

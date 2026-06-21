@@ -80,9 +80,11 @@ function prepararVistaAdminUsuarios() {
     // oidores para los filtros de busqueda
     const inputBusqueda = document.getElementById('busqueda-usuarios');
     const selectRol = document.getElementById('filtro-rol-usuario');
+    const selectEstado = document.getElementById('filtro-estado-usuario');
 
     if (inputBusqueda) inputBusqueda.addEventListener('input', filtrarUsuariosUI);
     if (selectRol) selectRol.addEventListener('change', filtrarUsuariosUI);
+    if (selectEstado) selectEstado.addEventListener('change', filtrarUsuariosUI);
 
     // pedimos los datos a java al momento de abrir la pantalla
     cargarListaUsuarios();
@@ -140,13 +142,15 @@ function dibujarTablaUsuarios(lista) {
     });
 }
 
-    // logica de filtrado para el administrador sin tildes
+// logica de filtrado para el administrador sin tildes
 function filtrarUsuariosUI() {
     const termino = document.getElementById('busqueda-usuarios').value.toLowerCase();
     const rolFiltro = document.getElementById('filtro-rol-usuario').value;
+    const selectEstado = document.getElementById('filtro-estado-usuario');
+    const estadoFiltro = selectEstado ? selectEstado.value : '';
 
     // le pedimos al servicio que procese el filtro en memoria
-    const filtrados = filtrarUsuarios(termino, rolFiltro);
+    const filtrados = filtrarUsuarios(termino, rolFiltro, estadoFiltro);
     
     // redibujamos la tabla con los resultados
     dibujarTablaUsuarios(filtrados);

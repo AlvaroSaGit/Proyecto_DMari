@@ -33,7 +33,8 @@ public class usuarioDAO {
     public int registrarUsuario(usuario nuevoUsuario) {
         // consulta para la tabla principal de usuario.
         // Ahora acepta nombre, apellido y el rol dinámicamente.
-        String sqlUsuario = "INSERT INTO usuario (nombre, apellido, id_rol_fk, estado_cuenta) VALUES (?, ?, ?, 1)";
+        // si el rol es 4 (proveedor) el estado_cuenta inicial sera 0 (inactivo)
+        String sqlUsuario = "INSERT INTO usuario (nombre, apellido, id_rol_fk, estado_cuenta) VALUES (?, ?, ?, ?)";
         
         // consulta para insertar el correo vinculado al usuario
         // vincula el id del usuario recien creado con su direccion de email principal
@@ -63,6 +64,8 @@ public class usuarioDAO {
                 psUsuario.setString(1, nuevoUsuario.getNombre());
                 psUsuario.setString(2, nuevoUsuario.getApellido());
                 psUsuario.setInt(3, nuevoUsuario.getIdRol());
+                // asignamos estado_cuenta = 0 si es proveedor para revision del admin
+                psUsuario.setInt(4, nuevoUsuario.getIdRol() == 4 ? 0 : 1);
                 psUsuario.executeUpdate();
                 try (ResultSet rs = psUsuario.getGeneratedKeys()) {
                     // condicional: verifica si mysql le otorgo un id unico al usuario.
