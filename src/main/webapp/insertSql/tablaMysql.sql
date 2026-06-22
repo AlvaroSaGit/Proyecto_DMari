@@ -185,8 +185,7 @@ create table detalle_carrito(
 -- Cabecera del Pedido (Conexión física y directa con el carrito de origen)
 create table pedido(
     id_pedido_pk int auto_increment primary key,
-    id_cliente_fk int not null,
-    id_carrito_fk int not null, -- ¡CONEXIÓN EXPLICÍTADA!
+    id_carrito_fk int not null, -- ¡CONEXION EXPLICITA!
     id_direccion_fk int not null,
     fecha timestamp default current_timestamp,
     total_pagar decimal(10,2) not null,
