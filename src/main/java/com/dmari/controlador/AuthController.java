@@ -89,40 +89,57 @@ public class AuthController extends HttpServlet {
         if ("/registro".equals(ruta)) {
             // getparameter extrae el valor de los campos que javascript nos envio a traves de la red
             String nombre = request.getParameter("nombre");
+            String apellido = request.getParameter("apellido");
             String correo = request.getParameter("correo");
             String password = request.getParameter("password");
             String rol = request.getParameter("rol");
 
-            // validamos el nombre campo por campo para enviar mensajes precisos
-            if (!validacionHelper.validarNombre(nombre)) {
+            // validamos el nombre en el backend
+            if (nombre == null || nombre.trim().length() < 3 || !validacionHelper.validarNombre(nombre)) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().print("El nombre es inválido o muy corto.");
+                response.getWriter().print("El nombre es invalido, obligatorio o muy corto (minimo 3 letras).");
                 return;
             }
-            // validamos el correo buscando el @ y el punto com
+            
+            // validamos el apellido en el backend
+            if (apellido == null || apellido.trim().length() < 3 || !validacionHelper.validarNombre(apellido)) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().print("El apellido es invalido, obligatorio o muy corto (minimo 3 letras).");
+                return;
+            }
+
+            // validamos el correo con formato generico
             if (!validacionHelper.validarCorreo(correo)) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().print("el correo debe tener @ y terminar en .com");
+                response.getWriter().print("El correo electronico no tiene un formato valido.");
                 return;
             }
+
             // validamos que la contrasena sea segura segun nuestras reglas
             if (!validacionHelper.validarPassword(password)) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().print("La contraseña requiere 8+ caracteres, 1 mayúscula y 1 número.");
+                response.getWriter().print("La contraseña requiere 8+ caracteres, 1 mayuscula y 1 numero.");
+                return;
+            }
+
+            // verificamos de forma explicita si el correo ya esta registrado en la base de datos
+            if (dao.existeCorreo(correo)) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().print("Este correo electronico ya esta en uso.");
                 return;
             }
 
             usuario nuevoUsuario = new usuario();
             nuevoUsuario.setNombre(nombre);
-            nuevoUsuario.setApellido(request.getParameter("apellido"));
+            nuevoUsuario.setApellido(apellido);
             nuevoUsuario.setCorreo(correo);
             nuevoUsuario.setPassword(password);
             nuevoUsuario.setIdRol(Integer.parseInt(rol));
 
-            // condicional de insercion: si fue exitoso (correo no repetido) devuelve 200
+            // condicional de insercion: si fue exitoso devuelve id de usuario, sino 0
             int idUsuarioGenerado = dao.registrarUsuario(nuevoUsuario);
             if (idUsuarioGenerado > 0) {
-                // Si el registro es de un proveedor, guardamos su solicitud
+                // si el registro es de un proveedor, guardamos su solicitud comercial
                 if ("4".equals(rol)) {
                     String nit = request.getParameter("nit");
                     String marca = request.getParameter("marca");
@@ -130,10 +147,25 @@ public class AuthController extends HttpServlet {
                     String banco = request.getParameter("banco");
                     String tipoCuenta = request.getParameter("tipoCuenta");
 
-                    // Validaciones básicas para los campos de proveedor
-                    if (nit == null || nit.trim().isEmpty() || marca == null || marca.trim().isEmpty()) {                        
+                    // validamos los campos obligatorios y de formato de proveedor
+                    if (nit == null || nit.trim().isEmpty() || !nit.trim().matches("^[0-9]{8,20}$")) {                        
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                        response.getWriter().print("El NIT y el nombre de la marca son obligatorios para proveedores.");
+                        response.getWriter().print("El NIT debe ser estrictamente numerico (entre 8 y 20 digitos).");
+                        return;
+                    }
+                    if (marca == null || marca.trim().length() < 3) {
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        response.getWriter().print("El nombre de la marca debe tener al menos 3 caracteres.");
+                        return;
+                    }
+                    if (cuenta == null || cuenta.trim().isEmpty() || !cuenta.trim().matches("^[0-9]{5,30}$")) {
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        response.getWriter().print("La cuenta debe contener entre 5 y 30 digitos.");
+                        return;
+                    }
+                    if (banco == null || banco.trim().isEmpty() || tipoCuenta == null || tipoCuenta.trim().isEmpty()) {
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        response.getWriter().print("El banco y tipo de cuenta son obligatorios.");
                         return;
                     }
 
@@ -146,14 +178,15 @@ public class AuthController extends HttpServlet {
                         response.setStatus(HttpServletResponse.SC_CREATED);
                     } else {
                         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                        response.getWriter().print("Error al crear la solicitud comercial de proveedor.");
                     }
                 } else {
                     response.setStatus(HttpServletResponse.SC_OK);
                 }
             } else {
-                // sc_bad_request (400) indica que la peticion fallo (ej. correo ya registrado).
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().print("Este correo electrónico ya está en uso.");
+                // error interno al guardar en base de datos
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().print("Hubo un error interno en el servidor al registrar el usuario. Por favor, intentelo mas tarde.");
             }
 
         } else if ("/login".equals(ruta)) {
