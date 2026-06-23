@@ -219,8 +219,8 @@ INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, selecciona
 (@last_carrito_id, 2, 1, TRUE);
 
 -- Cabecera del pedido (ahora vincula correctamente el id_carrito_fk)
-INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) VALUES 
-(2, @last_carrito_id, 1, 40500.00, 'Pendiente', CURRENT_TIMESTAMP);
+INSERT INTO pedido (id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) VALUES 
+(@last_carrito_id, 1, 40500.00, 'Pendiente', CURRENT_TIMESTAMP);
 SET @last_pedido_id = LAST_INSERT_ID();
 
 -- Detalle inmutable del pedido
@@ -240,8 +240,8 @@ INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comis
 INSERT INTO carrito (id_cliente_fk, estado) VALUES (2, 'Procesado');
 SET @last_carrito_id = LAST_INSERT_ID();
 INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 11, 1, TRUE);
-INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
-VALUES (2, @last_carrito_id, 1, 150000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 5 MONTH));
+INSERT INTO pedido (id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+VALUES (@last_carrito_id, 1, 150000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 5 MONTH));
 SET @last_pedido_id = LAST_INSERT_ID();
 INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (@last_pedido_id, 11, 1, 150000.00, 150000.00);
 INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) VALUES (@last_pedido_id, 1, 7500.00, 142500.00, 'Aprobado');
@@ -250,8 +250,8 @@ INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, 
 INSERT INTO carrito (id_cliente_fk, estado) VALUES (7, 'Procesado');
 SET @last_carrito_id = LAST_INSERT_ID();
 INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 2, 10, TRUE);
-INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
-VALUES (7, @last_carrito_id, 2, 45000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 4 MONTH));
+INSERT INTO pedido (id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+VALUES (@last_carrito_id, 2, 45000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 4 MONTH));
 SET @last_pedido_id = LAST_INSERT_ID();
 INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (@last_pedido_id, 2, 10, 4500.00, 45000.00);
 INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) VALUES (@last_pedido_id, 2, 2250.00, 42750.00, 'Aprobado');
@@ -260,8 +260,8 @@ INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, 
 INSERT INTO carrito (id_cliente_fk, estado) VALUES (8, 'Procesado');
 SET @last_carrito_id = LAST_INSERT_ID();
 INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 1, 5, TRUE);
-INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
-VALUES (8, @last_carrito_id, 3, 90000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 3 MONTH));
+INSERT INTO pedido (id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+VALUES (@last_carrito_id, 3, 90000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 3 MONTH));
 SET @last_pedido_id = LAST_INSERT_ID();
 INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (@last_pedido_id, 1, 5, 18000.00, 90000.00);
 INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) VALUES (@last_pedido_id, 3, 4500.00, 85500.00, 'Aprobado');
@@ -270,8 +270,8 @@ INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, 
 INSERT INTO carrito (id_cliente_fk, estado) VALUES (9, 'Procesado');
 SET @last_carrito_id = LAST_INSERT_ID();
 INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 4, 2, TRUE);
-INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
-VALUES (9, @last_carrito_id, 4, 130000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 2 MONTH));
+INSERT INTO pedido (id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+VALUES (@last_carrito_id, 4, 130000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 2 MONTH));
 SET @last_pedido_id = LAST_INSERT_ID();
 INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (@last_pedido_id, 4, 2, 65000.00, 130000.00);
 INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, estado_pago) VALUES (@last_pedido_id, 5, 6500.00, 123500.00, 'Aprobado');
@@ -280,8 +280,8 @@ INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, 
 INSERT INTO carrito (id_cliente_fk, estado) VALUES (2, 'Procesado');
 SET @last_carrito_id = LAST_INSERT_ID();
 INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 12, 1, TRUE), (@last_carrito_id, 5, 4, TRUE);
-INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
-VALUES (2, @last_carrito_id, 1, 97000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 MONTH));
+INSERT INTO pedido (id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido, fecha) 
+VALUES (@last_carrito_id, 1, 97000.00, 'Entregado', DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 MONTH));
 SET @last_pedido_id = LAST_INSERT_ID();
 INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES 
 (@last_pedido_id, 12, 1, 75000.00, 75000.00), -- DMari
@@ -309,7 +309,7 @@ values (12, '000000000-0', 'Andres Manualidades', '111222333', 'Nequi', 'Ahorros
 INSERT INTO carrito (id_cliente_fk, estado) VALUES (7, 'Procesado');
 SET @last_carrito_id = LAST_INSERT_ID();
 INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 11, 1, TRUE);
-INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES (7, @last_carrito_id, 2, 150000.00, 'Entregado');
+INSERT INTO pedido (id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES (@last_carrito_id, 2, 150000.00, 'Entregado');
 SET @last_pedido_id = LAST_INSERT_ID();
 INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (@last_pedido_id, 11, 1, 150000.00, 150000.00);
 INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comision_dmari, monto_total, estado_pago) VALUES (@last_pedido_id, 3, 'voucher tarjeta: 444455556666', 7500.00, 142500.00, 'Aprobado');
@@ -318,7 +318,7 @@ INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comis
 INSERT INTO carrito (id_cliente_fk, estado) VALUES (8, 'Procesado');
 SET @last_carrito_id = LAST_INSERT_ID();
 INSERT INTO detalle_carrito (id_carrito_fk, id_producto_fk, cantidad, seleccionado) VALUES (@last_carrito_id, 7, 1, TRUE);
-INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES (8, @last_carrito_id, 3, 85000.00, 'En Camino');
+INSERT INTO pedido (id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES (@last_carrito_id, 3, 85000.00, 'En Camino');
 SET @last_pedido_id = LAST_INSERT_ID();
 INSERT INTO detalle_pedido (id_pedido_fk, id_producto_fk, cantidad, precio_unitario, subtotal) VALUES (@last_pedido_id, 7, 1, 85000.00, 85000.00);
 INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, referencia_transaccion, comision_dmari, monto_total, estado_pago) VALUES (@last_pedido_id, 2, 'celular daviplata: 3124567890', 4250.00, 80750.00, 'Aprobado');

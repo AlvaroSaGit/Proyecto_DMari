@@ -185,7 +185,6 @@ create table detalle_carrito(
 -- Cabecera del Pedido (Conexión física y directa con el carrito de origen)
 create table pedido(
     id_pedido_pk int auto_increment primary key,
-    id_cliente_fk int not null,
     id_carrito_fk int not null, -- ¡CONEXIÓN EXPLICÍTADA!
     id_direccion_fk int not null,
     fecha timestamp default current_timestamp,
@@ -193,7 +192,6 @@ create table pedido(
     estado_pedido enum('Pendiente', 'Preparando', 'En Camino', 'Entregado', 'Cancelado_por_Proveedor', 'Cancelado_por_Cliente', 'Reembolso_Solicitado', 'Devuelto') default 'Pendiente',
     motivo_cancelacion text null,
     cancelado_por_id_fk int null,
-    foreign key (id_cliente_fk) references cliente(id_cliente_pk),
     foreign key (id_carrito_fk) references carrito(id_carrito_pk), -- Restriccion de integridad referencial
     foreign key (id_direccion_fk) references direccion(id_direccion_pk),
     foreign key (cancelado_por_id_fk) references usuario(id_usuario_pk)

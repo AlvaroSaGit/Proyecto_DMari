@@ -22,19 +22,19 @@ public class pedidoDAO {
      * opera bajo la regla todo o nada: guarda la cabecera del pedido,
      * los detalles de cada producto, descuenta el inventario y registra el pago.
      * 
-     * @param idCliente int: identificador numerico del comprador.
      * @param idCarrito int: identificador del carrito que se esta procesando.
+     * @param idDireccion int: identificador de la direccion del cliente.
      * @param totalPagar double: costo total de la compra con decimales.
      * @param carrito arraylist<detallepedido>: arreglo de objetos conteniendo ids de producto y sus cantidades.
      * @param idMetodoPago int: identificador de la forma de pago (ej. 1 para nequi).
      * @param numeroCuenta string: texto con el comprobante, cuenta o celular usado.
      * @return boolean: true si el commit general se ejecuta sin errores, false si hubo un rollback.
      */
-    public boolean registrarPedido(int idCliente, int idCarrito, int idDireccion, double totalPagar, ArrayList<detallePedido> carrito, int idMetodoPago, String numeroCuenta) {
+    public boolean registrarPedido(int idCarrito, int idDireccion, double totalPagar, ArrayList<detallePedido> carrito, int idMetodoPago, String numeroCuenta) {
         // sql para insertar la cabecera del pedido.
         // incluye id_carrito_fk e id_direccion_fk que son NOT NULL en la tabla
         // el campo id_direccion_fk es obligatorio segun el schema de tablaMysql.sql
-        String sqlPedido = "INSERT INTO pedido (id_cliente_fk, id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES (?, ?, ?, ?, 'Pendiente')";
+        String sqlPedido = "INSERT INTO pedido (id_carrito_fk, id_direccion_fk, total_pagar, estado_pedido) VALUES (?, ?, ?, 'Pendiente')";
         // sql para registrar cada producto comprado.
         // vincula el item al pedido principal usando su id.
         // guarda la cantidad, el precio capturado y el subtotal calculado.
@@ -58,13 +58,12 @@ public class pedidoDAO {
             
             // paso 1: insertamos el pedido maestro
             try (PreparedStatement psPedido = con.prepareStatement(sqlPedido, PreparedStatement.RETURN_GENERATED_KEYS)) {
-                // configuramos los 4 parametros: cliente, carrito, direccion y total
-                psPedido.setInt(1, idCliente);
-                psPedido.setInt(2, idCarrito);
-                // el tercer parametro es el id de la direccion primaria del cliente
+                // configuramos los 3 parametros: carrito, direccion y total
+                psPedido.setInt(1, idCarrito);
+                // el segundo parametro es el id de la direccion primaria del cliente
                 // antes faltaba este parametro y mysql lanzaba NOT NULL violation
-                psPedido.setInt(3, idDireccion);
-                psPedido.setDouble(4, totalPagar);
+                psPedido.setInt(2, idDireccion);
+                psPedido.setDouble(3, totalPagar);
                 // enviamos el comando de insercion a la base de datos
                 psPedido.executeUpdate();
                 
@@ -191,7 +190,8 @@ public class pedidoDAO {
                      // tabla principal de la consulta: el pedido maestro
                      "FROM pedido p " +
                      // inner join: el pedido debe tener un usuario real asociado si o si
-                     "INNER JOIN usuario u ON p.id_cliente_fk = u.id_usuario_pk " +
+                     "INNER JOIN carrito car ON p.id_carrito_fk = car.id_carrito_pk " +
+                     "INNER JOIN usuario u ON car.id_cliente_fk = u.id_usuario_pk " +
                      // left joins: cruzamos con el perfil del cliente y las tablas satelite
                      "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
                      "LEFT JOIN direccion d ON p.id_direccion_fk = d.id_direccion_pk " +
@@ -270,6 +270,7 @@ public class pedidoDAO {
                      // si una orden esta vacia por error, el inner join la esconde por seguridad.
                      "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
                      "INNER JOIN producto prod ON dp.id_producto_fk = prod.id_producto_pk " +
+                     "INNER JOIN carrito car ON p.id_carrito_fk = car.id_carrito_pk " +
                      
                      // left join: es relajado. intenta buscar el pago o el perfil del proveedor. 
                      // si todavia no hay pago o perfil asociado, no destruye la orden principal, 
@@ -279,7 +280,7 @@ public class pedidoDAO {
                      "LEFT JOIN usuario u_prov ON prov.id_proveedor_pk = u_prov.id_usuario_pk " +
                      "LEFT JOIN pago pg ON p.id_pedido_pk = pg.id_pedido_fk " +
                      "LEFT JOIN metodo_pago mp ON pg.id_metodo_pago_fk = mp.id_metodo_pago_pk " +
-                     "WHERE p.id_cliente_fk = ? ORDER BY p.fecha DESC";
+                     "WHERE car.id_cliente_fk = ? ORDER BY p.fecha DESC";
                      
         try (Connection con = db.conectar(); PreparedStatement ps = con.prepareStatement(sql)) {
              ps.setInt(1, idCliente);
@@ -336,7 +337,8 @@ public class pedidoDAO {
                      "(SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = u.id_usuario_pk LIMIT 1 OFFSET 1) AS telefono_secundario, " +
                      "prod.nombre_producto, dp.cantidad, dp.precio_unitario, dp.subtotal, mp.descripcion_pago " +
                      "FROM pedido p " +
-                     "INNER JOIN usuario u ON p.id_cliente_fk = u.id_usuario_pk " +
+                     "INNER JOIN carrito car ON p.id_carrito_fk = car.id_carrito_pk " +
+                     "INNER JOIN usuario u ON car.id_cliente_fk = u.id_usuario_pk " +
                      "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
                      "LEFT JOIN direccion d ON p.id_direccion_fk = d.id_direccion_pk " +
                      "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +
@@ -555,7 +557,8 @@ public class pedidoDAO {
                      "d.direccion, dp.cantidad, prod.nombre_producto, dp.precio_unitario, " +
                      "dp.subtotal, pg.monto_total, mp.descripcion_pago " +
                      "FROM pedido p " +
-                     "INNER JOIN usuario u ON p.id_cliente_fk = u.id_usuario_pk " +
+                     "INNER JOIN carrito car ON p.id_carrito_fk = car.id_carrito_pk " +
+                     "INNER JOIN usuario u ON car.id_cliente_fk = u.id_usuario_pk " +
                      "INNER JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk " +
                      "INNER JOIN direccion d ON u.id_usuario_pk = d.id_usuario_fk AND d.direccion_primario = 1 " +
                      "INNER JOIN detalle_pedido dp ON p.id_pedido_pk = dp.id_pedido_fk " +

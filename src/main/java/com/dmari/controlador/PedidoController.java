@@ -163,7 +163,7 @@ public class PedidoController extends HttpServlet {
         pedidoDAO dao = new pedidoDAO();
         // enviamos los 7 parametros en el orden exacto del dao actualizado
         // incluye el nuevo parametro idDireccion que antes no se enviaba y causaba el 500
-        boolean exito = dao.registrarPedido(user.getIdUsuario(), idCarrito, idDireccion, totalPagar, carritoList, idMetodo, cuenta);
+        boolean exito = dao.registrarPedido(idCarrito, idDireccion, totalPagar, carritoList, idMetodo, cuenta);
         
         // 5. resolucion web y limpieza.
         // condicional critico: confirma si mysql logro insertar todos los componentes.
