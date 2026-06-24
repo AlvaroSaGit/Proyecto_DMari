@@ -229,17 +229,55 @@ public class carritoDAO {
     }
 
     /**
-     * 4. vaciar carrito
-     * se ejecuta tras un checkout exitoso.
-     * 
-     * @param idcliente int: identificador del comprador.
-     * @return boolean: true si limpio la tabla.
+     * 4. vaciar carrito (post-checkout)
+     * se ejecuta inmediatamente despues de que el pedidoDAO confirma el commit de la compra.
+     * realiza dos operaciones de forma transaccional:
+     *   a. borra todos los items del detalle_carrito (la lista de productos).
+     *   b. marca el carrito maestro como 'Procesado' para que no sea reutilizado.
+     * nota: evitamos usar solo un delete de los items para no dejar el carrito activo.
+     * necesitamos pasarlo a estado 'Procesado' para garantizar que la proxima 
+     * compra genere un carrito nuevo con un id limpio.
+     * @param idCliente int: id del usuario comprador.
+     * @return boolean: true si el carrito quedo limpio y procesado, false si fallo.
      */
     public boolean vaciarCarrito(int idCliente) {
-        // Enviamos 'null' como lista de productos.
-        // Esto hara que sincronizarCarrito ejecute el DELETE,
-        // pero salte el INSERT, dejando la tabla limpia y lista para otra compra.
-        return sincronizarCarrito(idCliente, null);
+        // sql para borrar los items del carrito del cliente
+        String sqlDeleteItems = "DELETE dc FROM detalle_carrito dc " +
+                                "INNER JOIN carrito c ON dc.id_carrito_fk = c.id_carrito_pk " +
+                                "WHERE c.id_cliente_fk = ? AND c.estado = 'Activo'";
+        // sql para marcar el carrito como 'Procesado' para que obtenerOCrearCarrito no lo reutilice
+        // si el estado no cambia a 'Procesado', la siguiente compra usaria el mismo id de carrito
+        String sqlMarcarProcesado = "UPDATE carrito SET estado = 'Procesado' " +
+                                    "WHERE id_cliente_fk = ? AND estado = 'Activo'";
+
+        Connection con = null;
+        try {
+            con = db.conectar();
+            // usamos transaccion para que ambas operaciones ocurran juntas o ninguna
+            con.setAutoCommit(false);
+
+            // paso 1: borramos los items de la canasta activa del cliente
+            try (PreparedStatement psItems = con.prepareStatement(sqlDeleteItems)) {
+                psItems.setInt(1, idCliente);
+                psItems.executeUpdate();
+            }
+
+            // paso 2: cerramos la canasta marcandola como procesada
+            // asi, la siguiente llamada a obtenerOCrearCarrito() creara una canasta nueva
+            try (PreparedStatement psMarcar = con.prepareStatement(sqlMarcarProcesado)) {
+                psMarcar.setInt(1, idCliente);
+                psMarcar.executeUpdate();
+            }
+
+            con.commit();
+            return true;
+        } catch (SQLException e) {
+            try { if (con != null) con.rollback(); } catch (SQLException ex) {}
+            System.out.println("error al vaciar el carrito post-checkout: " + e.getMessage());
+            return false;
+        } finally {
+            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
+        }
     }
 
     /**

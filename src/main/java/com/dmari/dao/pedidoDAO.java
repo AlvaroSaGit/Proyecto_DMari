@@ -723,12 +723,9 @@ public class pedidoDAO {
      * 7. generar datos para factura (reporte PDF)
      * extrae la informacion completa de un pedido especifico para construir el comprobante.
      *
-     * CORRECCION POST-REFACTOR:
-     * antes: JOIN direccion ON u.id_usuario_pk = d.id_usuario_fk AND d.direccion_primario = 1
-     * - busca la direccion ACTUAL del usuario, no la del envio real.
-     * - si el cliente cambia su direccion despues de comprar, la factura es incorrecta.
-     * ahora: LEFT JOIN direccion d ON p.id_direccion_fk = d.id_direccion_pk
-     * - usa la FK directa del pedido, que captura la direccion exacta del momento del checkout.
+     * nota: el join con direccion se hace con la llave del pedido (id_direccion_fk)
+     * en lugar de la del usuario, esto asegura que la factura siempre muestre a donde 
+     * se envio el paquete en ese momento, aunque el cliente cambie de casa despues.
      */
     public ResultSet obtenerDatosFactura(int idPedido) throws SQLException {
         Connection con = db.conectar();

@@ -206,8 +206,18 @@ function prepararFormularioRegistro() {
             } else {
                 // capturamos el mensaje de error que viene desde el validacionhelper de java
                 const mensajeError = await respuesta.text();
-                // Mostramos el error (ej: "correo ya en uso") debajo del campo de correo
-                mostrarErrorCampo('reg-correo', mensajeError || 'Error al registrarse. Intenta de nuevo.');
+                
+                // Si el backend devuelve un HTML de error por defecto de Tomcat, mostramos uno amigable
+                if (mensajeError.includes('<html') || mensajeError.includes('<body')) {
+                    const msjGenerico = 'Este correo electronico ya esta en uso o los datos son invalidos.';
+                    mostrarErrorCampo('reg-correo', msjGenerico);
+                    alert(msjGenerico);
+                } else {
+                    // Mostramos el error (ej: "correo ya en uso") debajo del campo de correo
+                    mostrarErrorCampo('reg-correo', mensajeError || 'Error al registrarse. Intenta de nuevo.');
+                    // Tambien lanzamos un alert para que sea completamente evidente para el usuario
+                    alert(mensajeError || 'Error al registrarse. Revisa los datos.');
+                }
             }
         } catch (error) {
             // si falla la promesa de java caera aqui sin crashear la pagina
