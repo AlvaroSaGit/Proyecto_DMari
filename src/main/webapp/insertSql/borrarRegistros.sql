@@ -10,9 +10,8 @@ use dmari;
 set foreign_key_checks = 0;
 
 -- ==========================================================
--- 2. vaciamos las tablas de solicitudes y devoluciones
+-- 2. vaciamos las tablas de solicitudes
 -- ==========================================================
-truncate table devolucion;
 truncate table solicitud_proveedor;
 truncate table solicitud_categoria;
 

@@ -10,9 +10,8 @@ use dmari;
 set foreign_key_checks = 0;
 
 -- ==========================================================
--- 1. eliminacion de tablas de solicitudes y devoluciones
+-- 1. eliminacion de tablas de solicitudes
 -- ==========================================================
-drop table if exists devolucion;
 drop table if exists solicitud_proveedor;
 drop table if exists solicitud_categoria;
 
