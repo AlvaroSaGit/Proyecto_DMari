@@ -25,8 +25,8 @@ public class SolicitudCategoriaDAO {
      * Obtiene todas las solicitudes registradas, incluyendo el nombre del proveedor
      * que las hizo a traves de un INNER JOIN con la tabla {@code usuario}.
      *
-     * @return {@link java.util.ArrayList} con todos los objetos
-     *         {@link SolicitudCategoria}
+     * @return ArrayList con todos los objetos
+     *         SolicitudCategoria
      *         ordenados por fecha de creacion descendente (las mas recientes
      *         primero).
      *         Devuelve una lista vacia si no hay solicitudes o si ocurre un error

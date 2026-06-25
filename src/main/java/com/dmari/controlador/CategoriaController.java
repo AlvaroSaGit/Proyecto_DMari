@@ -18,7 +18,7 @@ import jakarta.servlet.http.HttpSession;
 /**
  * Servlet para la gestion del catalogo de categorias de DMari.
  *
- * Atiende la ruta {@code /categorias} con dos comportamientos segun el metodo HTTP:
+ * Atiende la ruta /categorias con dos comportamientos segun el metodo HTTP:
  *       GET /categorias - Publica (sin sesion requerida). Si recibe el
  *       parametro todas=true, devuelve todas las categorias incluyendo las pausadas
  *       (para el admin). Sin el parametro, solo devuelve las activas (para el catalogo publico).

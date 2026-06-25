@@ -121,18 +121,6 @@ create table credenciales(
     foreign key (id_usuario) references usuario(id_usuario_pk)
 );
 
--- datos adicionales exclusivos para usuarios con rol 'proveedor'.
--- id_proveedor_pk comparte el mismo id que la tabla usuario (relacion 1:1 herencia).
-create table proveedor(
-    id_proveedor_pk int primary key,           -- mismo id que el usuario base (herencia de tabla)
-    nit_empresa varchar(20) not null,          -- identificador tributario de la empresa del proveedor
-    nombre_marca varchar(100) not null,        -- nombre comercial visible en el catalogo
-    cuenta_bancaria varchar(30),               -- numero de cuenta para pagos
-    banco_nombre varchar(50),                  -- entidad bancaria donde recibe pagos
-    tipo_cuenta enum('Ahorros','Corriente'),   -- tipo de cuenta bancaria
-    foreign key (id_proveedor_pk) references usuario(id_usuario_pk)
-);
-
 -- datos adicionales exclusivos para usuarios con rol 'cliente'.
 -- id_cliente_pk comparte el mismo id que la tabla usuario (relacion 1:1 herencia).
 create table cliente(
@@ -141,14 +129,25 @@ create table cliente(
     foreign key (id_cliente_pk) references usuario(id_usuario_pk)
 );
 
--- solicitudes de nuevos proveedores enviadas por clientes que quieren vender.
--- estado_solicitud controla el ciclo de vida de la postulacion.
+-- 1. La solicitud se crea primero con toda la información (Solo existe aquí)
 create table solicitud_proveedor(
     id_solicitud_pk int auto_increment primary key,
     id_usuario_fk int not null,
+    nit_solicitado varchar(20) not null,
+    nombre_marca varchar(100) not null,
+    cuenta_bancaria varchar(30),
+    banco_nombre varchar(50),
+    tipo_cuenta enum('Ahorros','Corriente'),
     estado_solicitud enum('pendiente', 'aprobada', 'rechazada') default 'pendiente',
     fecha_solicitud timestamp default current_timestamp,
     foreign key (id_usuario_fk) references usuario(id_usuario_pk)
+);
+
+-- 2. El proveedor se crea después (Solo si se aprueba)
+create table proveedor(
+    nit_empresa varchar(20) not null primary key, -- PK sigue siendo el NIT
+    id_solicitud_fk int not null unique,          -- FK obligatoria (NOT NULL) y única
+    foreign key (id_solicitud_fk) references solicitud_proveedor(id_solicitud_pk)
 );
 
 -- galeria de imagenes de los productos (relacion 1:N con producto).
@@ -176,9 +175,9 @@ create table producto_etiqueta(
 -- un proveedor puede surtir varios productos, y un producto puede tener varios proveedores.
 create table proveedor_producto(
     id_proveedor_producto_pk int auto_increment primary key,
-    id_proveedor_fk int not null,
+    id_proveedor_fk varchar(20) not null,
     id_producto_fk int not null,
-    foreign key (id_proveedor_fk) references proveedor(id_proveedor_pk),
+    foreign key (id_proveedor_fk) references proveedor(nit_empresa),
     foreign key (id_producto_fk) references producto(id_producto_pk)
 );
 
@@ -283,10 +282,10 @@ create table pago(
 -- el admin decide si aprobarla, rechazarla o dejarla pendiente.
 create table solicitud_categoria (
     id_solicitud_pk int auto_increment primary key,
-    id_proveedor_fk int not null,
+    id_proveedor_fk varchar(20) not null,
     nombre_sugerido varchar(100) not null,
     justificacion text not null,
     estado_solicitud enum('pendiente', 'aprobada', 'rechazada') default 'pendiente',
     fecha_creacion timestamp default current_timestamp,
-    foreign key (id_proveedor_fk) references proveedor(id_proveedor_pk)
+    foreign key (id_proveedor_fk) references proveedor(nit_empresa)
 );

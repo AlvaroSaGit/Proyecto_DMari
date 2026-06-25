@@ -7,12 +7,10 @@ import java.sql.*;
 /**
  * DAO para las consultas estadisticas del panel de control (dashboard) de DMari.
  *
- * <p>Separa la visibilidad de los datos financieros segun el rol del usuario:
+ * Separa la visibilidad de los datos financieros segun el rol del usuario:
  * el Administrador ve los numeros de toda la plataforma, mientras que el
- * Proveedor solo ve las cifras generadas por sus propios productos.</p>
- *
- * @author Alvaro Andres Salazar Herrera
- * @version 1.0
+ * Proveedor solo ve las cifras generadas por sus propios productos.
+
  */
 public class DashboardDAO {
     private databaseHelper db = new databaseHelper();
@@ -20,11 +18,11 @@ public class DashboardDAO {
     /**
      * Obtiene las estadisticas globales de toda la plataforma (solo para Administrador).
      *
-     * <p>Calcula el total de ingresos, la cantidad de pedidos entregados,
+     * Calcula el total de ingresos, la cantidad de pedidos entregados,
      * el total de unidades vendidas y las comisiones acumuladas de DMari,
-     * filtrando unicamente los pedidos con estado {@code 'Entregado'}.</p>
+     * filtrando unicamente los pedidos con estado 'Entregado'
      *
-     * @return {@link DashboardEstadistica} con los datos agregados de la plataforma.
+     * @return DashboardEstadistica con los datos agregados de la plataforma.
      *         Los campos seran cero si no hay pedidos entregados registrados.
      */
     public DashboardEstadistica obtenerEstadisticasGlobales() {
@@ -56,12 +54,12 @@ public class DashboardDAO {
     /**
      * Obtiene las estadisticas de ventas filtradas para un proveedor especifico.
      *
-     * <p>Usa un JOIN con {@code proveedor_producto} para garantizar que solo se
+     * Usa un JOIN con {@code proveedor_producto} para garantizar que solo se
      * contabilizan los pedidos de los productos que pertenecen a ese proveedor,
-     * filtrando adicionalmente por estado {@code 'Entregado'} para realismo financiero.</p>
+     * filtrando adicionalmente por estado {@code 'Entregado'} para realismo financiero.
      *
-     * @param idProveedor {@code int} con el ID del proveedor en sesion.
-     * @return {@link DashboardEstadistica} con los ingresos, pedidos y unidades
+     * @param idProveedor int con el ID del proveedor en sesion.
+     * @return DashboardEstadistica con los ingresos, pedidos y unidades
      *         vendidas exclusivamente de ese proveedor. Los campos seran cero si
      *         no tiene ventas entregadas.
      */
