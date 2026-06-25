@@ -17,16 +17,13 @@ import java.util.ArrayList;
 /**
  * Servlet de consulta de proveedores activos en el sistema DMari.
  *
- * <p>Atiende la ruta {@code GET /proveedores}. Ejecuta una consulta directa
- * a la tabla {@code usuario} para obtener unicamente los usuarios con rol
- * Proveedor (id_rol_fk = 4) y estado de cuenta activo.</p>
+ * Atiende la ruta GET /proveedores. Ejecuta una consulta directa
+ * a la tabla usuario para obtener unicamente los usuarios con rol
+ * Proveedor (id_rol_fk = 4) y estado de cuenta activo.
  *
- * <p>Este listado se usa principalmente en el panel de administracion para
+ * Este listado se usa principalmente en el panel de administracion para
  * llenar los menus desplegables al momento de crear o editar productos,
- * permitiendo asignar un proveedor dueno a cada articulo.</p>
- *
- * @author Alvaro Andres Salazar Herrera
- * @version 1.0
+ * permitiendo asignar un proveedor dueno a cada articulo.
  */
 @WebServlet(name = "ListarProveedoresController", urlPatterns = {"/proveedores"})
 public class ListarProveedoresController extends HttpServlet {

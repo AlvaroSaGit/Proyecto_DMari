@@ -18,15 +18,11 @@ import jakarta.servlet.http.HttpSession;
 /**
  * Servlet de sincronizacion del carrito de compras con la base de datos.
  *
- * <p>Permite que el carrito del cliente (almacenado en {@code localStorage} del navegador)
- * se persista en MySQL para sobrevivir cierres de sesion y cambios de dispositivo.</p>
- * <ul>
- *   <li>{@code GET /carrito-db} - Lee el carrito guardado en BD para el usuario en sesion.</li>
- *   <li>{@code POST /carrito-db} - Sobreescribe el carrito en BD con los datos actuales del navegador.</li>
- * </ul>
- *
- * @author Alvaro Andres Salazar Herrera
- * @version 1.0
+ * Permite que el carrito del cliente (almacenado en localStorage del navegador)
+ * se persista en MySQL para sobrevivir cierres de sesion y cambios de dispositivo.
+ * 
+ *   GET /carrito-db - Lee el carrito guardado en BD para el usuario en sesion.
+ *   POST /carrito-db - Sobreescribe el carrito en BD con los datos actuales del navegador.
  */
 @WebServlet(name = "CarritoDBController", urlPatterns = {"/carrito-db"})
 public class CarritoDBController extends HttpServlet {

@@ -16,19 +16,14 @@ import jakarta.servlet.http.HttpSession;
 /**
  * Servlet de gestion del perfil logistico del cliente en DMari.
  *
- * <p>Atiende la ruta {@code /perfil-cliente} con dos comportamientos:</p>
- * <ul>
- *   <li>{@code GET /perfil-cliente} - Obtiene los datos de envio y contacto
- *       del cliente en sesion (direccion, telefonos, referencia de ubicacion).</li>
- *   <li>{@code POST /perfil-cliente} - Guarda o actualiza el perfil del cliente,
- *       insertando o modificando registros en las tablas {@code direccion} y {@code telefono}.</li>
- * </ul>
+ * Atiende la ruta {@code /perfil-cliente} con dos comportamientos:
+ *       GET /perfil-cliente - Obtiene los datos de envio y contacto
+ *       del cliente en sesion (direccion, telefonos, referencia de ubicacion).
+ *       POST /perfil-cliente - Guarda o actualiza el perfil del cliente,
+ *       insertando o modificando registros en las tablas {@code direccion} y {@code telefono}.
  *
- * <p>Ambas rutas requieren una sesion activa (devuelve HTTP 401 si no existe).
- * Los campos telefono y direccion son obligatorios; si llegan vacios retorna HTTP 400.</p>
- *
- * @author Alvaro Andres Salazar Herrera
- * @version 1.0
+ * Ambas rutas requieren una sesion activa (devuelve HTTP 401 si no existe).
+ * Los campos telefono y direccion son obligatorios; si llegan vacios retorna HTTP 400.
  */
 @WebServlet(name = "PerfilClienteController", urlPatterns = {"/perfil-cliente"})
 public class PerfilClienteController extends HttpServlet {

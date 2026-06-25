@@ -10,17 +10,14 @@ import java.io.PrintWriter;
 
 /**
  * Servlet que sirve los datos de resumen del dashboard en formato JSON.
+ * 
+ * Atiende la ruta {@code GET /api-dashboard-resumen}. Identifica el rol del
+ * usuario en sesion y devuelve estadisticas diferenciadas:
+ * 
+ * Rol 1 (Administrador): estadisticas globales de toda la plataforma.
+ * Rol 4 (Proveedor): estadisticas solo de sus propios productos y ventas.
+ * Roles sin acceso (ej. Cliente) reciben un HTTP 403 Forbidden.
  *
- * <p>Atiende la ruta {@code GET /api-dashboard-resumen}. Identifica el rol del
- * usuario en sesion y devuelve estadisticas diferenciadas:</p>
- * <ul>
- *   <li>Rol 1 (Administrador): estadisticas globales de toda la plataforma.</li>
- *   <li>Rol 4 (Proveedor): estadisticas solo de sus propios productos y ventas.</li>
- * </ul>
- * <p>Roles sin acceso (ej. Cliente) reciben un HTTP 403 Forbidden.</p>
- *
- * @author Alvaro Andres Salazar Herrera
- * @version 1.0
  */
 @WebServlet(name = "DashboardController", urlPatterns = {"/api-dashboard-resumen"})
 public class DashboardController extends HttpServlet {

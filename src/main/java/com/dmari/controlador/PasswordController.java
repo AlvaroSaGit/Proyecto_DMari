@@ -15,13 +15,10 @@ import jakarta.servlet.http.HttpSession;
 /**
  * Servlet dedicado exclusivamente a la actualizacion de contrasenas.
  *
- * <p>Atiende la ruta {@code POST /cambiar-password}. Requiere una sesion activa
+ * Atiende la ruta {@code POST /cambiar-password}. Requiere una sesion activa
  * para garantizar que solo el usuario dueno de la cuenta pueda cambiar su propia
  * clave. Delega la logica de verificacion y actualizacion al
- * {@link com.dmari.dao.usuarioDAO}.</p>
- *
- * @author Alvaro Andres Salazar Herrera
- * @version 1.0
+ * usuarioDAO.
  */
 @WebServlet(name = "PasswordController", urlPatterns = {"/cambiar-password"})
 public class PasswordController extends HttpServlet {

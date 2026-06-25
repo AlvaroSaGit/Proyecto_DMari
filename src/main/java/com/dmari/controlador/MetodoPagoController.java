@@ -14,12 +14,9 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Servlet de lectura de metodos de pago disponibles en DMari.
  *
- * <p>Atiende la ruta {@code GET /metodos-pago}. Obtiene de la base de datos
+ * Atiende la ruta GET /metodos-pago. Obtiene de la base de datos
  * los metodos de pago activos (bancos, PSE, etc.) y los devuelve en formato
- * JSON para poblar el selector del modal de checkout del carrito.</p>
- *
- * @author Alvaro Andres Salazar Herrera
- * @version 1.0
+ * JSON para poblar el selector del modal de checkout del carrito.
  */
 @WebServlet(name = "MetodoPagoController", urlPatterns = {"/metodos-pago"})
 public class MetodoPagoController extends HttpServlet {

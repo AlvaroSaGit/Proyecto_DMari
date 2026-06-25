@@ -8,16 +8,14 @@ import java.util.ArrayList;
 /**
  * DAO para la gestion de solicitudes de nuevas categorias en DMari.
  *
- * <p>
+
  * Gestiona el flujo completo de peticiones que los proveedores envian
  * al administrador cuando desean que se cree una nueva categoria de productos.
- * </p>
- *
- * <p>
- * El metodo {@link #aprobarSolicitud(int, String)} es transaccional:
+
+ * El metodo #aprobarSolicitud(int, String) es transaccional:
  * actualiza el estado de la solicitud E inserta la nueva categoria en la
- * tabla {@code categoria} de forma atomica (todo o nada).
- * </p>
+ * tabla categoria de forma atomica (todo o nada).
+
  *
  */
 public class SolicitudCategoriaDAO {

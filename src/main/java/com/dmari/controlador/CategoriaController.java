@@ -18,17 +18,12 @@ import jakarta.servlet.http.HttpSession;
 /**
  * Servlet para la gestion del catalogo de categorias de DMari.
  *
- * <p>Atiende la ruta {@code /categorias} con dos comportamientos segun el metodo HTTP:</p>
- * <ul>
- *   <li>{@code GET /categorias} - Publica (sin sesion requerida). Si recibe el
- *       parametro {@code todas=true}, devuelve todas las categorias incluyendo las pausadas
- *       (para el admin). Sin el parametro, solo devuelve las activas (para el catalogo publico).</li>
- *   <li>{@code POST /categorias} - Restringida (requiere rol Administrador o Proveedor).
- *       Crea, actualiza o cambia el estado de una categoria segun la accion enviada.</li>
- * </ul>
- *
- * @author Alvaro Andres Salazar Herrera
- * @version 1.0
+ * Atiende la ruta {@code /categorias} con dos comportamientos segun el metodo HTTP:
+ *       GET /categorias - Publica (sin sesion requerida). Si recibe el
+ *       parametro todas=true, devuelve todas las categorias incluyendo las pausadas
+ *       (para el admin). Sin el parametro, solo devuelve las activas (para el catalogo publico).
+ *       POST /categorias - Restringida (requiere rol Administrador o Proveedor).
+ *       Crea, actualiza o cambia el estado de una categoria segun la accion enviada.
  */
 @WebServlet(name = "CategoriaController", urlPatterns = {"/categorias"})
 public class CategoriaController extends HttpServlet {

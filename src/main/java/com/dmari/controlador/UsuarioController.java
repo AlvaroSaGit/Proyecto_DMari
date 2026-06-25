@@ -16,18 +16,13 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Servlet de gestion administrativa de usuarios en DMari.
  *
- * <p>Atiende la ruta {@code /usuarios} con dos comportamientos:
- * <ul>
- *   <li>{@code GET /usuarios} - Lista todos los usuarios del sistema (id, nombre,
- *       apellido, correo, rol y estado de cuenta) para la tabla del panel admin.</li>
- *   <li>{@code POST /usuarios} - Modifica el rol y el estado de cuenta de un usuario
- *       especifico (bloquear, activar o cambiar su nivel de acceso).</li>
- * </ul>
- *
- * <p>Acceso exclusivo para el Administrador (rol 1).</p>
- *
- * @author Alvaro Andres Salazar Herrera
- * @version 1.0
+ * Atiende la ruta /usuarios con dos comportamientos:
+ * 
+ *       GET /usuarios - Lista todos los usuarios del sistema (id, nombre,
+ *       apellido, correo, rol y estado de cuenta) para la tabla del panel admin.
+ *       POST /usuarios - Modifica el rol y el estado de cuenta de un usuario
+ *       especifico (bloquear, activar o cambiar su nivel de acceso).
+ *       Acceso exclusivo para el Administrador (rol 1).
  */
 @WebServlet(name = "UsuarioController", urlPatterns = {"/usuarios"})
 public class UsuarioController extends HttpServlet {

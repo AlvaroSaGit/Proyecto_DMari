@@ -146,11 +146,6 @@ create table cliente(
 create table solicitud_proveedor(
     id_solicitud_pk int auto_increment primary key,
     id_usuario_fk int not null,
-    nit_empresa varchar(20) not null,
-    nombre_marca varchar(100) not null,
-    cuenta_bancaria varchar(30),
-    banco_nombre varchar(50),
-    tipo_cuenta varchar(20),
     estado_solicitud enum('pendiente', 'aprobada', 'rechazada') default 'pendiente',
     fecha_solicitud timestamp default current_timestamp,
     foreign key (id_usuario_fk) references usuario(id_usuario_pk)
@@ -229,13 +224,8 @@ create table detalle_carrito(
 -- ============================================================
 create table pedido(
     id_pedido_pk int auto_increment primary key,
-<<<<<<< HEAD
-    id_carrito_fk int not null, -- ¡CONEXION EXPLICITA!
-    id_direccion_fk int not null,
-=======
     id_carrito_fk int not null,     -- enlace con el carrito que origino la compra (NO NULL obligatorio)
     id_direccion_fk int not null,   -- direccion de entrega capturada al momento de la compra (NO NULL obligatorio)
->>>>>>> 9b665a55f2f3d8d618715fe43869790daf8091e2
     fecha timestamp default current_timestamp,
     total_pagar decimal(10,2) not null,   -- suma total de todos los productos (calculado en java, no en js)
     estado_pedido enum(
