@@ -1,5 +1,10 @@
 package com.dmari.modelo;
 
+/*
+    objetivo de este archivo:
+    representar una etiqueta (tag) de clasificacion de productos en java.
+    mapea la tabla 'tag' de mysql para permitir organizar y filtrar productos.
+*/
 public class etiqueta {
     // identificador unico de la etiqueta en base de datos
     private int idEtiquetaPk;

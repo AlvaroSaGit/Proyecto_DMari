@@ -1,8 +1,3 @@
-/*
-   objetivo de este archivo:
-   gestionar las peticiones de nuevas categorias que envian los proveedores.
-   permite listar, insertar y aprobar solicitudes mediante procesos transaccionales.
-*/
 package com.dmari.dao;
 
 import com.dmari.helper.databaseHelper;
@@ -10,21 +5,47 @@ import com.dmari.modelo.SolicitudCategoria;
 import java.sql.*;
 import java.util.ArrayList;
 
+/**
+ * DAO para la gestion de solicitudes de nuevas categorias en DMari.
+ *
+ * <p>
+ * Gestiona el flujo completo de peticiones que los proveedores envian
+ * al administrador cuando desean que se cree una nueva categoria de productos.
+ * </p>
+ *
+ * <p>
+ * El metodo {@link #aprobarSolicitud(int, String)} es transaccional:
+ * actualiza el estado de la solicitud E inserta la nueva categoria en la
+ * tabla {@code categoria} de forma atomica (todo o nada).
+ * </p>
+ *
+ */
 public class SolicitudCategoriaDAO {
     private databaseHelper db = new databaseHelper();
 
-    // obtiene todas las solicitudes registradas haciendo un cruce con la tabla usuario para saber quien la hizo
+    /**
+     * Obtiene todas las solicitudes registradas, incluyendo el nombre del proveedor
+     * que las hizo a traves de un INNER JOIN con la tabla {@code usuario}.
+     *
+     * @return {@link java.util.ArrayList} con todos los objetos
+     *         {@link SolicitudCategoria}
+     *         ordenados por fecha de creacion descendente (las mas recientes
+     *         primero).
+     *         Devuelve una lista vacia si no hay solicitudes o si ocurre un error
+     *         SQL.
+     */
     public ArrayList<SolicitudCategoria> listarTodas() {
         ArrayList<SolicitudCategoria> lista = new ArrayList<>();
         String sql = "SELECT s.*, u.nombre as nombre_proveedor FROM solicitud_categoria s " +
-                     "INNER JOIN usuario u ON s.id_proveedor_fk = u.id_usuario_pk " +
-                     "ORDER BY s.fecha_creacion DESC";
-        
-        // usamos el bloque try con recursos para asegurar que la conexion se cierre al terminar
+                "INNER JOIN usuario u ON s.id_proveedor_fk = u.id_usuario_pk " +
+                "ORDER BY s.fecha_creacion DESC";
+
+        // usamos el bloque try con recursos para asegurar que la conexion se cierre al
+        // terminar
         try (Connection con = db.conectar();
-             PreparedStatement pst = con.prepareStatement(sql);
-             ResultSet rs = pst.executeQuery()) {
-            
+                PreparedStatement pst = con.prepareStatement(sql);
+                ResultSet rs = pst.executeQuery()) {
+
             while (rs.next()) {
                 SolicitudCategoria sol = new SolicitudCategoria();
                 sol.setIdSolicitudPk(rs.getInt("id_solicitud_pk"));
@@ -41,12 +62,23 @@ public class SolicitudCategoriaDAO {
         return lista;
     }
 
-    // guarda una nueva sugerencia de categoria en la base de datos
+    /**
+     * Guarda una nueva solicitud de categoria enviada por un proveedor.
+     *
+     * @param idProveedor   {@code int} con el ID del usuario proveedor que realiza
+     *                      la solicitud.
+     * @param nombre        {@code String} con el nombre que el proveedor sugiere
+     *                      para la nueva categoria.
+     * @param justificacion {@code String} con la explicacion de por que se necesita
+     *                      esa categoria.
+     * @return {@code true} si la insercion fue exitosa; {@code false} si ocurrio un
+     *         error SQL.
+     */
     public boolean insertar(int idProveedor, String nombre, String justificacion) {
         String sql = "INSERT INTO solicitud_categoria (id_proveedor_fk, nombre_sugerido, justificacion) VALUES (?, ?, ?)";
         // inyectamos los datos del proveedor y su propuesta
         try (Connection con = db.conectar();
-             PreparedStatement pst = con.prepareStatement(sql)) {
+                PreparedStatement pst = con.prepareStatement(sql)) {
             pst.setInt(1, idProveedor);
             pst.setString(2, nombre);
             pst.setString(3, justificacion);
@@ -56,12 +88,26 @@ public class SolicitudCategoriaDAO {
         }
     }
 
-    // cambia el estado de una solicitud (ej. de pendiente a rechazada)
+    /**
+     * Cambia el estado de una solicitud existente.
+     *
+     * <p>
+     * Se usa principalmente para marcar una solicitud como {@code rechazada}
+     * cuando el administrador decide no aprobarla.
+     * </p>
+     *
+     * @param idSolicitud {@code int} con la llave primaria de la solicitud a
+     *                    modificar.
+     * @param nuevoEstado {@code String} con el nuevo estado (ej.
+     *                    {@code "rechazada"}, {@code "pendiente"}).
+     * @return {@code true} si la actualizacion afecto al menos un registro;
+     *         {@code false} si fallo.
+     */
     public boolean actualizarEstado(int idSolicitud, String nuevoEstado) {
         String sql = "UPDATE solicitud_categoria SET estado_solicitud = ? WHERE id_solicitud_pk = ?";
         // localizamos la solicitud por su llave primaria para aplicar el cambio
         try (Connection con = db.conectar();
-             PreparedStatement pst = con.prepareStatement(sql)) {
+                PreparedStatement pst = con.prepareStatement(sql)) {
             pst.setString(1, nuevoEstado);
             pst.setInt(2, idSolicitud);
             return pst.executeUpdate() > 0;
@@ -69,32 +115,61 @@ public class SolicitudCategoriaDAO {
             return false;
         }
     }
-    
-    // metodo transaccional: marca la solicitud como aprobada e inserta la categoria real al mismo tiempo
+
+    /**
+     * Aprueba una solicitud de categoria usando una transaccion atomica de dos
+     * pasos.
+     *
+     * <p>
+     * <b>Paso 1:</b> Actualiza el estado de la solicitud a {@code "aprobada"}.<br>
+     * <b>Paso 2:</b> Inserta la nueva categoria en la tabla {@code categoria} con
+     * estado activo para que aparezca en la tienda.
+     * </p>
+     *
+     * <p>
+     * Si cualquiera de los dos pasos falla, se hace ROLLBACK para evitar
+     * datos huerfanos (solicitud aprobada pero sin categoria creada o viceversa).
+     * </p>
+     *
+     * @param idSolicitud {@code int} con la llave primaria de la solicitud a
+     *                    aprobar.
+     * @param nombreCat   {@code String} con el nombre final que tendra la nueva
+     *                    categoria.
+     * @return {@code true} si ambas operaciones se completaron exitosamente;
+     *         {@code false} si fallo.
+     */
     public boolean aprobarSolicitud(int idSolicitud, String nombreCat) {
         Connection con = null;
         try {
             con = db.conectar();
             con.setAutoCommit(false); // apagamos el autoguardado para iniciar una transaccion segura
-            
+
             // paso 1: actualizar el estado de la solicitud a aprobada
             String sqlUpdate = "UPDATE solicitud_categoria SET estado_solicitud = 'aprobada' WHERE id_solicitud_pk = ?";
             PreparedStatement pstUpdate = con.prepareStatement(sqlUpdate);
             pstUpdate.setInt(1, idSolicitud);
             pstUpdate.executeUpdate();
-            
-            // paso 2: crear la categoria formal en la tabla de categorias para que aparezca en la tienda
+
+            // paso 2: crear la categoria formal en la tabla de categorias para que aparezca
+            // en la tienda
             String sqlInsert = "INSERT INTO categoria (nombre, descripcion, estado_activo) VALUES (?, 'Categoria sugerida por proveedor', 1)";
             PreparedStatement pstInsert = con.prepareStatement(sqlInsert);
             pstInsert.setString(1, nombreCat);
             pstInsert.executeUpdate();
-            
+
             con.commit();
             return true;
-            // si algo falla en cualquiera de los dos pasos, deshacemos todo para evitar datos huerfanos
+            // si algo falla en cualquiera de los dos pasos, deshacemos todo para evitar
+            // datos huerfanos
         } catch (SQLException e) {
-            try { if (con != null) con.rollback(); } catch (SQLException ex) {}
+            try {
+                if (con != null)
+                    con.rollback();
+            } catch (SQLException ex) {
+            }
             return false;
-        } finally { db.cerrar(con); }
+        } finally {
+            db.cerrar(con);
+        }
     }
 }

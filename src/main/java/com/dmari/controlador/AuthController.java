@@ -15,10 +15,23 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 /**
- * objetivo de este archivo:
- * controlador principal de seguridad. se encarga de recibir las peticiones
- * de inicio de sesion (login), registro, cierre de sesion (logout)
- * y de contestar si hay una sesion activa en el navegador.
+ * Servlet de autenticacion y gestion de sesion del sistema DMari.
+ *
+ * <p>Es el punto de entrada de seguridad para todos los usuarios.
+ * Maneja cuatro rutas distintas segun la URL interceptada:</p>
+ * <ul>
+ *   <li>{@code POST /registro} - Registra nuevos usuarios (clientes y proveedores).</li>
+ *   <li>{@code POST /login} - Valida credenciales e inicia una sesion de servidor.</li>
+ *   <li>{@code GET /logout} - Invalida la sesion activa del usuario.</li>
+ *   <li>{@code GET /session} - Consulta si hay una sesion activa y devuelve el rol.</li>
+ * </ul>
+ *
+ * <p>Utiliza {@link com.dmari.helper.validacionHelper} para verificar el formato
+ * de los datos antes de pasarlos al DAO, y {@link com.dmari.dao.usuarioDAO}
+ * para la persistencia y verificacion de credenciales.</p>
+ *
+ * @author Alvaro Andres Salazar Herrera
+ * @version 1.1
  */
 @WebServlet(name = "AuthController", urlPatterns = { "/login", "/registro", "/logout", "/session" })
 public class AuthController extends HttpServlet {

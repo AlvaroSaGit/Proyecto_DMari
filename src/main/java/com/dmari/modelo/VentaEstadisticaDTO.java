@@ -1,9 +1,10 @@
 package com.dmari.modelo;
 
-/**
- * dto para transportar datos de graficas.
- * agrupa el total de ventas por un periodo de tiempo.
- */
+/*
+    objetivo de este archivo:
+    dto para transportar datos de graficas de ventas por periodo de tiempo.
+    cada objeto representa un punto en una grafica de barras o lineas.
+*/
 public class VentaEstadisticaDTO {
     private String etiqueta;
     private double total;

@@ -12,8 +12,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * objetivo de este archivo:
- * proveer la lista de opciones financieras al modal del carrito de compras.
+ * Servlet de lectura de metodos de pago disponibles en DMari.
+ *
+ * <p>Atiende la ruta {@code GET /metodos-pago}. Obtiene de la base de datos
+ * los metodos de pago activos (bancos, PSE, etc.) y los devuelve en formato
+ * JSON para poblar el selector del modal de checkout del carrito.</p>
+ *
+ * @author Alvaro Andres Salazar Herrera
+ * @version 1.0
  */
 @WebServlet(name = "MetodoPagoController", urlPatterns = {"/metodos-pago"})
 public class MetodoPagoController extends HttpServlet {

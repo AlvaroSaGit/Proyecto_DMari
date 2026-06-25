@@ -1,9 +1,12 @@
-// dto maestro para facturacion. corregimos el paquete para que coincida con la carpeta modelo.
-// dto maestro para facturacion. corregimos el paquete para que el compilador lo encuentre.
 package com.dmari.modelo;
 
 import java.util.List;
 
+/*
+    objetivo de este archivo:
+    dto maestro para representar una factura de compra completa.
+    agrupa los datos principales de la compra con la lista de productos comprados.
+*/
 public class FacturaDTO {
     // identificador unico del pedido para la cabecera
     private int idPedido;

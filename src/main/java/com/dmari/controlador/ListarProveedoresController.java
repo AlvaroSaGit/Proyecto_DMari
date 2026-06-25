@@ -1,11 +1,3 @@
-/*
-    objetivo de este archivo:
-    este controlador responde a las peticiones del frontend para obtener 
-    exclusivamente la lista de usuarios que tienen el rol de "proveedor" (rol 4).
-    esta lista se utiliza principalmente para llenar los menus desplegables (selects)
-    al momento de crear o editar un producto desde el panel de administracion, 
-    permitiendo asignarle un dueno al producto.
-*/
 package com.dmari.controlador;
 
 import com.dmari.helper.databaseHelper;
@@ -22,6 +14,20 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 
+/**
+ * Servlet de consulta de proveedores activos en el sistema DMari.
+ *
+ * <p>Atiende la ruta {@code GET /proveedores}. Ejecuta una consulta directa
+ * a la tabla {@code usuario} para obtener unicamente los usuarios con rol
+ * Proveedor (id_rol_fk = 4) y estado de cuenta activo.</p>
+ *
+ * <p>Este listado se usa principalmente en el panel de administracion para
+ * llenar los menus desplegables al momento de crear o editar productos,
+ * permitiendo asignar un proveedor dueno a cada articulo.</p>
+ *
+ * @author Alvaro Andres Salazar Herrera
+ * @version 1.0
+ */
 @WebServlet(name = "ListarProveedoresController", urlPatterns = {"/proveedores"})
 public class ListarProveedoresController extends HttpServlet {
 

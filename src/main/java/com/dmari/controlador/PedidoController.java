@@ -18,13 +18,25 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-/*
-    objetivo de este archivo:
-    controlador encargado de recibir las compras del carrito y transformarlas 
-    en pedidos reales en la base de datos, ademas de devolver el historial de facturas.
-    tambien gestiona los cambios de estado (preparando, enviado, etc.) solicitados 
-    por administradores o proveedores.
-*/
+/**
+ * Servlet de gestion de pedidos del sistema DMari.
+ *
+ * <p>Este controlador tiene dos responsabilidades principales segun el metodo HTTP:</p>
+ * <ul>
+ *   <li>{@code POST /pedido} - Crea un nuevo pedido (checkout del carrito) o actualiza
+ *       el estado logistico de un pedido existente (Preparando, Enviado, Entregado, Cancelado).</li>
+ *   <li>{@code GET /pedido} - Devuelve el historial de pedidos filtrado por rol:
+ *       todos los pedidos para el Administrador, los pedidos del proveedor para el
+ *       Proveedor, y los pedidos propios para el Cliente.</li>
+ * </ul>
+ *
+ * <p>Implementa validaciones de seguridad estrictas: verifica la sesion activa (401),
+ * el nivel jerarquico del usuario para cambios de estado (403) y el formato de los
+ * datos del carrito (400) antes de ejecutar cualquier operacion.</p>
+ *
+ * @author Alvaro Andres Salazar Herrera
+ * @version 1.1
+ */
 @WebServlet(name = "PedidoController", urlPatterns = { "/pedido" })
 public class PedidoController extends HttpServlet {
 
