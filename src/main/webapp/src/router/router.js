@@ -11,7 +11,6 @@ import { conectarBotonHeaderProveedor, inicializarProveedor } from '../views/Pro
 import { cargarVistaAdminCategorias } from '../views/Administrador/categorias/adminCategoriasController.js';
 import { cargarVistaAdminUsuarios } from '../views/Administrador/usuarios/adminusuariosController.js';
 import { cargarVistaAdminPedidos } from '../views/Administrador/adminPedido/adminPedidosController.js';
-import { cargarVistaAdminDevoluciones } from '../views/Administrador/devoluciones/adminDevolucionesController.js';
 import { cargarVistaAdminSolicitudes } from '../views/Administrador/adminSolicitudes/adminSolicitudesController.js';
 import { cargarVistaPerfil } from '../views/Cliente/perfil/perfilController.js';
 
@@ -85,8 +84,6 @@ async function manejarRuta() {
         cargarVistaAdminCategorias(); // reutilizamos la vista de gestion de categorias
     } else if (vista === 'admin-pedidos') {
         cargarVistaAdminPedidos();
-    } else if (vista === 'admin-devoluciones') {
-        cargarVistaAdminDevoluciones();
     } else if (vista === 'dashboard') {
         // decidimos que controlador de estadistica cargar segun el rol del usuario
         if (rolUsuario === '1') {

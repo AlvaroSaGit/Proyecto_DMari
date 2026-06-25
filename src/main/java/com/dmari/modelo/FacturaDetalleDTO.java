@@ -1,6 +1,10 @@
-// dto para representar cada linea de producto en la factura modulo 4
 package com.dmari.modelo;
 
+/*
+    objetivo de este archivo:
+    dto que representa una linea individual de un producto dentro de una factura.
+    contiene el nombre del producto, la cantidad, el precio y el subtotal.
+*/
 public class FacturaDetalleDTO {
     // nombre descriptivo del producto artesanal
     private String nombreProducto;

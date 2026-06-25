@@ -1,12 +1,23 @@
-/*
-    objetivo de este archivo:
-    este archivo es un controlador (servlet) que sirve como puente de comunicacion
-    entre el frontend (javascript) y la base de datos (dao) para la gestion de productos.
-    se encarga de procesar los datos y devolver las respuestas en formato json.
+/**
+ * Servlet de gestion del catalogo de productos de DMari.
+ Actua como puente de comunicacion entre el frontend (JavaScript) y la
+ * base de datos para todas las operaciones CRUD sobre productos. Responde a
+ * las siguientes rutas HTTP
+ * 
+ *   GET /listar - Devuelve la lista de productos (con filtros opcionales por proveedor o estado).
+ *   POST /insertar - Crea un nuevo producto con imagen y etiquetas.
+ *   POST /actualizar - Modifica los datos de un producto existente.
+ *   POST /eliminar - Elimina un producto de la base de datos.
+ *   POST /cambiar-estad - Activa o pausa la visibilidad del producto.
+
  */
+/*
+    @multipartconfig: permiso especial que le damos al servlet para leer archivos fisicos (fotos).
+    le indica a tomcat que este controlador recibira paquetes de tipo multipart/form-data.
+*/
+
 package com.dmari.controlador;
 
-// Import del archivo productoDao y producto
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;

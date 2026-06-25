@@ -1,6 +1,10 @@
-// modelo para representar las categorias de productos modulo 3
 package com.dmari.modelo;
 
+/*
+    objetivo de este archivo:
+    representar una categoria de productos de la tienda en java.
+    mapea la tabla 'categoria' en mysql y permite agrupar los articulos.
+*/
 public class categoria {
     // identificador primario de la categoria en bd
     private int idCategoriaPk;

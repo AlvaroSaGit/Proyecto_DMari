@@ -15,12 +15,21 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-/*
-    objetivo de este archivo:
-    actuar como el puente (controlador) entre el panel de administrador en javascript 
-    y la base de datos de categorias. procesa las peticiones get (para leer) y 
-    post (para crear, editar y cambiar estado).
-*/
+/**
+ * Servlet para la gestion del catalogo de categorias de DMari.
+ *
+ * <p>Atiende la ruta {@code /categorias} con dos comportamientos segun el metodo HTTP:</p>
+ * <ul>
+ *   <li>{@code GET /categorias} - Publica (sin sesion requerida). Si recibe el
+ *       parametro {@code todas=true}, devuelve todas las categorias incluyendo las pausadas
+ *       (para el admin). Sin el parametro, solo devuelve las activas (para el catalogo publico).</li>
+ *   <li>{@code POST /categorias} - Restringida (requiere rol Administrador o Proveedor).
+ *       Crea, actualiza o cambia el estado de una categoria segun la accion enviada.</li>
+ * </ul>
+ *
+ * @author Alvaro Andres Salazar Herrera
+ * @version 1.0
+ */
 @WebServlet(name = "CategoriaController", urlPatterns = {"/categorias"})
 public class CategoriaController extends HttpServlet {
 

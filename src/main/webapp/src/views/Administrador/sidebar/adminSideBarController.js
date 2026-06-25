@@ -17,7 +17,6 @@ export async function inicializarAdmin() {
     const btnCategorias = document.getElementById('btn-nav-categorias');
     const btnPedidos = document.getElementById('btn-nav-pedidos');
     const btnSolicitudes = document.getElementById('btn-nav-solicitudes');
-    const btnDevoluciones = document.getElementById('btn-nav-devoluciones');
     const btnUsuarios = document.getElementById('btn-nav-usuarios');
     const btnSalir = document.getElementById('btn-nav-salir');
     
@@ -54,11 +53,6 @@ export async function inicializarAdmin() {
         });
     }
 
-    if (btnDevoluciones) {
-        btnDevoluciones.addEventListener('click', () => {
-            navegarA('admin-devoluciones');
-        });
-    }
 
     if (btnUsuarios) {
         btnUsuarios.addEventListener('click', () => {
@@ -106,8 +100,6 @@ export async function inicializarAdmin() {
             btnCategorias.classList.add('activo');
         } else if (hashActual.includes('admin-pedidos') && btnPedidos) {
             btnPedidos.classList.add('activo');
-        } else if (hashActual.includes('admin-devoluciones') && btnDevoluciones) {
-            btnDevoluciones.classList.add('activo');
         } else if (hashActual.includes('admin-solicitudes') && btnSolicitudes) {
             btnSolicitudes.classList.add('activo');
         } else if (hashActual.includes('admin-usuarios') && btnUsuarios) {

@@ -1,10 +1,3 @@
-/*
-    objetivo de este archivo:
-    esta clase es un ayudante (helper) disenado para centralizar la conversion
-    de listas de objetos java a cadenas de texto en formato json.
-    al modularizar esta logica aqui, evitamos repetir codigo en los controladores
-    y mantenemos los servlets limpios y dedicados solo a responder peticiones.
-*/
 package com.dmari.helper;
 
 import java.util.ArrayList;
@@ -14,11 +7,22 @@ import com.dmari.modelo.detallePedido;
 import com.dmari.modelo.etiqueta;
 import com.dmari.modelo.producto;
 
+/*
+    objetivo de este archivo:
+    esta clase es un ayudante disenado para centralizar la conversion
+    de listas de objetos java a cadenas de texto en formato json.
+    al modularizar esta logica aqui, evitamos repetir codigo en los controladores
+    y mantenemos los servlets limpios y dedicados solo a responder peticiones.
+*/
 public class jsonHelper {
     
-    // metodo interno para limpiar textos y evitar que caracteres especiales 
-    // rompan la estructura del json en descripciones largas.
-    // cambiado a public static para que otros controladores puedan usarlo sin instanciar
+    /**
+     * Limpia un texto escapando caracteres especiales que pueden romper el formato JSON.
+     * Se aplica en descripciones, nombres con comillas y textos con saltos de linea.
+     *
+     * @param texto la cadena que se quiere limpiar. Puede ser nulo.
+     * @return el texto con los caracteres escapados, o una cadena vacia si el texto era nulo.
+     */
     public static String escaparTexto(String texto) {
         // validamos si el texto es nulo para evitar errores de ejecucion
         if (texto == null) return "";
@@ -29,8 +33,14 @@ public class jsonHelper {
                     .replace("\r", "\\r");
     }
 
-    // metodo para convertir una lista de productos a formato json.
-    // se centraliza aqui para que cualquier controlador pueda usarlo sin repetir codigo.
+    /**
+     * Convierte una lista de productos a una cadena en formato JSON.
+     * Incluye todos los campos del producto: id, nombre, descripcion, precio, stock,
+     * estado, categoria, etiquetas, imagen y datos del proveedor.
+     *
+     * @param lista lista de objetos producto obtenidos del DAO.
+     * @return cadena de texto con el arreglo JSON de productos.
+     */
     public String productosAJson(ArrayList<producto> lista) {
         // usamos stringbuilder para construir la cadena de texto de forma eficiente
         StringBuilder json = new StringBuilder();
@@ -74,10 +84,14 @@ public class jsonHelper {
         return json.toString();
     }
 
-    /*
-        metodo para convertir una lista de categorias a formato json.
-    */
-    // convierte la lista de categorias en un formato json basico para filtros
+    /**
+     * Convierte una lista de categorias a formato JSON.
+     * Solo incluye el id y el nombre de cada categoria,
+     * que es lo que necesita el frontend para los menus desplegables.
+     *
+     * @param lista lista de objetos categoria.
+     * @return cadena JSON con las categorias.
+     */
     public String categoriasAJson(ArrayList<categoria> lista) {
         StringBuilder json = new StringBuilder();
         json.append("[");
@@ -101,9 +115,14 @@ public class jsonHelper {
         return json.toString();
     }
 
-    /*
-        metodo para convertir una lista de etiquetas a formato json.
-    */
+    /**
+     * Convierte una lista de etiquetas a formato JSON.
+     * Incluye el id y el nombre de cada etiqueta para los filtros de busqueda
+     * y los formularios de creacion de productos.
+     *
+     * @param lista lista de objetos etiqueta.
+     * @return cadena JSON con las etiquetas.
+     */
     public String etiquetasAJson(ArrayList<etiqueta> lista) {
         StringBuilder json = new StringBuilder();
         json.append("[");
@@ -125,10 +144,15 @@ public class jsonHelper {
         return json.toString();
     }
 
-    /*
-        metodo para convertir el historial de pedidos a formato json.
-    */
-    // serializa el historial de pedidos con sus detalles financieros
+    /**
+     * Convierte una lista de detalles de pedidos a formato JSON.
+     * Incluye la fecha, estado, motivo de cancelacion, nombre del producto,
+     * proveedor, cantidad, precio unitario y subtotal de cada linea.
+     * Si el registro tiene nombre de cliente (vista admin o proveedor), tambien lo agrega.
+     *
+     * @param lista lista de objetos detallePedido obtenidos del DAO.
+     * @return cadena JSON con el historial de pedidos.
+     */
     public String pedidosAJson(ArrayList<detallePedido> lista) {
         StringBuilder json = new StringBuilder();
         json.append("[");
