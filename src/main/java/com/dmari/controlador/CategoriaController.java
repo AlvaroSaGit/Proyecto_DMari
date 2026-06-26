@@ -19,28 +19,31 @@ import jakarta.servlet.http.HttpSession;
  * Servlet para la gestion del catalogo de categorias de DMari.
  *
  * Atiende la ruta /categorias con dos comportamientos segun el metodo HTTP:
- *       GET /categorias - Publica (sin sesion requerida). Si recibe el
- *       parametro todas=true, devuelve todas las categorias incluyendo las pausadas
- *       (para el admin). Sin el parametro, solo devuelve las activas (para el catalogo publico).
- *       POST /categorias - Restringida (requiere rol Administrador o Proveedor).
- *       Crea, actualiza o cambia el estado de una categoria segun la accion enviada.
+ * 
+ * GET /categorias - Publica (sin sesion requerida). Si recibe el
+ * parametro todas=true, devuelve todas las categorias incluyendo las pausadas
+ * (para el admin). Sin el parametro, solo devuelve las activas (para el
+ * catalogo publico).
+ * POST /categorias - Restringida (requiere rol Administrador o Proveedor).
+ * Crea, actualiza o cambia el estado de una categoria segun la accion enviada.
+ * 
  */
-@WebServlet(name = "CategoriaController", urlPatterns = {"/categorias"})
+@WebServlet(name = "CategoriaController", urlPatterns = { "/categorias" })
 public class CategoriaController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         // configuramos la respuesta para que el navegador sepa que recibira un json
         response.setContentType("application/json;charset=UTF-8");
-        
+
         categoriaDAO dao = new categoriaDAO();
         ArrayList<categoria> lista;
-        
+
         // atrapamos el parametro que manda javascript cuando es el administrador
         String parametroTodas = request.getParameter("todas");
-        
+
         // si el parametro existe y es true, traemos todo (incluso las pausadas)
         if (parametroTodas != null && parametroTodas.equals("true")) {
             lista = dao.listarTodasCategorias();
@@ -48,7 +51,7 @@ public class CategoriaController extends HttpServlet {
             // si no, solo mandamos las activas para el catalogo publico
             lista = dao.listarCategoriasActivas();
         }
-        
+
         // construimos el json manualmente para evitar depender de librerias externas
         try (PrintWriter out = response.getWriter()) {
             StringBuilder json = new StringBuilder("[");
@@ -57,17 +60,18 @@ public class CategoriaController extends HttpServlet {
                 json.append("{");
                 json.append("\"id_categoria_pk\":").append(cat.getIdCategoriaPk()).append(",");
                 json.append("\"nombre\":\"").append(cat.getNombre()).append("\",");
-                json.append("\"descripcion\":\"").append(cat.getDescripcion() != null ? cat.getDescripcion() : "").append("\",");
+                json.append("\"descripcion\":\"").append(cat.getDescripcion() != null ? cat.getDescripcion() : "")
+                        .append("\",");
                 json.append("\"estado_activo\":").append(cat.isEstado_activo());
                 json.append("}");
-                
+
                 // agregamos una coma si no es el ultimo elemento
                 if (i < lista.size() - 1) {
                     json.append(",");
                 }
             }
             json.append("]");
-            
+
             // enviamos la cadena construida al frontend
             out.print(json.toString());
         }
@@ -98,20 +102,26 @@ public class CategoriaController extends HttpServlet {
             // logica para pausar o activar
             int id = Integer.parseInt(request.getParameter("id"));
             boolean estado = Boolean.parseBoolean(request.getParameter("estado"));
-            
-            if (dao.cambiarEstado(id, estado)) response.setStatus(HttpServletResponse.SC_OK);
-            else response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            
+
+            if (dao.cambiarEstado(id, estado))
+                response.setStatus(HttpServletResponse.SC_OK);
+            else
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+
         } else {
             // logica para crear o actualizar (el formulario del modal)
             String idParam = request.getParameter("id");
             String nombre = request.getParameter("nombre");
             String descripcion = request.getParameter("descripcion");
 
-            boolean exito = (idParam != null && !idParam.isEmpty()) ? dao.actualizarCategoria(Integer.parseInt(idParam), nombre, descripcion) : dao.insertarCategoria(nombre, descripcion);
-            
-            if (exito) response.setStatus(HttpServletResponse.SC_OK);
-            else response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            boolean exito = (idParam != null && !idParam.isEmpty())
+                    ? dao.actualizarCategoria(Integer.parseInt(idParam), nombre, descripcion)
+                    : dao.insertarCategoria(nombre, descripcion);
+
+            if (exito)
+                response.setStatus(HttpServletResponse.SC_OK);
+            else
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
     }
 }
