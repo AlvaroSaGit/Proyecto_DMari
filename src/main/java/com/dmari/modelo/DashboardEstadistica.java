@@ -1,5 +1,10 @@
 package com.dmari.modelo;
 
+/**
+ * Clase modelo simple para transportar estadisticas agregadas del dashboard
+ * (ingresos, cantidad de pedidos y productos vendidos) desde el DAO hasta el
+ * Servlet controlador.
+ */
 public class DashboardEstadistica {
     // suma total de dinero por ventas brutas
     private double totalIngresos;

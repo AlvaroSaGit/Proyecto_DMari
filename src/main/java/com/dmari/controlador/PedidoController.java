@@ -20,16 +20,24 @@ import jakarta.servlet.http.HttpSession;
 
 /**
  * Servlet de gestion de pedidos del sistema DMari.
- *       Este controlador tiene dos responsabilidades principales segun el metodo HTTP:
-         POST /pedido - Crea un nuevo pedido (checkout del carrito) o actualiza
- *       el estado logistico de un pedido existente (Preparando, Enviado, Entregado, Cancelado).
- *       GET /pedido - Devuelve el historial de pedidos filtrado por rol:
- *       todos los pedidos para el Administrador, los pedidos del proveedor para el
- *       Proveedor, y los pedidos propios para el Cliente.
  *
- * Implementa validaciones de seguridad estrictas: verifica la sesion activa (401),
- * el nivel jerarquico del usuario para cambios de estado (403) y el formato de los
- * datos del carrito (400) antes de ejecutar cualquier operacion.
+ * Este controlador tiene dos responsabilidades principales segun el metodo
+ * HTTP:
+ * </p>
+ * 
+ * POST /pedido - Crea un nuevo pedido (checkout del carrito) o actualiza
+ * el estado logistico de un pedido existente (Preparando, Enviado, Entregado,
+ * Cancelado).</li>
+ * GET /pedido - Devuelve el historial de pedidos filtrado por rol:
+ * todos los pedidos para el Administrador, los pedidos del proveedor para el
+ * Proveedor, y los pedidos propios para el Cliente
+ * 
+ *
+ * Implementa validaciones de seguridad estrictas: verifica la sesion activa
+ * (401),
+ * el nivel jerarquico del usuario para cambios de estado (403) y el formato de
+ * los
+ * datos del carrito (400) antes de ejecutar cualquier operacion
  */
 @WebServlet(name = "PedidoController", urlPatterns = { "/pedido" })
 public class PedidoController extends HttpServlet {

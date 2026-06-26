@@ -1,3 +1,4 @@
+package com.dmari.controlador;
 
 import com.dmari.dao.DashboardDAO;
 import com.dmari.modelo.DashboardEstadistica;
