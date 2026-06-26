@@ -80,34 +80,110 @@ function prepararFormularioRegistro() {
             parametros.append('tipoCuenta', tipoCuenta);
         }
 
-        // --- Bloque de Validación ---
+        // --- bloque de validacion ---
         limpiarErrorCampo('reg-nombre');
         limpiarErrorCampo('reg-apellido');
         limpiarErrorCampo('reg-correo');
         limpiarErrorCampo('reg-password');
         limpiarErrorCampo('reg-confirm-password');
+        limpiarErrorCampo('reg-nit');
+        limpiarErrorCampo('reg-marca');
+        limpiarErrorCampo('reg-cuenta');
 
         let esValido = true;
 
-        if (!validarNombre(nombre)) {
-            mostrarErrorCampo('reg-nombre', 'El nombre es inválido o muy corto.');
+        // validacion detallada para el nombre
+        if (!nombre || nombre.trim() === '') {
+            mostrarErrorCampo('reg-nombre', 'El nombre es obligatorio.');
+            esValido = false;
+        } else if (nombre.trim().length < 3) {
+            mostrarErrorCampo('reg-nombre', 'El nombre debe tener al menos 3 caracteres.');
+            esValido = false;
+        } else if (!/^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+$/.test(nombre.trim())) {
+            mostrarErrorCampo('reg-nombre', 'El nombre solo puede contener letras.');
             esValido = false;
         }
-        if (!validarNombre(apellido)) {
-            mostrarErrorCampo('reg-apellido', 'El apellido es inválido o muy corto.');
+
+        // validacion detallada para el apellido
+        if (!apellido || apellido.trim() === '') {
+            mostrarErrorCampo('reg-apellido', 'El apellido es obligatorio.');
+            esValido = false;
+        } else if (apellido.trim().length < 3) {
+            mostrarErrorCampo('reg-apellido', 'El apellido debe tener al menos 3 caracteres.');
+            esValido = false;
+        } else if (!/^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+$/.test(apellido.trim())) {
+            mostrarErrorCampo('reg-apellido', 'El apellido solo puede contener letras.');
             esValido = false;
         }
-        if (!validarCorreo(correo)) {
-            mostrarErrorCampo('reg-correo', 'El formato del correo es inválido.');
+
+        // validacion detallada para el correo
+        if (!correo || correo.trim() === '') {
+            mostrarErrorCampo('reg-correo', 'El correo electronico es obligatorio.');
+            esValido = false;
+        } else if (!validarCorreo(correo)) {
+            mostrarErrorCampo('reg-correo', 'El formato del correo es invalido (ejemplo: usuario@correo.com).');
             esValido = false;
         }
-        if (!validarPassword(password)) {
-            mostrarErrorCampo('reg-password', 'Debe tener 8+ caracteres, 1 mayúscula y 1 número.');
+
+        // validacion detallada para la contrasena
+        if (!password) {
+            mostrarErrorCampo('reg-password', 'La contraseña es obligatoria.');
+            esValido = false;
+        } else if (password.length < 8) {
+            mostrarErrorCampo('reg-password', 'La contraseña debe tener al menos 8 caracteres.');
+            esValido = false;
+        } else if (!/[A-Z]/.test(password)) {
+            mostrarErrorCampo('reg-password', 'La contraseña debe incluir al menos una letra mayuscula.');
+            esValido = false;
+        } else if (!/[0-9]/.test(password)) {
+            mostrarErrorCampo('reg-password', 'La contraseña debe incluir al menos un numero.');
             esValido = false;
         }
-        if (password !== confirmPassword) {
+
+        // validacion para la confirmacion de contrasena
+        if (!confirmPassword) {
+            mostrarErrorCampo('reg-confirm-password', 'Debe confirmar su contraseña.');
+            esValido = false;
+        } else if (password !== confirmPassword) {
             mostrarErrorCampo('reg-confirm-password', 'Las contraseñas no coinciden.');
             esValido = false;
+        }
+
+        // validacion especifica para proveedores
+        if (rol === '4') {
+            const nitVal = parametros.get('nit');
+            const marcaVal = parametros.get('marca');
+            const cuentaVal = parametros.get('cuenta');
+            
+            if (!nitVal || nitVal.trim() === '') {
+                mostrarErrorCampo('reg-nit', 'El NIT es obligatorio para proveedores.');
+                esValido = false;
+            } else if (!/^\d+$/.test(nitVal.trim())) {
+                mostrarErrorCampo('reg-nit', 'El NIT debe ser estrictamente numerico.');
+                esValido = false;
+            } else if (nitVal.trim().length < 8 || nitVal.trim().length > 20) {
+                mostrarErrorCampo('reg-nit', 'El NIT debe tener entre 8 y 20 digitos.');
+                esValido = false;
+            }
+            
+            if (!marcaVal || marcaVal.trim() === '') {
+                mostrarErrorCampo('reg-marca', 'El nombre de la marca es obligatorio para proveedores.');
+                esValido = false;
+            } else if (marcaVal.trim().length < 3) {
+                mostrarErrorCampo('reg-marca', 'El nombre de la marca debe tener al menos 3 caracteres.');
+                esValido = false;
+            }
+            
+            if (!cuentaVal || cuentaVal.trim() === '') {
+                mostrarErrorCampo('reg-cuenta', 'El numero de cuenta es obligatorio para proveedores.');
+                esValido = false;
+            } else if (!/^\d+$/.test(cuentaVal.trim())) {
+                mostrarErrorCampo('reg-cuenta', 'El numero de cuenta debe ser estrictamente numerico.');
+                esValido = false;
+            } else if (cuentaVal.trim().length < 5 || cuentaVal.trim().length > 30) {
+                mostrarErrorCampo('reg-cuenta', 'El numero de cuenta debe tener entre 5 y 30 digitos.');
+                esValido = false;
+            }
         }
 
         if (!esValido) return;
@@ -122,14 +198,26 @@ function prepararFormularioRegistro() {
             
             if (respuesta.ok) {
                 const msj = rol === '4' ? 'Registro enviado con exito. Espere la aprobacion del administrador.' : '¡Registro exitoso! Ahora inicia sesion.';
+                // limpiamos el local storage para evitar arrastrar el carrito anterior
+                localStorage.removeItem('carritoDMari');
                 alert(msj);
                 formulario.reset();
                 navegarA('login');
             } else {
                 // capturamos el mensaje de error que viene desde el validacionhelper de java
                 const mensajeError = await respuesta.text();
-                // Mostramos el error (ej: "correo ya en uso") debajo del campo de correo
-                mostrarErrorCampo('reg-correo', mensajeError || 'Error al registrarse. Intenta de nuevo.');
+                
+                // Si el backend devuelve un HTML de error por defecto de Tomcat, mostramos uno amigable
+                if (mensajeError.includes('<html') || mensajeError.includes('<body')) {
+                    const msjGenerico = 'Este correo electronico ya esta en uso o los datos son invalidos.';
+                    mostrarErrorCampo('reg-correo', msjGenerico);
+                    alert(msjGenerico);
+                } else {
+                    // Mostramos el error (ej: "correo ya en uso") debajo del campo de correo
+                    mostrarErrorCampo('reg-correo', mensajeError || 'Error al registrarse. Intenta de nuevo.');
+                    // Tambien lanzamos un alert para que sea completamente evidente para el usuario
+                    alert(mensajeError || 'Error al registrarse. Revisa los datos.');
+                }
             }
         } catch (error) {
             // si falla la promesa de java caera aqui sin crashear la pagina

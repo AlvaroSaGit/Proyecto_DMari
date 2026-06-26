@@ -1,32 +1,21 @@
-<div id="overlay-prov" class="overlay-sidebar"></div>
-<div id="sidebar-proveedor" class="sidebar-container">
-    <div class="sidebar-header">
-        <h3>Panel de Proveedor</h3>
-        <button id="btn-cerrar-prov" class="btn-icon">
-            <span class="material-symbols-outlined">close</span>
-        </button>
-    </div>
+<nav class="admin-sidebar-menu">
+    <button id="btn-prov-productos" class="admin-nav-item">
+        <span class="material-symbols-outlined">inventory_2</span>
+        <span>Mis Productos</span>
+    </button>
+    <button id="btn-prov-pedidos" class="admin-nav-item">
+        <span class="material-symbols-outlined">shopping_bag</span>
+        <span>Mis Pedidos</span>
+    </button>
+    <button id="btn-prov-estadistica" class="admin-nav-item">
+        <span class="material-symbols-outlined">monitoring</span>
+        <span>Estadísticas de Ventas</span>
+    </button>
     
-    <div class="sidebar-content">
-        <div class="prov-item" data-go="proveedor-productos">
-            <span class="material-symbols-outlined">inventory_2</span>
-            <p>Mis Productos</p>
-        </div>
-        <div class="prov-item" data-go="proveedor-pedidos">
-            <span class="material-symbols-outlined">shopping_bag</span>
-            <p>Mis Pedidos</p>
-        </div>
-        <div class="prov-item" data-go="proveedor-estadistica">
-            <span class="material-symbols-outlined">monitoring</span>
-            <p>Estadísticas de Ventas</p>
-        </div>
-    </div>
-
-    <!-- Pie de página del sidebar para el botón de logout -->
-    <div class="sidebar-footer">
-        <button id="btn-cerrar-sesion" class="prov-item" style="color: #ff4d4d; width: 100%;">
-            <span class="material-symbols-outlined">logout</span>
-            <p>Cerrar Sesión</p>
-        </button>
-    </div>
-</div>
+    <div class="admin-sidebar-divisor"></div>
+    
+    <button id="btn-nav-salir" class="admin-nav-item">
+        <span class="material-symbols-outlined">logout</span>
+        <span>Cerrar Sesión</span>
+    </button>
+</nav>

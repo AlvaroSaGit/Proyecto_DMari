@@ -33,7 +33,8 @@ public class usuarioDAO {
     public int registrarUsuario(usuario nuevoUsuario) {
         // consulta para la tabla principal de usuario.
         // Ahora acepta nombre, apellido y el rol dinámicamente.
-        String sqlUsuario = "INSERT INTO usuario (nombre, apellido, id_rol_fk, estado_cuenta) VALUES (?, ?, ?, 1)";
+        // si el rol es 4 (proveedor) el estado_cuenta inicial sera 0 (inactivo)
+        String sqlUsuario = "INSERT INTO usuario (nombre, apellido, id_rol_fk, estado_cuenta) VALUES (?, ?, ?, ?)";
         
         // consulta para insertar el correo vinculado al usuario
         // vincula el id del usuario recien creado con su direccion de email principal
@@ -63,6 +64,8 @@ public class usuarioDAO {
                 psUsuario.setString(1, nuevoUsuario.getNombre());
                 psUsuario.setString(2, nuevoUsuario.getApellido());
                 psUsuario.setInt(3, nuevoUsuario.getIdRol());
+                // asignamos estado_cuenta = 0 si es proveedor para revision del admin
+                psUsuario.setInt(4, nuevoUsuario.getIdRol() == 4 ? 0 : 1);
                 psUsuario.executeUpdate();
                 try (ResultSet rs = psUsuario.getGeneratedKeys()) {
                     // condicional: verifica si mysql le otorgo un id unico al usuario.
@@ -142,37 +145,41 @@ public class usuarioDAO {
      */
     public usuario verificarLogin(String correo, String password) {
         
-        // aes_decrypt hace el proceso inverso: usa la llave secreta para destrabar el blob y lo compara con el texto digitado.
-        // traemos tambien el estado_cuenta para validarlo desde java y poder darle un mensaje especifico al usuario
-        // el inner join con correo permite buscar por email (que es unico)
-        // el inner join con credenciales permite acceder al blob encriptado para compararlo
-        // la condicion aes_decrypt(..., llave) = ? es la que valida la contraseña en el motor de la base de datos
-        String sql = "SELECT u.id_usuario_pk, u.nombre, u.apellido, u.id_rol_fk, c.correo, u.estado_cuenta " +
+        // extraemos los datos del usuario y ademas desencriptamos la contrasena en formato texto (cast as char)
+        // en lugar de comparar la contrasena en la base de datos, la compararemos en java para evitar problemas de charset
+        String sql = "SELECT u.id_usuario_pk, u.nombre, u.apellido, u.id_rol_fk, c.correo, u.estado_cuenta, " +
+                     "CAST(AES_DECRYPT(cr.passwd_encript, ?) AS CHAR) as dec_passwd " +
                      "FROM usuario u " +
                      "INNER JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk " +
                      "INNER JOIN credenciales cr ON u.id_usuario_pk = cr.id_usuario " +
-                     "WHERE c.correo = ? AND AES_DECRYPT(cr.passwd_encript, ?) = ?";
+                     "WHERE c.correo = ?";
                      
         usuario usuarioLogueado = null;
         
         try (Connection con = db.conectar();
             PreparedStatement ps = con.prepareStatement(sql)) {
             
-            ps.setString(1, correo);
-            ps.setString(2, LLAVE_SECRETA);
-            ps.setString(3, password);
+            // seteamos la llave secreta para aes_decrypt
+            ps.setString(1, LLAVE_SECRETA);
+            // seteamos el correo
+            ps.setString(2, correo);
             
             try (ResultSet rs = ps.executeQuery()) {
-                // condicional: si el cursor avanza, encontro coincidencias exactas.
-                // si no avanza, significa que el correo no existe o la clave esta mal.
+                // si el cursor avanza, significa que encontro el correo
                 if (rs.next()) {
-                    usuarioLogueado = new usuario();
-                    usuarioLogueado.setIdUsuario(rs.getInt("id_usuario_pk"));
-                    usuarioLogueado.setNombre(rs.getString("nombre"));
-                    usuarioLogueado.setApellido(rs.getString("apellido"));
-                    usuarioLogueado.setCorreo(rs.getString("correo"));
-                    usuarioLogueado.setIdRol(rs.getInt("id_rol_fk"));
-                    usuarioLogueado.setEstadoCuenta(rs.getBoolean("estado_cuenta"));
+                    // extraemos la contrasena desencriptada que devolvio mysql
+                    String decPasswd = rs.getString("dec_passwd");
+                    
+                    // comparamos en java (password.equals) que es mas seguro contra fallos de collation
+                    if (decPasswd != null && decPasswd.equals(password)) {
+                        usuarioLogueado = new usuario();
+                        usuarioLogueado.setIdUsuario(rs.getInt("id_usuario_pk"));
+                        usuarioLogueado.setNombre(rs.getString("nombre"));
+                        usuarioLogueado.setApellido(rs.getString("apellido"));
+                        usuarioLogueado.setCorreo(rs.getString("correo"));
+                        usuarioLogueado.setIdRol(rs.getInt("id_rol_fk"));
+                        usuarioLogueado.setEstadoCuenta(rs.getBoolean("estado_cuenta"));
+                    }
                 }
             }
             
@@ -191,14 +198,26 @@ public class usuarioDAO {
      * @return boolean: true si el correo ya existe en la tabla correo.
      */
     public boolean existeCorreo(String correo) {
+        // consulta sql con marcador de posicion (?) para evitar inyeccion sql.
+        // previene la concatenacion directa de variables de entrada.
         String sql = "SELECT 1 FROM correo WHERE correo = ?";
         
+        // try-with-resources asegura el cierre automatico de la conexion.
+        // connection: gestiona el enlace logico con la base de datos.
+        // preparedstatement: compila la consulta y la protege contra ejecucion de codigo malicioso.
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
+            // asignacion del parametro a la consulta.
+            // setstring neutraliza caracteres especiales o comillas de la variable.
             ps.setString(1, correo);
+            
+            // resultset: almacena el conjunto de datos retornado por mysql.
+            // executequery(): metodo especifico para ejecutar sentencias de lectura (select).
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next(); // devuelve true si encontro el correo
+                // rs.next() desplaza el cursor a la primera fila de resultados.
+                // devuelve true si existe informacion, o false si el conjunto esta vacio.
+                return rs.next();
             }
             
         } catch (SQLException e) {
@@ -450,6 +469,26 @@ public class usuarioDAO {
             return false;
         } finally {
             try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException e) {}
+        }
+    }
+
+    /**
+     * metodo complementario: desactiva la cuenta de usuario.
+     * utilizado principalmente cuando un proveedor se registra y queda en estado "pendiente".
+     *
+     * @param idUsuario identificador del usuario en mysql.
+     * @return boolean true si la operacion afecto filas.
+     */
+    public boolean desactivarCuentaParaRevision(int idUsuario) {
+        // el usuario sigue existiendo en el sistema pero estado_cuenta pasa a 0 (desactivado)
+        String sql = "UPDATE usuario SET estado_cuenta = 0 WHERE id_usuario_pk = ?";
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idUsuario);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error al desactivar cuenta de usuario: " + e.getMessage());
+            return false;
         }
     }
 }

@@ -13,10 +13,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 /**
-    objetivo de este archivo:
-    controlador (servlet) dedicado exclusivamente a gestionar la actualizacion
-    de contrasenas de los usuarios. escucha las peticiones post en la ruta
-    '/cambiar-password' y se comunica con el dao para validar y ejecutar el cambio.
+ * Servlet dedicado exclusivamente a la actualizacion de contrasenas.
+ *
+ * Atiende la ruta {@code POST /cambiar-password}. Requiere una sesion activa
+ * para garantizar que solo el usuario dueno de la cuenta pueda cambiar su propia
+ * clave. Delega la logica de verificacion y actualizacion al
+ * usuarioDAO.
  */
 @WebServlet(name = "PasswordController", urlPatterns = {"/cambiar-password"})
 public class PasswordController extends HttpServlet {

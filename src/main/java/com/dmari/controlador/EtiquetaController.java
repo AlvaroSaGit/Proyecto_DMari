@@ -1,8 +1,3 @@
-/*
-    objetivo de este archivo:
-    el etiqueta controller, su trabajo es traerse las etiquetas de la base de datos
-    y traducirlas (usando jsonhelper) para que el frontend pueda mostrarlas.
-*/
 package com.dmari.controlador;
 
 import java.io.IOException;
@@ -19,6 +14,16 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Servlet de lectura del catalogo de etiquetas (tags) de DMari.
+ *
+ * Atiende la ruta {@code GET /etiquetas}. Obtiene todas las etiquetas
+ * disponibles en la base de datos a traves del {@link com.dmari.dao.etiquetaDAO}
+ * y las serializa a JSON usando {@link com.dmari.helper.jsonHelper}.
+ *
+ * Estas etiquetas se usan en los formularios de productos (para asignarlas)
+ * y en los filtros del catalogo publico (para busqueda por tag).
+ */
 @WebServlet(name = "EtiquetaController", urlPatterns = {"/etiquetas"})
 public class EtiquetaController extends HttpServlet {
 

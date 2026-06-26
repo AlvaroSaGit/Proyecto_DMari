@@ -1,7 +1,3 @@
-/*
-   objetivo de este archivo:
-   representar los numeros clave del negocio para los paneles de control.
-*/
 package com.dmari.modelo;
 
 public class DashboardEstadistica {
@@ -14,7 +10,8 @@ public class DashboardEstadistica {
     private double totalComisiones; // nuevo campo para rastrear la ganancia de la empresa
 
     // inicializador vacio para reportes
-    public DashboardEstadistica() {}
+    public DashboardEstadistica() {
+    }
 
     // getters y setters siguiendo el estilo del proyecto
     public double getTotalIngresos() {

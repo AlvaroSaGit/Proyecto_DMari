@@ -1,18 +1,30 @@
-/*
-   objetivo de este archivo:
-   consultar la base de datos para generar calculos financieros.
-   separa la visibilidad de dinero segun el rol del usuario.
-*/
 package com.dmari.dao;
 
 import com.dmari.helper.databaseHelper;
 import com.dmari.modelo.DashboardEstadistica;
 import java.sql.*;
 
+/**
+ * DAO para las consultas estadisticas del panel de control (dashboard) de DMari.
+ *
+ * Separa la visibilidad de los datos financieros segun el rol del usuario:
+ * el Administrador ve los numeros de toda la plataforma, mientras que el
+ * Proveedor solo ve las cifras generadas por sus propios productos.
+
+ */
 public class DashboardDAO {
     private databaseHelper db = new databaseHelper();
 
-    // el administrador ve los ingresos globales de toda la plataforma
+    /**
+     * Obtiene las estadisticas globales de toda la plataforma (solo para Administrador).
+     *
+     * Calcula el total de ingresos, la cantidad de pedidos entregados,
+     * el total de unidades vendidas y las comisiones acumuladas de DMari,
+     * filtrando unicamente los pedidos con estado 'Entregado'
+     *
+     * @return DashboardEstadistica con los datos agregados de la plataforma.
+     *         Los campos seran cero si no hay pedidos entregados registrados.
+     */
     public DashboardEstadistica obtenerEstadisticasGlobales() {
         DashboardEstadistica est = new DashboardEstadistica();
         String sql = "SELECT SUM(dp.subtotal) as ingresos, COUNT(DISTINCT p.id_pedido_pk) as pedidos, " +
@@ -39,7 +51,18 @@ public class DashboardDAO {
         return est;
     }
 
-    // el proveedor solo ve el dinero generado por sus propios productos
+    /**
+     * Obtiene las estadisticas de ventas filtradas para un proveedor especifico.
+     *
+     * Usa un JOIN con {@code proveedor_producto} para garantizar que solo se
+     * contabilizan los pedidos de los productos que pertenecen a ese proveedor,
+     * filtrando adicionalmente por estado {@code 'Entregado'} para realismo financiero.
+     *
+     * @param idProveedor int con el ID del proveedor en sesion.
+     * @return DashboardEstadistica con los ingresos, pedidos y unidades
+     *         vendidas exclusivamente de ese proveedor. Los campos seran cero si
+     *         no tiene ventas entregadas.
+     */
     public DashboardEstadistica obtenerEstadisticasPorProveedor(int idProveedor) {
         DashboardEstadistica est = new DashboardEstadistica();
         

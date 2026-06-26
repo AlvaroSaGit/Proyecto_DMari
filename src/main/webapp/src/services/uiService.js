@@ -16,7 +16,9 @@ export async function cargarComponente(id, ruta) {
         if (!contenedor) return; // si no existe el hueco, no hacemos nada
 
         // se extrae la ruta en una constante de respuesta
-        const respuesta = await fetch(ruta);
+        // agregamos un cache buster para evitar que el navegador cargue html viejos
+        const rutaConCacheBuster = ruta + '?v=' + new Date().getTime();
+        const respuesta = await fetch(rutaConCacheBuster);
         // verificamos que la peticion http haya sido exitosa (ej. que no sea un error 404)
         if (!respuesta.ok) {
             throw new Error(`Error HTTP: ${respuesta.status}`);

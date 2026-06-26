@@ -2,6 +2,11 @@ package com.dmari.modelo;
 
 import java.sql.Timestamp;
 
+/*
+    objetivo de este archivo:
+    representar una solicitud de creacion de nueva categoria en el sistema.
+    permite que los proveedores sugieran categorias al administrador para que las apruebe o rechace.
+*/
 public class SolicitudCategoria {
     private int idSolicitudPk;
     // vinculo con el usuario de rol proveedor

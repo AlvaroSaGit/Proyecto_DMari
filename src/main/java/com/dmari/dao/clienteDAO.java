@@ -27,15 +27,16 @@ public class clienteDAO {
      */
     public perfilCliente obtenerPerfil(int idUsuario) {
         perfilCliente perfil = null;
-        // Se usan alias (AS) para simplificar los nombres de las columnas y hacerlos consistentes.
+        // el espacio al final de la linea del subquery es OBLIGATORIO para separarlo del FROM
+        // sin ese espacio, mysql recibe "...telefono_secundarioFROM..." y lanza un error de sintaxis
         String sql = "SELECT d.direccion, c.referencia_ubicacion, d.direccion_detallada AS direccion_detalle, t.numero_telefonico AS telefono, co.correo, " +
-                     "(SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = u.id_usuario_pk AND id_telefono_pk != t.id_telefono_pk LIMIT 1) AS telefono_secundario" +
+                     "(SELECT numero_telefonico FROM telefono WHERE id_usuario_fk = u.id_usuario_pk AND id_telefono_pk != t.id_telefono_pk LIMIT 1) AS telefono_secundario " +
                      "FROM usuario u " +
                      "LEFT JOIN cliente c ON u.id_usuario_pk = c.id_cliente_pk " +
                      "LEFT JOIN direccion d ON u.id_usuario_pk = d.id_usuario_fk AND d.direccion_primario = 1 " +
                      "LEFT JOIN telefono t ON u.id_usuario_pk = t.id_usuario_fk " + 
                      "LEFT JOIN correo co ON u.id_usuario_pk = co.id_usuario_fk " +
-                     "WHERE u.id_usuario_pk = ?";
+                     "WHERE u.id_usuario_pk = ? LIMIT 1";
         
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -72,74 +73,112 @@ public class clienteDAO {
      * @param referencia Indicaciones para la entrega (ej. "casa esquinera").
      * @return true si la transacción fue exitosa (commit), false si falló (rollback).
      */
+    /**
+     * obtiene el id de la direccion marcada como primaria del cliente.
+     * este metodo es usado por el PedidoController para cumplir con la
+     * restriccion NOT NULL del campo id_direccion_fk en la tabla pedido.
+     *
+     * @param idUsuario el id del usuario logueado.
+     * @return el id_direccion_pk de la direccion primaria, o -1 si no tiene ninguna.
+     */
+    public int obtenerIdDireccionPrimaria(int idUsuario) {
+        // consultamos solo la columna id_direccion_pk de la fila marcada como primaria
+        String sql = "SELECT id_direccion_pk FROM direccion WHERE id_usuario_fk = ? AND direccion_primario = 1 LIMIT 1";
+        
+        try (Connection con = db.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            // inyectamos el id del usuario en el marcador de posicion
+            ps.setInt(1, idUsuario);
+            try (ResultSet rs = ps.executeQuery()) {
+                // condicional: si existe al menos una fila, extraemos el id
+                if (rs.next()) {
+                    return rs.getInt("id_direccion_pk");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("error al obtener id de direccion primaria: " + e.getMessage());
+        }
+        // retornamos -1 para indicar que el cliente no tiene direccion configurada
+        return -1;
+    }
+
     public boolean guardarOActualizarPerfil(int idUsuario, String direccionPrimaria, String direccionDetalle, String numeroTelefono, String telefonoSecundario, String referencia) {
         
         // La tabla cliente solo maneja la referencia de ubicación.
-        String sqlCliente = "UPDATE cliente SET referencia_ubicacion = ? WHERE id_cliente_pk = ?";
+        // Ahora usamos INSERT ON DUPLICATE KEY UPDATE. Si el usuario se registró pero no tenía fila en 'cliente', la creamos.
+        // Si ya existe, simplemente actualizamos su referencia.
+        String sqlCliente = "INSERT INTO cliente (id_cliente_pk, referencia_ubicacion) VALUES (?, ?) " +
+                            "ON DUPLICATE KEY UPDATE referencia_ubicacion = VALUES(referencia_ubicacion)";
                             
-        // 2. preparamos la instruccion sql para la tabla direccion.
-        // Si ya existe una dirección primaria para el usuario, la actualiza. Si no, la crea.
-        String sqlDireccion = "INSERT INTO direccion (id_usuario_fk, direccion, direccion_detallada, direccion_primario) " +
-                              "VALUES (?, ?, ?, 1) " +
-                              "ON DUPLICATE KEY UPDATE direccion = VALUES(direccion), direccion_detallada = VALUES(direccion_detallada)";
-                              
-        // INSERT IGNORE previene errores si el teléfono ya existe para otro usuario, priorizando la integridad.
-        String sqlTelefono = "INSERT IGNORE INTO telefono (id_usuario_fk, numero_telefonico) " +
-                             "VALUES (?, ?)";
+        // 2. estrategia correcta para direccion: intentamos actualizar primero.
+        String sqlActualizarDireccion = "UPDATE direccion SET direccion = ?, direccion_detallada = ? " +
+                                        "WHERE id_usuario_fk = ? AND direccion_primario = 1";
+        String sqlInsertarDireccion  = "INSERT INTO direccion (id_usuario_fk, direccion, direccion_detallada, direccion_primario) " +
+                                       "VALUES (?, ?, ?, 1)";
 
         Connection con = null;
         try {
             con = db.conectar();
-            // Desactivamos el autocommit para iniciar una transacción manual.
-            // Esto garantiza que si una inserción falla, las demás se revierten.
             con.setAutoCommit(false);
 
-            // Bloque 1: Actualizar la tabla 'cliente' con la referencia de ubicación.
+            // bloque 1: crear o actualizar la tabla cliente con la referencia de ubicacion.
             try (PreparedStatement psCli = con.prepareStatement(sqlCliente)) {
-                psCli.setString(1, referencia);
-                psCli.setInt(2, idUsuario);
+                psCli.setInt(1, idUsuario);
+                psCli.setString(2, referencia);
                 psCli.executeUpdate();
             }
 
-            // Bloque 2: Insertar o actualizar la dirección principal.
-            try (PreparedStatement psDir = con.prepareStatement(sqlDireccion)) {
-                psDir.setInt(1, idUsuario);
-                psDir.setString(2, direccionPrimaria);
-                psDir.setString(3, direccionDetalle);
-                psDir.executeUpdate();
-            }
-
-            // Bloque 3: Actualizar el teléfono principal.
-            String sqlActualizarTelefono = "UPDATE telefono SET numero_telefonico = ? WHERE id_usuario_fk = ?";
-            try (PreparedStatement psTelUpd = con.prepareStatement(sqlActualizarTelefono)) {
-                psTelUpd.setString(1, numeroTelefono);
-                psTelUpd.setInt(2, idUsuario);
-                int filas = psTelUpd.executeUpdate();
+            // bloque 2: intentar actualizar la direccion primaria existente del usuario.
+            try (PreparedStatement psDir = con.prepareStatement(sqlActualizarDireccion)) {
+                psDir.setString(1, direccionPrimaria);
+                psDir.setString(2, direccionDetalle);
+                psDir.setInt(3, idUsuario);
+                int filasDireccion = psDir.executeUpdate();
                 
-                if (telefonoSecundario != null && !telefonoSecundario.trim().isEmpty()) {
-                    // TODO: Implementar lógica para un segundo teléfono.
-                    // Se podría añadir una columna 'tipo' en la tabla 'telefono'
-                    // o manejar una segunda fila para el mismo usuario.
-                }
-
-                // Si el UPDATE no afectó filas, significa que el usuario no tenía un teléfono
-                // registrado, por lo que procedemos a insertarlo.
-                if (filas == 0) {
-                    try (PreparedStatement psTelIns = con.prepareStatement(sqlTelefono)) {
-                        psTelIns.setInt(1, idUsuario);
-                        psTelIns.setString(2, numeroTelefono);
-                        psTelIns.executeUpdate();
+                // si el update no afecto filas, el usuario no tiene direccion aun: insertamos una nueva.
+                if (filasDireccion == 0) {
+                    try (PreparedStatement psDirIns = con.prepareStatement(sqlInsertarDireccion)) {
+                        psDirIns.setInt(1, idUsuario);
+                        psDirIns.setString(2, direccionPrimaria);
+                        psDirIns.setString(3, direccionDetalle);
+                        psDirIns.executeUpdate();
                     }
                 }
             }
 
-            // Si todas las operaciones fueron exitosas, confirmamos los cambios.
+            // bloque 3: manejar telefonos (borrar existentes e insertar nuevos)
+            String sqlDeleteTel = "DELETE FROM telefono WHERE id_usuario_fk = ?";
+            String sqlInsertTel = "INSERT INTO telefono (id_usuario_fk, numero_telefonico) VALUES (?, ?)";
+            
+            try (PreparedStatement psDel = con.prepareStatement(sqlDeleteTel)) {
+                psDel.setInt(1, idUsuario);
+                psDel.executeUpdate();
+            }
+            
+            try (PreparedStatement psIns = con.prepareStatement(sqlInsertTel)) {
+                // Insertar el principal
+                if (numeroTelefono != null && !numeroTelefono.trim().isEmpty()) {
+                    psIns.setInt(1, idUsuario);
+                    psIns.setString(2, numeroTelefono.trim());
+                    psIns.executeUpdate();
+                }
+                // Insertar el secundario
+                if (telefonoSecundario != null && !telefonoSecundario.trim().isEmpty() && !telefonoSecundario.trim().equals(numeroTelefono.trim())) {
+                    psIns.setInt(1, idUsuario);
+                    psIns.setString(2, telefonoSecundario.trim());
+                    psIns.executeUpdate();
+                }
+            }
+
+            // Si todo fue exitoso, guardamos cambios permanentemente.
             con.commit();
             return true;
         } catch (SQLException e) {
             // Si ocurre cualquier error, revertimos todos los cambios hechos en esta transacción.
             try { if (con != null) con.rollback(); } catch (SQLException ex) {}
-            System.out.println("Error al guardar perfil del cliente: " + e.getMessage());
+            System.err.println("=== ERROR SQL AL GUARDAR PERFIL ===");
+            System.err.println("Mensaje: " + e.getMessage());
+            e.printStackTrace();
             return false;
         } finally {
             // En cualquier caso, restauramos el autocommit y cerramos la conexión.

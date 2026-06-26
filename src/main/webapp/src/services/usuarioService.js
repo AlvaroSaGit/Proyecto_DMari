@@ -5,7 +5,7 @@ let usuariosCache = [];
 // funcion para obtener la lista de usuarios y guardarla en cache
 export async function obtenerUsuarios() {
     try {
-        const respuesta = await fetch('usuarios');
+        const respuesta = await fetch('usuarios?t=' + Date.now());
         if (!respuesta.ok) throw new Error('no se pudo conectar con el servidor');
         usuariosCache = await respuesta.json();
         return usuariosCache;
@@ -16,7 +16,7 @@ export async function obtenerUsuarios() {
 }
 
 // permite filtrar la lista que ya tenemos en memoria sin volver al servidor
-export function filtrarUsuarios(termino, idRol) {
+export function filtrarUsuarios(termino, idRol, estadoFiltro) {
     const busqueda = termino.toLowerCase();
     
     return usuariosCache.filter(usr => {
@@ -27,8 +27,10 @@ export function filtrarUsuarios(termino, idRol) {
         const coincideTexto = nombreCompleto.includes(busqueda) || correo.includes(busqueda);
         // verificamos si coincide el rol (si el filtro de rol no esta vacio)
         const coincideRol = idRol === '' || String(usr.idRol) === idRol;
+        // verificamos si coincide el estado de la cuenta (activo o bloqueado/pendiente)
+        const coincideEstado = estadoFiltro === '' || String(usr.estadoCuenta) === estadoFiltro;
 
-        return coincideTexto && coincideRol;
+        return coincideTexto && coincideRol && coincideEstado;
     });
 }
 

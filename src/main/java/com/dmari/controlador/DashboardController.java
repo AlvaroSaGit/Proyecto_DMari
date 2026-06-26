@@ -1,8 +1,3 @@
-/*
-   objetivo de este archivo:
-   servir los datos del dashboard en formato json para el frontend.
-   identifica si debe entregar datos globales o privados segun el rol.
-*/
 package com.dmari.controlador;
 
 import com.dmari.dao.DashboardDAO;
@@ -13,6 +8,17 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+/**
+ * Servlet que sirve los datos de resumen del dashboard en formato JSON.
+ * 
+ * Atiende la ruta {@code GET /api-dashboard-resumen}. Identifica el rol del
+ * usuario en sesion y devuelve estadisticas diferenciadas:
+ * 
+ * Rol 1 (Administrador): estadisticas globales de toda la plataforma.
+ * Rol 4 (Proveedor): estadisticas solo de sus propios productos y ventas.
+ * Roles sin acceso (ej. Cliente) reciben un HTTP 403 Forbidden.
+ *
+ */
 @WebServlet(name = "DashboardController", urlPatterns = {"/api-dashboard-resumen"})
 public class DashboardController extends HttpServlet {
 

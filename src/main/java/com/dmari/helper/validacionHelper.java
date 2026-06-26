@@ -1,12 +1,13 @@
-/*
-   objetivo de este archivo:
-   centralizar las reglas de validacion del sistema para reutilizarlas en todos los servlets.
-   aplica filtros estrictos para evitar datos malformados en la base de datos.
-*/
 package com.dmari.helper;
 
 import java.util.regex.Pattern;
 
+/*
+    objetivo de este archivo:
+    centralizar las reglas de validacion del sistema para reutilizarlas en todos los servlets.
+    aplica filtros estrictos para evitar datos malformados en la base de datos.
+    todos los metodos son estaticos, no es necesario instanciar la clase.
+*/
 public class validacionHelper {
 
     // expresiones regulares para validar formatos especificos y garantizar la integridad de la base de datos
@@ -21,62 +22,83 @@ public class validacionHelper {
     // exige entre 7 y 15 digitos numericos para telefonos
     private static final String REGEX_TELEFONO = "^[0-9]{7,15}$";
 
-    // verifica que un texto contenga unicamente letras y espacios (util para nombres y apellidos).
-    // @param texto cadena recibida desde el formulario de registro o perfil.
-    // @return true si cumple el patron alfabetico y no esta vacio ni es nulo.
+    /**
+     * Verifica que un texto contenga unicamente letras y espacios.
+     * Util para validar nombres y apellidos. Rechaza numeros y caracteres especiales.
+     *
+     * @param texto cadena recibida desde el formulario.
+     * @return true si el texto es valido, false si es nulo, vacio o contiene caracteres no permitidos.
+     */
     public static boolean validarNombre(String texto) {
         if (texto == null || texto.trim().isEmpty()) return false;
         return Pattern.matches(REGEX_SOLO_LETRAS, texto);
     }
 
-    // verifica que el correo tenga un formato institucional o comercial valido (acepta .co, .net, etc).
-    // @param correo direccion de email a evaluar.
-    // @return true si el formato es aceptado por la expresion regular.
+    /**
+     * Verifica que el correo tenga un formato valido.
+     * Acepta dominios comunes como .co, .net, .org, .com.co.
+     *
+     * @param correo direccion de email a evaluar.
+     * @return true si el formato es correcto, false si no lo es.
+     */
     public static boolean validarCorreo(String correo) {
         if (correo == null) return false;
         return Pattern.matches(REGEX_CORREO, correo);
     }
 
-    // verifica que la clave tenga al menos 8 caracteres, una mayuscula y un numero por seguridad.
-    // ayuda a prevenir ataques de fuerza bruta simples.
-    // @param password contrasena en texto plano.
-    // @return true si cumple con la politica de seguridad minima.
+    /**
+     * Verifica que la contrasena cumpla la politica minima de seguridad:
+     * al menos 8 caracteres, una letra mayuscula y un numero.
+     *
+     * @param password contrasena en texto plano.
+     * @return true si cumple la politica, false si no.
+     */
     public static boolean validarPassword(String password) {
         if (password == null) return false;
         return Pattern.matches(REGEX_PASSWORD, password);
     }
 
-    // verifica que el campo contenga solo digitos (util para telefonos o nit).
-    // util para campos que se procesaran como cadenas pero representan numeros.
-    // @param texto cadena de caracteres numericos.
-    // @return true si no contiene letras ni simbolos especiales.
+    /**
+     * Verifica que el campo contenga unicamente digitos numericos.
+     * Util para campos como NIT o numero de cuenta bancaria.
+     *
+     * @param texto cadena de caracteres a evaluar.
+     * @return true si solo contiene digitos, false si tiene letras o simbolos.
+     */
     public static boolean validarSoloNumeros(String texto) {
         if (texto == null) return false;
         return Pattern.matches(REGEX_SOLO_NUMEROS, texto);
     }
 
     /**
-     * Verifica que un teléfono contenga solo números y tenga una longitud válida.
-     * @param telefono Cadena que representa el número de teléfono.
-     * @return true si cumple con el formato (7-15 dígitos).
+     * Verifica que un numero de telefono contenga solo digitos y tenga entre 7 y 15 caracteres.
+     *
+     * @param telefono cadena que representa el telefono.
+     * @return true si el formato es valido, false si no.
      */
     public static boolean validarTelefono(String telefono) {
         if (telefono == null || telefono.trim().isEmpty()) return false;
         return Pattern.matches(REGEX_TELEFONO, telefono.trim());
     }
 
-    // valida que un precio sea un numero positivo mayor a cero.
-    // evita errores de logica donde un producto podria registrarse sin costo.
-    // @param precio valor monetario del producto.
-    // @return true si el valor es estrictamente mayor a cero.
+    /**
+     * Valida que un precio sea mayor a cero.
+     * Evita que un producto se registre sin valor monetario.
+     *
+     * @param precio valor monetario del producto.
+     * @return true si el precio es positivo, false si es cero o negativo.
+     */
     public static boolean validarPrecio(double precio) {
         return precio > 0;
     }
 
-    // valida que el stock no sea negativo.
-    // permite valor cero para productos agotados pero bloquea inconsistencias negativas.
-    // @param stock cantidad fisica en inventario.
-    // @return true si es cero o positivo.
+    /**
+     * Valida que el stock no sea un valor negativo.
+     * Permite el valor cero para productos agotados.
+     *
+     * @param stock cantidad de unidades en inventario.
+     * @return true si el stock es cero o mayor, false si es negativo.
+     */
     public static boolean validarStock(int stock) {
         return stock >= 0;
     }

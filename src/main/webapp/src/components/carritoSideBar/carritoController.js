@@ -101,13 +101,23 @@ export async function inicializarCarrito() {
         document.getElementById('btn-cancelar-pago').addEventListener('click', function() { modalPago.style.display = 'none'; });
         document.getElementById('btn-confirmar-pago').addEventListener('click', confirmarPagoSimulado);
 
-        // validacion en tiempo real ux
-        // este bloque impide que el usuario escriba letras en el campo de cuenta telefono
+        // validacion en tiempo real ux: solo permite digitos numericos
+        // el evento 'input' se dispara cada vez que el valor cambia (pegado, escrito, etc.)
         const inputCuenta = document.getElementById('input-cuenta-pago');
         if (inputCuenta) {
+            // forzamos un maximo de 10 digitos (numero de celular colombiano tiene 10)
+            inputCuenta.setAttribute('maxlength', '10');
+            inputCuenta.setAttribute('inputmode', 'numeric'); // muestra teclado numerico en movil
+            inputCuenta.setAttribute('pattern', '[0-9]*');    // refuerzo html5 para movil
             inputCuenta.addEventListener('input', function(e) {
-                // reemplazamos cualquier caracter que no sea un numero 0-9 por nada
-                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                const soloNumeros = e.target.value.replace(/[^0-9]/g, '');
+                if (e.target.value !== soloNumeros) e.target.value = soloNumeros;
+            });
+            inputCuenta.addEventListener('keydown', function(e) {
+                const teclasSistema = [8, 9, 13, 37, 38, 39, 40, 46];
+                if (!teclasSistema.includes(e.keyCode) && (e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) {
+                    e.preventDefault(); 
+                }
             });
         }
     }
@@ -236,10 +246,13 @@ async function procesarCompra() {
                     return;             // abortamos la ejecucion para que no se abra el modal de pago
                 }
                 
-                // automatizacion traemos el numero de telefono configurado por el usuario al campo de pago
+                // automatizacion: pre-llenamos el numero de telefono configurado en el perfil
                 const inputCuenta = document.getElementById('input-cuenta-pago');
-                if (inputCuenta) {
-                    inputCuenta.value = perfil.telefono || '';
+                if (inputCuenta && perfil.telefono) {
+                    // sanitizamos el valor antes de inyectarlo: eliminamos todo lo que no sea digito
+                    // esto evita que un numero guardado con formato (ej: '310-500 1234') 
+                    // pase la validacion del frontend pero sea rechazado por java
+                    inputCuenta.value = perfil.telefono.replace(/[^0-9]/g, '');
                 }
             }
             

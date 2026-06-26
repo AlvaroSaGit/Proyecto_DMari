@@ -6,6 +6,9 @@
 /*El layout de cliente*/
 @import url("../../../layout/layout-cliente.css");
 
+/* layout del panel de control para administrador y proveedor */
+@import url("../../../layout/layout-dashboard.css");
+
 /* ---- HEADER ---- */
 @import url(../../../components/header/index.css);
 
@@ -31,7 +34,9 @@
 
 /* ESTILOS DEL ADMINISTRADOR */
 @import url("../../admin/adminProductos.css");
-@import url("../../admin/adminSideBar.css");
+
+/* ESTILOS DEL DASHBOARD GENERAL (SIDEBAR) */
+@import url("../../../layout/dashboardSideBar.css");
 
 /* ESTILOS DEL PROVEEDOR */
 @import url("../../proveedor/proveedorProductos.css");

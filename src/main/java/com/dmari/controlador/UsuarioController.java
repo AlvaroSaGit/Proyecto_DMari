@@ -13,11 +13,17 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-/*
-    objetivo de este archivo:
-    escuchar las peticiones del administrador para listar al personal 
-    y modificar sus roles de acceso o bloquearlos del sistema.
-*/
+/**
+ * Servlet de gestion administrativa de usuarios en DMari.
+ *
+ * Atiende la ruta /usuarios con dos comportamientos:
+ * 
+ *       GET /usuarios - Lista todos los usuarios del sistema (id, nombre,
+ *       apellido, correo, rol y estado de cuenta) para la tabla del panel admin.
+ *       POST /usuarios - Modifica el rol y el estado de cuenta de un usuario
+ *       especifico (bloquear, activar o cambiar su nivel de acceso).
+ *       Acceso exclusivo para el Administrador (rol 1).
+ */
 @WebServlet(name = "UsuarioController", urlPatterns = {"/usuarios"})
 public class UsuarioController extends HttpServlet {
 

@@ -7,10 +7,11 @@
         <table class="tabla-admin">
             <thead>
                 <tr>
-                    <th>ID Solicitud</th>
-                    <th>Proveedor</th>
-                    <th>Nombre Sugerido</th>
-                    <th>Justificación</th>
+                    <th>ID</th>
+                    <th>Usuario (Correo)</th>
+                    <th>NIT</th>
+                    <th>Marca</th>
+                    <th>Banco / Cuenta</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
@@ -18,6 +19,29 @@
             <tbody id="tabla-solicitudes-body">
                 <!-- Aqui se inyectaran las solicitudes con JS -->
                 <tr><td colspan="6" style="text-align:center;">Cargando solicitudes...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="admin-header-seccion" style="margin-top: 40px;">
+        <h2>Solicitudes de Nuevas Categorías (Proveedores)</h2>
+    </div>
+    
+    <div class="admin-tabla-contenedor">
+        <table class="tabla-admin">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Proveedor</th>
+                    <th>Categoría Sugerida</th>
+                    <th>Justificación</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-solicitudes-cat-body">
+                <tr><td colspan="7" style="text-align:center;">Cargando sugerencias de categorías...</td></tr>
             </tbody>
         </table>
     </div>

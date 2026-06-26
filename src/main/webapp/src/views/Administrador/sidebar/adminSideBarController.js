@@ -9,7 +9,7 @@ export async function inicializarAdmin() {
     // cargamos el html del sidebar desde la carpeta de vistas del administrador.
     // agregamos '?t=' + new Date().getTime() para crear una url unica en cada recarga.
     // esto destruye la cache del navegador y nos asegura que siempre cargue la version mas reciente del menu.
-    await cargarComponente('contenedor-sidebar-admin', './src/views/Administrador/sidebar/adminSideBar.html?t=' + new Date().getTime());
+    await cargarComponente('contenedor-sidebar-dashboard', './src/views/Administrador/sidebar/adminSideBar.html?t=' + new Date().getTime());
     
     // extraemos y guardamos en variables los botones de navegacion que acabamos de inyectar en el html
     const btnDashboard = document.getElementById('btn-nav-dashboard'); // asumiendo que el id es este en tu html
@@ -17,7 +17,6 @@ export async function inicializarAdmin() {
     const btnCategorias = document.getElementById('btn-nav-categorias');
     const btnPedidos = document.getElementById('btn-nav-pedidos');
     const btnSolicitudes = document.getElementById('btn-nav-solicitudes');
-    const btnDevoluciones = document.getElementById('btn-nav-devoluciones');
     const btnUsuarios = document.getElementById('btn-nav-usuarios');
     const btnSalir = document.getElementById('btn-nav-salir');
     
@@ -54,11 +53,6 @@ export async function inicializarAdmin() {
         });
     }
 
-    if (btnDevoluciones) {
-        btnDevoluciones.addEventListener('click', () => {
-            navegarA('admin-devoluciones');
-        });
-    }
 
     if (btnUsuarios) {
         btnUsuarios.addEventListener('click', () => {
@@ -106,8 +100,6 @@ export async function inicializarAdmin() {
             btnCategorias.classList.add('activo');
         } else if (hashActual.includes('admin-pedidos') && btnPedidos) {
             btnPedidos.classList.add('activo');
-        } else if (hashActual.includes('admin-devoluciones') && btnDevoluciones) {
-            btnDevoluciones.classList.add('activo');
         } else if (hashActual.includes('admin-solicitudes') && btnSolicitudes) {
             btnSolicitudes.classList.add('activo');
         } else if (hashActual.includes('admin-usuarios') && btnUsuarios) {

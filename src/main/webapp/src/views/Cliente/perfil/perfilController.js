@@ -127,9 +127,8 @@ async function prepararFormularioPerfil() {
                 });
                 
                 if (res.ok) {
-                    // confirmacion al usuario y redireccion al catalogo
-                    alert('¡Tus datos de envio se han guardado con exito!');
-                    window.location.hash = 'catalogo';
+                    // confirmacion al usuario en pantalla sin expulsarlo de la vista
+                    mostrarMensaje('¡Tus datos de envio se han guardado con exito!', 'exito');
                 } else {
                     alert('Hubo un error al intentar guardar tu perfil. Revisa tu conexion.');
                 }

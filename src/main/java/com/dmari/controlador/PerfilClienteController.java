@@ -13,12 +13,18 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-/*
-    objetivo de este archivo:
-    controlador (servlet) para gestionar el perfil logistico del cliente.
-    escucha las peticiones de javascript en la ruta '/perfil-cliente' 
-    para leer (get) o guardar (post) los datos de envio y contacto.
-*/
+/**
+ * Servlet de gestion del perfil logistico del cliente en DMari.
+ *
+ * Atiende la ruta {@code /perfil-cliente} con dos comportamientos:
+ *       GET /perfil-cliente - Obtiene los datos de envio y contacto
+ *       del cliente en sesion (direccion, telefonos, referencia de ubicacion).
+ *       POST /perfil-cliente - Guarda o actualiza el perfil del cliente,
+ *       insertando o modificando registros en las tablas {@code direccion} y {@code telefono}.
+ *
+ * Ambas rutas requieren una sesion activa (devuelve HTTP 401 si no existe).
+ * Los campos telefono y direccion son obligatorios; si llegan vacios retorna HTTP 400.
+ */
 @WebServlet(name = "PerfilClienteController", urlPatterns = {"/perfil-cliente"})
 public class PerfilClienteController extends HttpServlet {
 
