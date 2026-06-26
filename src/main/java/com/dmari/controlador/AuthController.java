@@ -17,19 +17,20 @@ import jakarta.servlet.http.HttpSession;
 /**
  * Servlet de autenticacion y gestion de sesion del sistema DMari.
  *
+ * 
  * Es el punto de entrada de seguridad para todos los usuarios.
  * Maneja cuatro rutas distintas segun la URL interceptada:
  * 
- *   POST /registro - Registra nuevos usuarios (clientes y proveedores).
- *   POST /login - Valida credenciales e inicia una sesion de servidor.
- *   GET /logout - Invalida la sesion activa del usuario.
- *   GET /session - Consulta si hay una sesion activa y devuelve el rol.
- * 
+ * POST /registro - Registra nuevos usuarios (clientes y proveedores).
+ * POST /login - Valida credenciales e inicia una sesion de servidor.
+ * GET /logout - Invalida la sesion activa del usuario.
+ * GET /session - Consulta si hay una sesion activa y devuelve el
+ * rol.
  *
  * Utiliza validacionHelper para verificar el formato
  * de los datos antes de pasarlos al DAO, y usuarioDAO
  * para la persistencia y verificacion de credenciales.
- *
+ * 
  */
 @WebServlet(name = "AuthController", urlPatterns = { "/login", "/registro", "/logout", "/session" })
 public class AuthController extends HttpServlet {
@@ -102,9 +103,10 @@ public class AuthController extends HttpServlet {
 
         // condicional de enrutamiento post
         if ("/registro".equals(ruta)) {
-            // Obligatorio para que Tomcat no cambie la respuesta por una pagina HTML de error generica
+            // Obligatorio para que Tomcat no cambie la respuesta por una pagina HTML de
+            // error generica
             response.setContentType("text/plain;charset=UTF-8");
-            
+
             // getparameter extrae el valor de los campos que javascript nos envio a traves
             // de la red
             String nombre = request.getParameter("nombre");
