@@ -1,12 +1,8 @@
+// dto maestro para facturacion. corregimos el paquete para que el compilador lo encuentre.
 package com.dmari.modelo;
 
 import java.util.List;
 
-/*
-    objetivo de este archivo:
-    dto maestro para representar una factura de compra completa.
-    agrupa los datos principales de la compra con la lista de productos comprados.
-*/
 public class FacturaDTO {
     // identificador unico del pedido para la cabecera
     private int idPedido;
@@ -24,27 +20,63 @@ public class FacturaDTO {
     private List<FacturaDetalleDTO> detalles;
 
     // constructor vacio para inicializacion
-    public FacturaDTO() {}
+    public FacturaDTO() {
+    }
 
     // getters y setters para mapeo de joins complejos en el dao
-    public int getIdPedido() { return idPedido; }
-    public void setIdPedido(int idPedido) { this.idPedido = idPedido; }
+    public int getIdPedido() {
+        return idPedido;
+    }
 
-    public String getFecha() { return fecha; }
-    public void setFecha(String fecha) { this.fecha = fecha; }
+    public void setIdPedido(int idPedido) {
+        this.idPedido = idPedido;
+    }
 
-    public String getNombreCliente() { return nombreCliente; }
-    public void setNombreCliente(String nombreCliente) { this.nombreCliente = nombreCliente; }
+    public String getFecha() {
+        return fecha;
+    }
 
-    public String getDireccionEnvio() { return direccionEnvio; }
-    public void setDireccionEnvio(String direccionEnvio) { this.direccionEnvio = direccionEnvio; }
+    public void setFecha(String fecha) {
+        this.fecha = fecha;
+    }
 
-    public String getMetodoPago() { return metodoPago; }
-    public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
+    public String getNombreCliente() {
+        return nombreCliente;
+    }
 
-    public double getTotal() { return total; }
-    public void setTotal(double total) { this.total = total; }
+    public void setNombreCliente(String nombreCliente) {
+        this.nombreCliente = nombreCliente;
+    }
 
-    public List<FacturaDetalleDTO> getDetalles() { return detalles; }
-    public void setDetalles(List<FacturaDetalleDTO> detalles) { this.detalles = detalles; }
+    public String getDireccionEnvio() {
+        return direccionEnvio;
+    }
+
+    public void setDireccionEnvio(String direccionEnvio) {
+        this.direccionEnvio = direccionEnvio;
+    }
+
+    public String getMetodoPago() {
+        return metodoPago;
+    }
+
+    public void setMetodoPago(String metodoPago) {
+        this.metodoPago = metodoPago;
+    }
+
+    public double getTotal() {
+        return total;
+    }
+
+    public void setTotal(double total) {
+        this.total = total;
+    }
+
+    public List<FacturaDetalleDTO> getDetalles() {
+        return detalles;
+    }
+
+    public void setDetalles(List<FacturaDetalleDTO> detalles) {
+        this.detalles = detalles;
+    }
 }

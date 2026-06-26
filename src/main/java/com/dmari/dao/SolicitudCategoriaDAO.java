@@ -8,14 +8,15 @@ import java.util.ArrayList;
 /**
  * DAO para la gestion de solicitudes de nuevas categorias en DMari.
  *
-
+ * 
  * Gestiona el flujo completo de peticiones que los proveedores envian
  * al administrador cuando desean que se cree una nueva categoria de productos.
-
+ * 
+ *
+ * 
  * El metodo #aprobarSolicitud(int, String) es transaccional:
  * actualiza el estado de la solicitud E inserta la nueva categoria en la
  * tabla categoria de forma atomica (todo o nada).
-
  *
  */
 public class SolicitudCategoriaDAO {
@@ -23,10 +24,10 @@ public class SolicitudCategoriaDAO {
 
     /**
      * Obtiene todas las solicitudes registradas, incluyendo el nombre del proveedor
-     * que las hizo a traves de un INNER JOIN con la tabla {@code usuario}.
+     * que las hizo a traves de un INNER JOIN con la tabla usuario.
      *
-     * @return ArrayList con todos los objetos
-     *         SolicitudCategoria
+     * @return #java.util.ArrayList con todos los objetos
+     *         #SolicitudCategoria
      *         ordenados por fecha de creacion descendente (las mas recientes
      *         primero).
      *         Devuelve una lista vacia si no hay solicitudes o si ocurre un error
@@ -63,13 +64,13 @@ public class SolicitudCategoriaDAO {
     /**
      * Guarda una nueva solicitud de categoria enviada por un proveedor.
      *
-     * @param idProveedor   {@code int} con el ID del usuario proveedor que realiza
+     * @param idProveedor   int con el ID del usuario proveedor que realiza
      *                      la solicitud.
-     * @param nombre        {@code String} con el nombre que el proveedor sugiere
+     * @param nombre        String con el nombre que el proveedor sugiere
      *                      para la nueva categoria.
-     * @param justificacion {@code String} con la explicacion de por que se necesita
+     * @param justificacion String con la explicacion de por que se necesita
      *                      esa categoria.
-     * @return {@code true} si la insercion fue exitosa; {@code false} si ocurrio un
+     * @return boolean si la insercion fue exitosa; false si ocurrio un
      *         error SQL.
      */
     public boolean insertar(int idProveedor, String nombre, String justificacion) {
@@ -89,17 +90,15 @@ public class SolicitudCategoriaDAO {
     /**
      * Cambia el estado de una solicitud existente.
      *
-     * <p>
-     * Se usa principalmente para marcar una solicitud como {@code rechazada}
+     * Se usa principalmente para marcar una solicitud como rechazada
      * cuando el administrador decide no aprobarla.
-     * </p>
      *
-     * @param idSolicitud {@code int} con la llave primaria de la solicitud a
+     * @param idSolicitud int con la llave primaria de la solicitud a
      *                    modificar.
-     * @param nuevoEstado {@code String} con el nuevo estado (ej.
-     *                    {@code "rechazada"}, {@code "pendiente"}).
-     * @return {@code true} si la actualizacion afecto al menos un registro;
-     *         {@code false} si fallo.
+     * @param nuevoEstado String con el nuevo estado (ej.
+     *                    rechazada, pendiente).
+     * @return true si la actualizacion afecto al menos un registro;
+     *         false si fallo.
      */
     public boolean actualizarEstado(int idSolicitud, String nuevoEstado) {
         String sql = "UPDATE solicitud_categoria SET estado_solicitud = ? WHERE id_solicitud_pk = ?";
@@ -118,23 +117,18 @@ public class SolicitudCategoriaDAO {
      * Aprueba una solicitud de categoria usando una transaccion atomica de dos
      * pasos.
      *
-     * <p>
-     * <b>Paso 1:</b> Actualiza el estado de la solicitud a {@code "aprobada"}.<br>
-     * <b>Paso 2:</b> Inserta la nueva categoria en la tabla {@code categoria} con
+     * Paso 1: Actualiza el estado de la solicitud a aprobada.
+     * Paso 2: Inserta la nueva categoria en la tabla categoria con
      * estado activo para que aparezca en la tienda.
-     * </p>
      *
-     * <p>
      * Si cualquiera de los dos pasos falla, se hace ROLLBACK para evitar
      * datos huerfanos (solicitud aprobada pero sin categoria creada o viceversa).
-     * </p>
      *
-     * @param idSolicitud {@code int} con la llave primaria de la solicitud a
-     *                    aprobar.
-     * @param nombreCat   {@code String} con el nombre final que tendra la nueva
-     *                    categoria.
-     * @return {@code true} si ambas operaciones se completaron exitosamente;
-     *         {@code false} si fallo.
+     *
+     * @param idSolicitud int con la llave primaria de la solicitud a aprobar.
+     * @param nombreCat   String con el nombre final que tendra la nueva categoria.
+     * @return true si ambas operaciones se completaron exitosamente;
+     *         false si fallo.
      */
     public boolean aprobarSolicitud(int idSolicitud, String nombreCat) {
         Connection con = null;

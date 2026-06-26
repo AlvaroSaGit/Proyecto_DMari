@@ -1,10 +1,12 @@
 package com.dmari.modelo;
 
-/*
-    objetivo de este archivo:
-    representar una categoria de productos de la tienda en java.
-    mapea la tabla 'categoria' en mysql y permite agrupar los articulos.
-*/
+/**
+ * Entidad que representa una categoria de productos en DMari.
+ *
+ * Mapea la tabla #categoria de MySQL. El campo #estado_activo
+ * es la bandera que controla si la categoria es visible en el catalogo
+ * publico de la tienda o si esta pausada por el administrador.
+ */
 public class categoria {
     // identificador primario de la categoria en bd
     private int idCategoriaPk;
@@ -55,5 +57,4 @@ public class categoria {
         this.estado_activo = estado_activo;
     }
 
-    
 }

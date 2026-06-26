@@ -1,10 +1,6 @@
+// dto para representar cada linea de producto en la factura modulo 4
 package com.dmari.modelo;
 
-/*
-    objetivo de este archivo:
-    dto que representa una linea individual de un producto dentro de una factura.
-    contiene el nombre del producto, la cantidad, el precio y el subtotal.
-*/
 public class FacturaDetalleDTO {
     // nombre descriptivo del producto artesanal
     private String nombreProducto;
@@ -16,18 +12,39 @@ public class FacturaDetalleDTO {
     private double subtotal;
 
     // constructor para serializacion json
-    public FacturaDetalleDTO() {}
+    public FacturaDetalleDTO() {
+    }
 
     // getters y setters para transferencia de datos
-    public String getNombreProducto() { return nombreProducto; }
-    public void setNombreProducto(String nombreProducto) { this.nombreProducto = nombreProducto; }
+    public String getNombreProducto() {
+        return nombreProducto;
+    }
 
-    public int getCantidad() { return cantidad; }
-    public void setCantidad(int cantidad) { this.cantidad = cantidad; }
+    public void setNombreProducto(String nombreProducto) {
+        this.nombreProducto = nombreProducto;
+    }
 
-    public double getPrecioUnitario() { return precioUnitario; }
-    public void setPrecioUnitario(double precioUnitario) { this.precioUnitario = precioUnitario; }
+    public int getCantidad() {
+        return cantidad;
+    }
 
-    public double getSubtotal() { return subtotal; }
-    public void setSubtotal(double subtotal) { this.subtotal = subtotal; }
+    public void setCantidad(int cantidad) {
+        this.cantidad = cantidad;
+    }
+
+    public double getPrecioUnitario() {
+        return precioUnitario;
+    }
+
+    public void setPrecioUnitario(double precioUnitario) {
+        this.precioUnitario = precioUnitario;
+    }
+
+    public double getSubtotal() {
+        return subtotal;
+    }
+
+    public void setSubtotal(double subtotal) {
+        this.subtotal = subtotal;
+    }
 }
