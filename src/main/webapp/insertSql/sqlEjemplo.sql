@@ -366,9 +366,9 @@ INSERT INTO pago (id_pedido_fk, id_metodo_pago_fk, comision_dmari, monto_total, 
 -- productos que aun no tenian proveedor asignado en el paso 12.
 -- ==========================================================
 INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) VALUES 
-(3, 3),  -- vela decorativa de flores -> carlos (ceras giron)
 (4, 9),  -- caja de trufas -> ana (delicias de ana)
 (5, 10); -- globo helio -> luis (vivero san luis)
+
 
 -- ==========================================================
 -- 17. solicitudes de nuevos proveedores
@@ -378,12 +378,18 @@ INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) VALUES
 -- ==========================================================
 
 -- miguel (id 15) quiere vender artesanias de cuero: solicitud pendiente
-insert into solicitud_proveedor (id_usuario_fk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta, estado_solicitud) 
-values (15, '800555444-9', 'Cueros Miguel', '444555666', 'Banco de Bogota', 'Corriente', 'pendiente');
+insert into proveedor (id_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta) 
+values (15, '800555444-9', 'Cueros Miguel', '444555666', 'Banco de Bogota', 'Corriente');
+
+insert into solicitud_proveedor (id_proveedor_fk, estado_solicitud) 
+values (15, 'pendiente');
 
 -- andres (id 12) fue rechazado por nit invalido (todos ceros)
-insert into solicitud_proveedor (id_usuario_fk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta, estado_solicitud) 
-values (12, '000000000-0', 'Andres Manualidades', '111222333', 'Nequi', 'Ahorros', 'rechazada');
+insert into proveedor (id_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta) 
+values (12, '000000000-0', 'Andres Manualidades', '111222333', 'Nequi', 'Ahorros');
+
+insert into solicitud_proveedor (id_proveedor_fk, estado_solicitud) 
+values (12, 'rechazada');
 
 -- ==========================================================
 -- 18. transacciones adicionales para el panel de gestion

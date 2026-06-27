@@ -147,9 +147,10 @@ create table producto_etiqueta(
 create table proveedor_producto(
     id_proveedor_producto_pk int auto_increment primary key,
     id_proveedor_fk int not null,
-    id_producto_fk int not null unique,
+    id_producto_fk int not null,
     foreign key (id_proveedor_fk) references proveedor(id_proveedor_pk),
-    foreign key (id_producto_fk) references producto(id_producto_pk)
+    foreign key (id_producto_fk) references producto(id_producto_pk),
+    unique (id_proveedor_fk, id_producto_fk)
 );
 
 -- ==========================================================

@@ -12,6 +12,8 @@ public class solicitudProveedorDAO {
     /**
      * 1. crear solicitud
      * crea una nueva solicitud para que un usuario se convierta en proveedor.
+     * ahora, con el nuevo esquema, inserta primero en la tabla proveedor y luego en solicitud_proveedor.
+     * ademas suspende la cuenta del usuario para revision.
      * @param idUsuario int: el id del usuario que realiza la solicitud.
      * @param nit string: el nit de la empresa.
      * @param marca string: el nombre de la marca.
@@ -21,31 +23,74 @@ public class solicitudProveedorDAO {
      * @return boolean: true si la solicitud se creo con exito.
      */
     public boolean crearSolicitud(int idUsuario, String nit, String marca, String cuenta, String banco, String tipoCuenta) {
-        // sql para insertar la nueva peticion del usuario en la tabla solicitud_proveedor
-        // el estado_solicitud inicial siempre sera 'pendiente'
-        String sql = "INSERT INTO solicitud_proveedor (id_usuario_fk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta, estado_solicitud) VALUES (?, ?, ?, ?, ?, ?, 'pendiente')";
+        // sql 1: insertamos los datos comerciales en la tabla definitiva de proveedor
+        String sqlProv = "INSERT INTO proveedor (id_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta) VALUES (?, ?, ?, ?, ?, ?)";
+        // sql 2: insertamos la solicitud apuntando al proveedor recien creado
+        String sqlSol = "INSERT INTO solicitud_proveedor (id_proveedor_fk, estado_solicitud) VALUES (?, 'pendiente')";
+        // sql 3: pausamos la cuenta del usuario para que el admin la apruebe
+        String sqlPausar = "UPDATE usuario SET estado_cuenta = 0 WHERE id_usuario_pk = ?";
         
-        // abrimos la conexion y preparamos la consulta al mismo tiempo (try-with-resources)
-        // esto asegura que la conexion se cierre automaticamente al final
-        try (Connection con = db.conectar();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-             
-            // asignamos cada parametro que recibio el metodo a los signos de interrogacion (?) en orden
-            ps.setInt(1, idUsuario);
-            ps.setString(2, nit);
-            ps.setString(3, marca);
-            ps.setString(4, cuenta);
-            ps.setString(5, banco);
-            ps.setString(6, tipoCuenta);
+        // Formatear tipoCuenta para que coincida con el ENUM de MySQL ('Ahorros', 'Corriente')
+        if (tipoCuenta != null && !tipoCuenta.isEmpty()) {
+            tipoCuenta = tipoCuenta.substring(0, 1).toUpperCase() + tipoCuenta.substring(1).toLowerCase();
+        }
+        
+        Connection con = null;
+        try {
+            // abrimos la conexion a la base de datos
+            con = db.conectar();
+            // desactivamos el autocommit para tratar todo como una sola transaccion
+            con.setAutoCommit(false);
             
-            // ejecutamos la insercion en la base de datos
-            // executeupdate devuelve el numero de filas afectadas. si es mayor a 0, guardo exitosamente
-            return ps.executeUpdate() > 0;
+            // paso 1: insertamos el perfil en la tabla proveedor
+            try (PreparedStatement psProv = con.prepareStatement(sqlProv)) {
+                // asignamos el id del usuario que ahora sera la llave primaria del proveedor
+                psProv.setInt(1, idUsuario);
+                // asignamos el nit de la empresa
+                psProv.setString(2, nit);
+                // asignamos el nombre de la marca
+                psProv.setString(3, marca);
+                // asignamos el numero de cuenta bancaria
+                psProv.setString(4, cuenta);
+                // asignamos el nombre del banco
+                psProv.setString(5, banco);
+                // asignamos el tipo de cuenta (ahorros o corriente)
+                psProv.setString(6, tipoCuenta);
+                // ejecutamos el query de insercion del proveedor
+                psProv.executeUpdate();
+            }
+            
+            // paso 2: insertamos el registro en la tabla de solicitudes
+            try (PreparedStatement psSol = con.prepareStatement(sqlSol)) {
+                // el id del proveedor fk es el mismo id del usuario
+                psSol.setInt(1, idUsuario);
+                // ejecutamos el query de insercion de la solicitud
+                psSol.executeUpdate();
+            }
+
+            // paso 3: pausamos el acceso del usuario
+            try (PreparedStatement psPause = con.prepareStatement(sqlPausar)) {
+                // asignamos el id del usuario a pausar
+                psPause.setInt(1, idUsuario);
+                // ejecutamos el update en la tabla usuario
+                psPause.executeUpdate();
+            }
+            
+            // si llegamos aqui sin errores, confirmamos todos los cambios en bloque
+            con.commit();
+            // retornamos verdadero indicando que todo salio bien
+            return true;
             
         } catch (SQLException e) {
-            // si ocurre algun error (por ejemplo, base de datos caida), lo mostramos en consola
+            // si hay algun error, hacemos rollback para deshacer cualquier cambio parcial
+            try { if (con != null) con.rollback(); } catch(SQLException ex) {}
+            // imprimimos el error en consola para depurar
             System.err.println("error al crear solicitud de proveedor: " + e.getMessage());
+            // devolvemos falso indicando fallo
             return false;
+        } finally {
+            // siempre volvemos a activar el autocommit y cerramos la conexion
+            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch(SQLException ex) {}
         }
     }
 
@@ -59,10 +104,14 @@ public class solicitudProveedorDAO {
         java.util.List<java.util.Map<String, String>> lista = new java.util.ArrayList<>();
         
         // sql para consultar la informacion.
-        // unimos (inner join) la tabla de solicitudes con la tabla usuario para ver el nombre real de quien la envia.
-        // usamos left join con correo por si queremos extraer el email, aunque no lo usemos todo.
-        String sql = "SELECT sp.*, u.nombre, c.correo FROM solicitud_proveedor sp " +
-                     "INNER JOIN usuario u ON sp.id_usuario_fk = u.id_usuario_pk " +
+        // unimos (inner join) la tabla de solicitudes con la tabla proveedor para obtener los datos comerciales.
+        // unimos (inner join) la tabla de proveedor con usuario para obtener el nombre del solicitante.
+        // usamos left join con correo por si queremos extraer el email.
+        String sql = "SELECT sp.id_solicitud_pk, u.nombre, c.correo, p.nit_empresa, p.nombre_marca, " +
+                     "p.cuenta_bancaria, p.banco_nombre, p.tipo_cuenta, sp.estado_solicitud, p.id_proveedor_pk as id_usuario_fk " +
+                     "FROM solicitud_proveedor sp " +
+                     "INNER JOIN proveedor p ON sp.id_proveedor_fk = p.id_proveedor_pk " +
+                     "INNER JOIN usuario u ON p.id_proveedor_pk = u.id_usuario_pk " +
                      "LEFT JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk " +
                      "ORDER BY sp.id_solicitud_pk DESC";
                      
@@ -100,20 +149,19 @@ public class solicitudProveedorDAO {
 
     /**
      * 3. aprobar solicitud
-     * accion compleja: acepta al proveedor, le da acceso al sistema y guarda su info financiera.
-     * requiere transaccion (commit/rollback) porque altera 3 tablas distintas.
+     * accion que acepta al proveedor: como los datos ya estan en la tabla proveedor,
+     * solo actualiza el estado de la solicitud y activa la cuenta del usuario otorgandole rol 4.
+     * requiere transaccion (commit/rollback) porque altera 2 tablas distintas.
      * @param idSolicitud int: el id de la solicitud en cuestion.
      * @return boolean: true si todo el proceso fue exitoso.
      */
     public boolean aprobarSolicitud(int idSolicitud) {
-        // sql 1: primero necesitamos leer los datos originales de la solicitud para copiarlos al perfil final
-        String sqlSelect = "SELECT * FROM solicitud_proveedor WHERE id_solicitud_pk = ?";
+        // sql 1: primero necesitamos el id del proveedor desde la solicitud
+        String sqlSelect = "SELECT id_proveedor_fk FROM solicitud_proveedor WHERE id_solicitud_pk = ?";
         // sql 2: actualizamos el estado en la tabla de solicitudes a 'aprobada'
         String sqlUpdateSol = "UPDATE solicitud_proveedor SET estado_solicitud = 'aprobada' WHERE id_solicitud_pk = ?";
-        // sql 3: le devolvemos el acceso al usuario quitando su estado bloqueado o pendiente (1 = activo)
-        String sqlUpdateUsr = "UPDATE usuario SET estado_cuenta = 1 WHERE id_usuario_pk = ?";
-        // sql 4: copiamos su nit y cuentas bancarias a la tabla definitiva de proveedores para que pueda cobrar
-        String sqlInsertProv = "INSERT INTO proveedor (id_proveedor_pk, nit_empresa, nombre_marca, cuenta_bancaria, banco_nombre, tipo_cuenta) VALUES (?, ?, ?, ?, ?, ?)";
+        // sql 3: activamos la cuenta y cambiamos el rol del usuario a proveedor (4)
+        String sqlUpdateUsr = "UPDATE usuario SET estado_cuenta = 1, id_rol_fk = 4 WHERE id_usuario_pk = ?";
         
         Connection con = db.conectar();
         if(con == null) return false;
@@ -122,22 +170,19 @@ public class solicitudProveedorDAO {
             // apagamos el autoguardado porque haremos multiples cambios. si uno falla, nada se guarda.
             con.setAutoCommit(false);
             
-            // variables para sostener en memoria la informacion leida de la solicitud
-            int idUsuario = 0;
-            String nit = "", marca = "", cuenta = "", banco = "", tipo = "";
+            // variable para guardar el id del proveedor que vamos a aprobar
+            int idProveedor = 0;
             
-            // paso 1: consultar la solicitud
+            // paso 1: consultar la solicitud para obtener el id_proveedor_fk
             try (PreparedStatement psSel = con.prepareStatement(sqlSelect)) {
+                // enviamos el parametro de la solicitud a buscar
                 psSel.setInt(1, idSolicitud);
+                // ejecutamos la busqueda
                 java.sql.ResultSet rs = psSel.executeQuery();
-                // si encontramos la solicitud, extraemos sus datos a la memoria
+                // si la solicitud existe
                 if(rs.next()) {
-                    idUsuario = rs.getInt("id_usuario_fk");
-                    nit = rs.getString("nit_empresa");
-                    marca = rs.getString("nombre_marca");
-                    cuenta = rs.getString("cuenta_bancaria");
-                    banco = rs.getString("banco_nombre");
-                    tipo = rs.getString("tipo_cuenta");
+                    // obtenemos el id_proveedor_fk (que es el mismo id_usuario)
+                    idProveedor = rs.getInt("id_proveedor_fk");
                 } else {
                     // si por alguna razon no existe, abortamos
                     return false;
@@ -146,35 +191,31 @@ public class solicitudProveedorDAO {
             
             // paso 2: marcar la solicitud como aprobada
             try (PreparedStatement psSol = con.prepareStatement(sqlUpdateSol)) {
+                // asignamos el id de la solicitud a actualizar
                 psSol.setInt(1, idSolicitud);
+                // ejecutamos el update
                 psSol.executeUpdate();
             }
             
-            // paso 3: habilitar el inicio de sesion del usuario (estado_cuenta = 1)
+            // paso 3: habilitar el inicio de sesion del usuario y cambiar su rol a 4
             try (PreparedStatement psUsr = con.prepareStatement(sqlUpdateUsr)) {
-                psUsr.setInt(1, idUsuario);
+                // asignamos el id del usuario que ahora sera formalmente proveedor
+                psUsr.setInt(1, idProveedor);
+                // ejecutamos el update en la tabla usuario
                 psUsr.executeUpdate();
             }
             
-            // paso 4: insertar su perfil de cobro en la tabla oficial de proveedores
-            try (PreparedStatement psProv = con.prepareStatement(sqlInsertProv)) {
-                psProv.setInt(1, idUsuario); // el id_proveedor_pk es exactamente el mismo id de usuario
-                psProv.setString(2, nit);
-                psProv.setString(3, marca);
-                psProv.setString(4, cuenta);
-                psProv.setString(5, banco);
-                psProv.setString(6, tipo);
-                psProv.executeUpdate();
-            }
-            
-            // si todo salio bien, confirmamos los 3 cambios en bloque
+            // si todo salio bien, confirmamos los 2 cambios en bloque
             con.commit();
+            // devolvemos true por exito
             return true;
             
         } catch (SQLException e) {
             // si algo explota, deshacemos todo lo que hicimos en esta peticion
             try { con.rollback(); } catch(SQLException ex) {}
+            // reportamos en consola
             System.err.println("error aprobar solicitud proveedor: " + e.getMessage());
+            // devolvemos falso
             return false;
         } finally {
             // encendemos el autoguardado para no afectar otras consultas
@@ -184,7 +225,7 @@ public class solicitudProveedorDAO {
 
     /**
      * 4. rechazar solicitud
-     * simplemente actualiza la solicitud a estado rechazado. no habilita al usuario ni inserta nada.
+     * simplemente actualiza la solicitud a estado rechazado.
      * @param idSolicitud int: el id de la peticion.
      * @return boolean: true si el cambio se guardo.
      */

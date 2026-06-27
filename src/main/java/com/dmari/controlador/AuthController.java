@@ -196,11 +196,11 @@ public class AuthController extends HttpServlet {
                             tipoCuenta);
 
                     if (solicitudOk) {
-                        // desactivamos la cuenta de forma preventiva (estado_cuenta = 0) para que no
-                        // pueda hacer login
-                        dao.desactivarCuentaParaRevision(idUsuarioGenerado);
+                        // la cuenta ya fue pausada internamente por el dao de solicitud
                         response.setStatus(HttpServletResponse.SC_CREATED);
                     } else {
+                        // si falla la creacion de la solicitud, eliminamos el usuario base para no dejar un registro zombie
+                        dao.eliminarUsuarioFisicamente(idUsuarioGenerado);
                         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                         response.getWriter().print("Error al crear la solicitud comercial de proveedor.");
                     }
