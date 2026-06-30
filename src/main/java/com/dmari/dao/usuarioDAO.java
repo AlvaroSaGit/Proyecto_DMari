@@ -175,6 +175,7 @@ public class usuarioDAO {
         usuario usuarioLogueado = null;
 
         try (Connection con = db.conectar();
+                // Se prepara la consulta con el sql
                 PreparedStatement ps = con.prepareStatement(sql)) {
 
             // seteamos la llave secreta para aes_decrypt
@@ -386,8 +387,6 @@ public class usuarioDAO {
         }
     }
 
-
-
     /**
      * metodo complementario: desactiva la cuenta de usuario.
      * utilizado principalmente cuando un proveedor se registra y queda en estado
@@ -411,7 +410,8 @@ public class usuarioDAO {
     }
 
     /**
-     * metodo de limpieza: elimina fisicamente a un usuario, sus correos y credenciales.
+     * metodo de limpieza: elimina fisicamente a un usuario, sus correos y
+     * credenciales.
      * util cuando falla la creacion secundaria (ej: registro fallido de proveedor).
      * 
      * @param idUsuario identificador del usuario a borrar.
@@ -421,12 +421,12 @@ public class usuarioDAO {
         String sqlCred = "DELETE FROM credenciales WHERE id_usuario = ?";
         String sqlCorreo = "DELETE FROM correo WHERE id_usuario_fk = ?";
         String sqlUsr = "DELETE FROM usuario WHERE id_usuario_pk = ?";
-        
+
         Connection con = null;
         try {
             con = db.conectar();
             con.setAutoCommit(false);
-            
+
             try (PreparedStatement psCred = con.prepareStatement(sqlCred)) {
                 psCred.setInt(1, idUsuario);
                 psCred.executeUpdate();
@@ -439,15 +439,25 @@ public class usuarioDAO {
                 psUsr.setInt(1, idUsuario);
                 psUsr.executeUpdate();
             }
-            
+
             con.commit();
             return true;
         } catch (SQLException e) {
-            try { if (con != null) con.rollback(); } catch (SQLException ex) {}
+            try {
+                if (con != null)
+                    con.rollback();
+            } catch (SQLException ex) {
+            }
             System.err.println("error al limpiar usuario zombie: " + e.getMessage());
             return false;
         } finally {
-            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (SQLException ex) {}
+            try {
+                if (con != null) {
+                    con.setAutoCommit(true);
+                    con.close();
+                }
+            } catch (SQLException ex) {
+            }
         }
     }
 }

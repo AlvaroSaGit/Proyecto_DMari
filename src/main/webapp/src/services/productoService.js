@@ -11,14 +11,15 @@ export async function obtenerProductos(parametros = '') {
         // verificamos si la ruta ya tiene un '?' para concatenar correctamente con '&'
         const separador = parametros.includes('?') ? '&' : '?';
         const cacheBuster = separador + 't=' + new Date().getTime();
-        
+
         // le agregamos los parametros a la ruta y burlamos la memoria del navegador
-        const respuesta = await fetch('listar' + parametros + cacheBuster); 
-        
+        const respuesta = await fetch('listar' + parametros + cacheBuster);
+
+        // Si la respuesta no esta entre 200 y 299
         if (!respuesta.ok) {
             throw new Error(`error http: ${respuesta.status}`);
         }
-        
+        // De la peticion de http esperamos la respuesta en formato json
         return await respuesta.json();
     } catch (error) {
         console.error('error en el servicio de productos:', error);
@@ -46,7 +47,7 @@ export async function eliminarProducto(id) {
     // empaquetamos el id en formato de urlsearchparams
     const parametros = new URLSearchParams();
     parametros.append('id', id);
-    
+
     // ejecutamos la peticion post hacia el controlador de borrado
     const respuesta = await fetch('eliminar', { method: 'POST', body: parametros });
     if (!respuesta.ok) throw new Error('Error al eliminar producto');
@@ -54,11 +55,16 @@ export async function eliminarProducto(id) {
 }
 
 export async function cambiarEstadoProducto(id, nuevoEstado) {
+    // Para peticiones HTTP
     const parametros = new URLSearchParams();
     parametros.append('id', id);
     parametros.append('estado', nuevoEstado);
-    
+
+    // Se actualiza el estado del producto en el servidor
     const respuesta = await fetch('cambiar-estado', { method: 'POST', body: parametros });
+
+    // Si la respuesta no esta entre 200 y 299
     if (!respuesta.ok) throw new Error('Error al cambiar el estado');
+    // Retorna true si la operacion fue exitosa
     return true;
 }

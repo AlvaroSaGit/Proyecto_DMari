@@ -15,7 +15,7 @@ let temporizadorSincronizacion = null;
 export async function inicializarCarrito() {
     // esperamos a que el componente html se coloque en su contenedor
     await cargarComponente('contenedor-sidebar-carrito', './src/components/carritoSideBar/carritoSidebar.html');
-    
+
     // agregamos una regla css dinamica para quitar las flechitas spinners del input en chrome edge y safari
     if (!document.getElementById('estilo-carrito-input')) {
         const estilo = document.createElement('style');
@@ -36,7 +36,7 @@ export async function inicializarCarrito() {
     const overlay = document.getElementById('overlay-carrito');
     // referencia al disparador del proceso de pago
     const btnComprar = document.getElementById('btn-comprar-carrito'); // buscamos el boton de pagar
-    
+
     // si el usuario da clic en la x o en el fondo oscuro se oculta el menu
     if (btnCerrar) btnCerrar.addEventListener('click', cerrarCarrito);
     if (overlay) overlay.addEventListener('click', cerrarCarrito);
@@ -51,7 +51,7 @@ export async function inicializarCarrito() {
     }
 
     // si hay items recuperados del localstorage renderizarlos visualmente de una vez
-    if(carrito.length > 0) {
+    if (carrito.length > 0) {
         renderizarCarrito();
     }
 
@@ -93,12 +93,12 @@ export async function inicializarCarrito() {
         // fixed top0 left0 width100 height100 garantizan que tape toda la pantalla
         // z-index 10000 asegura que quede por encima de todo navbars banners etc
         Object.assign(modalPago.style, { position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'none', justifyContent: 'center', alignItems: 'center', zIndex: '10000' });
-        
+
         // empujamos el modal de la memoria hacia la pagina visible
         document.body.appendChild(modalPago);
-        
+
         // enganchamos el comportamiento de los dos botones recien creados
-        document.getElementById('btn-cancelar-pago').addEventListener('click', function() { modalPago.style.display = 'none'; });
+        document.getElementById('btn-cancelar-pago').addEventListener('click', function () { modalPago.style.display = 'none'; });
         document.getElementById('btn-confirmar-pago').addEventListener('click', confirmarPagoSimulado);
 
         // validacion en tiempo real ux: solo permite digitos numericos
@@ -109,19 +109,21 @@ export async function inicializarCarrito() {
             inputCuenta.setAttribute('maxlength', '10');
             inputCuenta.setAttribute('inputmode', 'numeric'); // muestra teclado numerico en movil
             inputCuenta.setAttribute('pattern', '[0-9]*');    // refuerzo html5 para movil
-            inputCuenta.addEventListener('input', function(e) {
+            // al momento de escribir se limpian los datos
+            inputCuenta.addEventListener('input', function (e) {
                 const soloNumeros = e.target.value.replace(/[^0-9]/g, '');
                 if (e.target.value !== soloNumeros) e.target.value = soloNumeros;
             });
-            inputCuenta.addEventListener('keydown', function(e) {
+            // al presionar teclas se valida que sean numeros
+            inputCuenta.addEventListener('keydown', function (e) {
                 const teclasSistema = [8, 9, 13, 37, 38, 39, 40, 46];
                 if (!teclasSistema.includes(e.keyCode) && (e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) {
-                    e.preventDefault(); 
+                    e.preventDefault();
                 }
             });
         }
     }
-    
+
     // al cargar la pagina verificamos si el usuario esta logueado para descargar su carrito de mysql
     // asi si se paso del celular a la computadora recupera sus cosas al instante
     try {
@@ -130,19 +132,19 @@ export async function inicializarCarrito() {
             const resBD = await fetch('carrito-db');
             if (resBD.ok) {
                 const carritoBD = await resBD.json();
-                if (carritoBD.length > 0) { 
+                if (carritoBD.length > 0) {
                     let huboCambiosStock = false;
-                    
+
                     // mapeamos el carrito para normalizar llaves idproducto id y verificar recortes de inventario
-                    carrito = carritoBD.map(function(item) {
+                    carrito = carritoBD.map(function (item) {
                         let cantidadReal = item.cantidad;
-                        
+
                         // si el stock en bd es menor a la cantidad guardada por el cliente lo topamos al maximo disponible
                         if (item.stock != null && cantidadReal > item.stock) {
                             cantidadReal = item.stock;
                             huboCambiosStock = true;
                         }
-                        
+
                         return {
                             id: item.idProducto || item.id, // normalizamos el id para que los botones de sumar restar funcionen
                             nombre: item.nombre,
@@ -152,18 +154,18 @@ export async function inicializarCarrito() {
                             imagen: item.imagen,
                             seleccionado: item.seleccionado !== undefined ? item.seleccionado : true
                         };
-                    }).filter(function(item) {
+                    }).filter(function (item) {
                         return item.cantidad > 0;
-                    }); 
-                    
+                    });
+
                     if (carritoBD.length !== carrito.length) huboCambiosStock = true;
 
-                    localStorage.setItem('carritoDMari', JSON.stringify(carrito)); 
-                    renderizarCarrito(); 
-                    
+                    localStorage.setItem('carritoDMari', JSON.stringify(carrito));
+                    renderizarCarrito();
+
                     if (huboCambiosStock) {
                         // retrasamos la alerta medio segundo para no trabar el renderizado visual
-                        setTimeout(function() { alert('Atencion: Algunos productos de tu carrito fueron ajustados o removidos porque el inventario disponible cambio.'); }, 500);
+                        setTimeout(function () { alert('Atencion: Algunos productos de tu carrito fueron ajustados o removidos porque el inventario disponible cambio.'); }, 500);
                         programarSincronizacion(); // obligamos a mysql a registrar el nuevo limite
                     }
                 }
@@ -179,22 +181,22 @@ export async function inicializarCarrito() {
 async function cargarMetodosPago() {
     const select = document.getElementById('select-metodo-pago');
     if (!select) return;
-    
+
     try {
         select.innerHTML = '<option value="" disabled selected>Cargando opciones...</option>';
         const respuesta = await fetch('metodos-pago');
         if (respuesta.ok) {
             // desempaquetamos el json que trae id descripcion
             const metodos = await respuesta.json();
-            
+
             if (metodos.length === 0) {
                 select.innerHTML = '<option value="" disabled selected>No hay metodos (revisa mysql)</option>';
                 return;
             }
-            
+
             select.innerHTML = '<option value="" disabled selected>Elige una opcion...</option>';
             // recorremos el json inyectando una etiqueta option por cada metodo habilitado
-            metodos.forEach(function(m) {
+            metodos.forEach(function (m) {
                 const opt = document.createElement('option');
                 opt.value = m.id;
                 opt.textContent = m.descripcion;
@@ -203,8 +205,8 @@ async function cargarMetodosPago() {
         } else {
             select.innerHTML = '<option value="" disabled selected>Error en java (revisa netbeans)</option>';
         }
-    } catch (error) { 
-        console.error('Error al cargar metodos de pago:', error); 
+    } catch (error) {
+        console.error('Error al cargar metodos de pago:', error);
         select.innerHTML = '<option value="" disabled selected>Falla de red</option>';
     }
 }
@@ -216,8 +218,8 @@ async function cargarMetodosPago() {
  */
 async function procesarCompra() {
     // regla 1 verificar que haya productos seleccionados para la compra parcial
-    const seleccionados = carrito.filter(function(item) { return item.seleccionado; });
-    
+    const seleccionados = carrito.filter(function (item) { return item.seleccionado; });
+
     if (carrito.length === 0) {
         alert('Tu carrito esta vacio.');
         return;
@@ -231,12 +233,17 @@ async function procesarCompra() {
         // le preguntamos al backend de java si el usuario tiene la pulsera de logueado
         const respuesta = await fetch('session');
 
+        // Si el return del backend/servidor con un codigo entre 200 a 299, que es exitoso
         if (respuesta.ok) {
             // respondio 200 ok el servidor de java confirmo que tiene sesion iniciada
-            
+
             // validamos logisticamente al cliente consultamos su perfil
             const resPerfil = await fetch('perfil-cliente');
+
+            // Comprueba si tenemos cuenta y datos basicos
+            // Si el return del backend/servidor con un codigo entre 200 a 299, que es exitoso
             if (resPerfil.ok) {
+                // La respuesta del body http del fetch perfil-cliente estara en string, al volverlo .json lo volvera un objeto de js
                 const perfil = await resPerfil.json();
                 // si los datos llegan nulos o como un string de espacios vacios bloqueamos el proceso
                 if (!perfil.direccion || perfil.direccion.trim() === '' || !perfil.telefono || perfil.telefono.trim() === '') {
@@ -245,9 +252,12 @@ async function procesarCompra() {
                     navegarA('perfil'); // forzamos una redireccion spa hacia el formulario
                     return;             // abortamos la ejecucion para que no se abra el modal de pago
                 }
-                
+
                 // automatizacion: pre-llenamos el numero de telefono configurado en el perfil
                 const inputCuenta = document.getElementById('input-cuenta-pago');
+
+                // Del objeto que se transformo del body respuesta http de java, se toma el atributo telefono
+                // Y se verifica que el objeto no sea nulo y que el atributo telefono no sea nulo
                 if (inputCuenta && perfil.telefono) {
                     // sanitizamos el valor antes de inyectarlo: eliminamos todo lo que no sea digito
                     // esto evita que un numero guardado con formato (ej: '310-500 1234') 
@@ -255,7 +265,7 @@ async function procesarCompra() {
                     inputCuenta.value = perfil.telefono.replace(/[^0-9]/g, '');
                 }
             }
-            
+
             // si tiene cuenta y perfil completo mostramos la pasarela
             const modalPago = document.getElementById('modal-pago-simulado');
             if (modalPago) {
@@ -266,7 +276,7 @@ async function procesarCompra() {
         } else {
             // respondio 401 unauthorized el visitante no se ha identificado
             alert('Por favor, inicia sesion o registrate para poder finalizar tu compra.');
-            cerrarCarrito(); 
+            cerrarCarrito();
             navegarA('login'); // interceptamos y lo enviamos al login
         }
     } catch (error) {
@@ -284,7 +294,7 @@ async function confirmarPagoSimulado() {
     // extraemos los datos del formulario flotante
     const cuenta = document.getElementById('input-cuenta-pago').value;
     const idMetodo = document.getElementById('select-metodo-pago').value;
-    
+
     // validacion estricta el campo de cuenta celular no debe estar vacio
     if (!cuenta || cuenta.trim() === '') {
         alert('Por favor ingresa un numero de cuenta o telefono valido para continuar.');
@@ -300,37 +310,37 @@ async function confirmarPagoSimulado() {
 
     // quitamos el modal de la pantalla para evitar dobles envios
     document.getElementById('modal-pago-simulado').style.display = 'none';
-    
+
     // cambiamos el boton a estado cargando por si la bd es lenta
     const botonConfirmar = document.getElementById('btn-confirmar-pago');
     botonConfirmar.innerText = "Procesando pago...";
     botonConfirmar.disabled = true;
-    
+
     // filtramos unicamente los items seleccionados para la compra
-    const itemsAComprar = carrito.filter(function(item) { return item.seleccionado; });
-    
+    const itemsAComprar = carrito.filter(function (item) { return item.seleccionado; });
+
     // enviamos solo lo seleccionado al servidor java
     const exito = await enviarPedido(itemsAComprar, idMetodo, cuenta);
-    
+
     if (exito) {
         // limpieza selectiva: mantenemos en el carrito lo que no se compro
-        carrito = carrito.filter(function(item) { return !item.seleccionado; });
-        
+        carrito = carrito.filter(function (item) { return !item.seleccionado; });
+
         // destruimos las cookies almacenamiento local para que no reaparezcan cosas fantasma
         localStorage.setItem('carritoDMari', JSON.stringify(carrito));
-        
+
         // le avisamos a la bd que sincronice nuestro carrito mandara un carrito vacio que ejecutara el delete
         programarSincronizacion();
-        
+
         renderizarCarrito(); // redibujamos la canasta quedara vacia en pantalla
-        
+
         window.dispatchEvent(new CustomEvent('inventarioActualizado'));
         mostrarNotificacion('¡Pago aprobado y compra realizada con exito!', 'exito');
     } else {
         window.dispatchEvent(new CustomEvent('inventarioActualizado'));
         mostrarNotificacion('El pedido fallo. Revisa si algun producto se agoto.', 'error');
     }
-    
+
     botonConfirmar.innerText = "Pagar ahora";
     botonConfirmar.disabled = false;
 }
@@ -339,7 +349,7 @@ async function confirmarPagoSimulado() {
 export function abrirCarrito() {
     const sidebar = document.getElementById('sidebar-carrito');
     const overlay = document.getElementById('overlay-carrito');
-    
+
     // agregamos la clase que lo desliza a la pantalla
     if (sidebar) sidebar.classList.add('activo');
     if (overlay) overlay.classList.add('activo');
@@ -349,7 +359,7 @@ export function abrirCarrito() {
 export function cerrarCarrito() {
     const sidebar = document.getElementById('sidebar-carrito');
     const overlay = document.getElementById('overlay-carrito');
-    
+
     if (sidebar) sidebar.classList.remove('activo');
     if (overlay) overlay.classList.remove('activo');
 }
@@ -364,8 +374,9 @@ export function cerrarCarrito() {
  */
 export function agregarAlCarrito(id, nombre, precio, stock = null) {
     // buscamos si el producto ya existe en nuestro arreglo en memoria
-    const productoExistente = carrito.find(function(item) { return item.id === id; });
-    
+    const productoExistente = carrito.find(function (item) { return item.id === id; });
+
+    // Si encuentra producto
     if (productoExistente) {
         // actualizacion si el producto ya existia le refrescamos el stock con el dato mas reciente
         if (stock != null) {
@@ -382,23 +393,29 @@ export function agregarAlCarrito(id, nombre, precio, stock = null) {
         } else {
             productoExistente.cantidad++;
         }
-    } else {
+    }
+    // Si no encuentra el producto
+    else {
         // validamos que si es un producto nuevo tenga al menos 1 unidad de stock
         if (stock != null && stock <= 0) {
             alert('Este producto se encuentra agotado por el momento.');
             return;
         }
+
+        // Se coloca en el carrito
         // si es un producto nuevo insertamos el objeto con seleccionado true por defecto
         carrito.push({ id: id, nombre: nombre, precio: precio, cantidad: 1, stock: stock, seleccionado: true });
     }
-    
+
     // guardamos la informacion actualizada en el navegador
     localStorage.setItem('carritoDMari', JSON.stringify(carrito));
 
     // tras modificar los datos redibujamos el html y forzamos a abrir el panel
+    // Visual de carrito
     renderizarCarrito();
+    // Abrir carrito
     abrirCarrito();
-    
+
     // avisamos a la base de datos de forma silenciosa y sin saturar
     programarSincronizacion();
 }
@@ -410,7 +427,7 @@ export function agregarAlCarrito(id, nombre, precio, stock = null) {
  * @param {number} nuevaCantidad la cantidad requerida por el usuario
  */
 export function actualizarCantidad(id, nuevaCantidad) {
-    const productoExistente = carrito.find(function(item) {
+    const productoExistente = carrito.find(function (item) {
         return item.id === id;
     });
     if (productoExistente && nuevaCantidad > 0) {
@@ -421,10 +438,10 @@ export function actualizarCantidad(id, nuevaCantidad) {
         } else {
             productoExistente.cantidad = nuevaCantidad;
         }
-        
+
         localStorage.setItem('carritoDMari', JSON.stringify(carrito));
         renderizarCarrito(); // redibujamos con el nuevo precio subtotal
-        
+
         // avisamos a la base de datos de forma silenciosa y sin saturar
         programarSincronizacion();
     }
@@ -435,12 +452,12 @@ export function actualizarCantidad(id, nuevaCantidad) {
  * @param {number} id identificador del producto a eliminar
  */
 export function eliminarDelCarrito(id) {
-    carrito = carrito.filter(function(item) {
+    carrito = carrito.filter(function (item) {
         return item.id !== id;
     });
     localStorage.setItem('carritoDMari', JSON.stringify(carrito));
     renderizarCarrito();
-    
+
     // avisamos a la base de datos de forma silenciosa y sin saturar
     programarSincronizacion();
 }
@@ -449,7 +466,7 @@ export function eliminarDelCarrito(id) {
  * cambia el flag de seleccionado para un producto compra parcial
  */
 export function cambiarSeleccion(id, seleccionado) {
-    const item = carrito.find(function(i) {
+    const item = carrito.find(function (i) {
         return i.id === id;
     });
     if (item) {
@@ -467,26 +484,27 @@ export function cambiarSeleccion(id, seleccionado) {
 function programarSincronizacion() {
     // si ya habia un guardado programado en la recamara lo cancelamos
     if (temporizadorSincronizacion) clearTimeout(temporizadorSincronizacion);
-    
+
     // programamos un nuevo envio al servidor para dentro de 1.5 segundos
-    temporizadorSincronizacion = setTimeout(async function() {
+    temporizadorSincronizacion = setTimeout(async function () {
         // empaquetamos el carrito tal cual lo hacemos para las facturas
         const parametros = new URLSearchParams();
-        carrito.forEach(function(item) {
+        carrito.forEach(function (item) {
             parametros.append('id_producto', item.id);
             parametros.append('cantidad', item.cantidad);
             parametros.append('seleccionado', item.seleccionado);
         });
-        
+
         try {
             // enviamos la peticion en la sombra sin bloquear la pantalla
             // si el usuario es visitante no esta logueado java respondera un error 401 
             // pero como estamos en un settimeout en la sombra y omitimos los alerts 
             // el visitante jamas se dara cuenta y su pagina seguira perfecta con el localstorage
+            // fetch es un post
             await fetch('carrito-db', { method: 'POST', body: parametros });
         } catch (e) {
             console.warn('Fallo la sincronizacion silenciosa del carrito. Esto es normal si el usuario no ha iniciado sesion.', e.message);
-        } 
+        }
     }, 1500);
 }
 
@@ -498,16 +516,16 @@ function programarSincronizacion() {
 function renderizarCarrito() {
     const contenedor = document.getElementById('items-carrito');
     const txtTotal = document.getElementById('total-carrito');
-    
+
     // proteccion en caso de que el html aun no este listo
     if (!contenedor || !txtTotal) return;
-    
+
     let total = 0;
     // variable tipo texto string para acumular el html sin tocar el dom repetidas veces
-    let htmlCarrito = ''; 
-    
+    let htmlCarrito = '';
+
     // recorremos los elementos del carrito para ir calculando precios y armar etiquetas
-    carrito.forEach(function(item) {
+    carrito.forEach(function (item) {
         // calculamos cuanto cuesta en total este articulo por su cantidad
         let subtotal = item.precio * item.cantidad;
 
@@ -515,7 +533,7 @@ function renderizarCarrito() {
         if (item.seleccionado) {
             total += subtotal;
         }
-        
+
         // si el producto tiene stock preparamos el atributo max para el input
         const maxAttr = item.stock ? `max="${item.stock}"` : '';
         // preparamos un texto visual para que el usuario sepa cuanto stock le queda disponible
@@ -542,48 +560,48 @@ function renderizarCarrito() {
                 </div>
             </div>`;
     });
-    
+
     // inyectamos de golpe todo el texto armado en el contenedor principal mejor rendimiento
     contenedor.innerHTML = htmlCarrito;
-    
+
     // actualizamos el texto del total a pagar
     txtTotal.innerText = '$' + total.toFixed(2); // aseguramos que solo muestre 2 decimales
 
     // comportamiento del checkbox de seleccion parcial
-    document.querySelectorAll('.check-seleccion').forEach(function(check) {
-        check.addEventListener('change', function(e) {
+    document.querySelectorAll('.check-seleccion').forEach(function (check) {
+        check.addEventListener('change', function (e) {
             cambiarSeleccion(parseInt(e.target.dataset.id), e.target.checked);
         });
     });
 
     // comportamiento del boton de restar
-    document.querySelectorAll('.btn-restar').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
+    document.querySelectorAll('.btn-restar').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
             const id = parseInt(e.target.dataset.id);
-            const item = carrito.find(function(i) { return i.id === id; });
+            const item = carrito.find(function (i) { return i.id === id; });
             if (item && item.cantidad > 1) actualizarCantidad(id, item.cantidad - 1);
         });
     });
 
     // comportamiento del boton de sumar
-    document.querySelectorAll('.btn-sumar').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
+    document.querySelectorAll('.btn-sumar').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
             const id = parseInt(e.target.dataset.id);
-            const item = carrito.find(function(i) { return i.id === id; });
+            const item = carrito.find(function (i) { return i.id === id; });
             if (item) actualizarCantidad(id, item.cantidad + 1);
         });
     });
 
     // agregamos el comportamiento a los nuevos inputs de cantidad
-    document.querySelectorAll('.input-cantidad').forEach(function(input) {
-        input.addEventListener('change', function(e) {
+    document.querySelectorAll('.input-cantidad').forEach(function (input) {
+        input.addEventListener('change', function (e) {
             actualizarCantidad(parseInt(e.target.dataset.id), parseInt(e.target.value));
         });
     });
 
     // agregamos el comportamiento a los botones de eliminar
-    document.querySelectorAll('.btn-eliminar-item').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
+    document.querySelectorAll('.btn-eliminar-item').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
             eliminarDelCarrito(parseInt(e.target.dataset.id));
         });
     });
@@ -596,14 +614,14 @@ function renderizarCarrito() {
 function mostrarNotificacion(mensaje, tipo) {
     const toast = document.createElement('div');
     toast.innerText = mensaje;
-    
+
     const colorFondo = tipo === 'exito' ? '#4caf50' : '#f44336';
     toast.style.cssText = `position: fixed; bottom: 30px; right: 30px; background: ${colorFondo}; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-weight: bold; z-index: 10000; transition: opacity 0.5s ease;`;
-    
+
     document.body.appendChild(toast);
-    
-    setTimeout(function() {
+
+    setTimeout(function () {
         toast.style.opacity = '0';
-        setTimeout(function() { toast.remove(); }, 500); // lo borramos del html tras la animacion
+        setTimeout(function () { toast.remove(); }, 500); // lo borramos del html tras la animacion
     }, 3500);
 }

@@ -199,7 +199,8 @@ public class AuthController extends HttpServlet {
                         // la cuenta ya fue pausada internamente por el dao de solicitud
                         response.setStatus(HttpServletResponse.SC_CREATED);
                     } else {
-                        // si falla la creacion de la solicitud, eliminamos el usuario base para no dejar un registro zombie
+                        // si falla la creacion de la solicitud, eliminamos el usuario base para no
+                        // dejar un registro zombie
                         dao.eliminarUsuarioFisicamente(idUsuarioGenerado);
                         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                         response.getWriter().print("Error al crear la solicitud comercial de proveedor.");
@@ -214,7 +215,9 @@ public class AuthController extends HttpServlet {
                         "Hubo un error interno en el servidor al registrar el usuario. Por favor, intentelo mas tarde.");
             }
 
+            // Cuando el http apunta a login
         } else if ("/login".equals(ruta)) {
+            // De los parametros del body, se agarra correo y contraseña
             String correo = request.getParameter("correo");
             String password = request.getParameter("password");
 

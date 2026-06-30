@@ -34,12 +34,14 @@ public class UsuarioController extends HttpServlet {
 
         response.setContentType("application/json;charset=UTF-8");
         usuarioDAO dao = new usuarioDAO();
+        // Se trae los usuarios de la base de datos mediante el modelo
         ArrayList<usuario> lista = dao.listarUsuarios();
 
         // construccion del json manual para asegurarnos que los nombres de variables
         // coincidan exactamente con lo que espera tu archivo javascript
         try (PrintWriter out = response.getWriter()) {
             StringBuilder json = new StringBuilder("[");
+            // Recorren la lista que se trajo del UsuarioDAO
             for (int i = 0; i < lista.size(); i++) {
                 usuario usr = lista.get(i);
                 json.append("{");
@@ -50,12 +52,14 @@ public class UsuarioController extends HttpServlet {
                 json.append("\"idRol\":").append(usr.getIdRol()).append(",");
                 json.append("\"estadoCuenta\":").append(usr.isEstadoCuenta());
                 json.append("}");
-
+                // Para añadir "," despues de cada array de usuario
                 if (i < lista.size() - 1) {
                     json.append(",");
                 }
             }
+            // Se añade "]" para cerrar el array y convertir el stringbuilder en json
             json.append("]");
+            // Se imprime el json
             out.print(json.toString());
         }
     }

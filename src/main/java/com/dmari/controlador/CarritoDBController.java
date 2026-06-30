@@ -46,6 +46,7 @@ public class CarritoDBController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("application/json;charset=UTF-8");
+        // Si ya existe, la devuelve, si no devuelve null
         HttpSession sesion = request.getSession(false);
 
         // condicional de autorizacion
