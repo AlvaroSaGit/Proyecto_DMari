@@ -183,6 +183,7 @@ public class usuarioDAO {
             // seteamos el correo
             ps.setString(2, correo);
 
+            // Ejecuta el sql pero con los valores ingresados
             try (ResultSet rs = ps.executeQuery()) {
                 // si el cursor avanza, significa que encontro el correo
                 if (rs.next()) {
@@ -192,7 +193,9 @@ public class usuarioDAO {
                     // comparamos en java (password.equals) que es mas seguro contra fallos de
                     // collation
                     if (decPasswd != null && decPasswd.equals(password)) {
+                        // Se utiliza los metodos del DTO de usuario
                         usuarioLogueado = new usuario();
+                        // Guardando los datos en los campos del objeto de usuario
                         usuarioLogueado.setIdUsuario(rs.getInt("id_usuario_pk"));
                         usuarioLogueado.setNombre(rs.getString("nombre"));
                         usuarioLogueado.setApellido(rs.getString("apellido"));
@@ -265,9 +268,11 @@ public class usuarioDAO {
         String sql = "SELECT u.id_usuario_pk, u.nombre, u.apellido, u.id_rol_fk, u.estado_cuenta, c.correo " +
                 "FROM usuario u " +
                 "LEFT JOIN correo c ON u.id_usuario_pk = c.id_usuario_fk";
-
+        // Se conecta a la base de datos
         try (Connection con = db.conectar();
+                // Se prepara la consulta con el sql
                 PreparedStatement ps = con.prepareStatement(sql);
+                // Ejecuta el sql pero con los valores ingresados
                 ResultSet rs = ps.executeQuery()) {
 
             // iteracion: lee todos los usuarios y los empaqueta en objetos java

@@ -310,28 +310,38 @@ public class productoDAO {
 
             // condicional funcional: si el admin eligio 0 ("sin proveedor"), esta insercion
             // no se ejecuta.
+            // verifica si se proporciono un id de proveedor valido
             if (idUsuarioProveedor > 0) {
                 int idProveedorPk = 0;
+                // consulta sql para buscar si el proveedor existe
                 String sqlBuscar = "SELECT id_proveedor_pk FROM proveedor WHERE id_proveedor_pk = ?";
                 try (PreparedStatement psBuscar = con.prepareStatement(sqlBuscar)) {
                     psBuscar.setInt(1, idUsuarioProveedor);
+                    // ejecuta la consulta
                     try (ResultSet rs = psBuscar.executeQuery()) {
+                        // si encuentra el proveedor, guarda su id
                         if (rs.next())
                             idProveedorPk = rs.getInt("id_proveedor_pk");
                     }
                 }
 
+                // si el proveedor existe, se procede a relacionarlo con el producto
                 if (idProveedorPk > 0) {
+                    // consulta sql para insertar la relacion en la tabla intermedia
                     String sqlInsert = "INSERT INTO proveedor_producto (id_proveedor_fk, id_producto_fk) VALUES (?, ?)";
                     try (PreparedStatement psInsert = con.prepareStatement(sqlInsert)) {
                         psInsert.setInt(1, idProveedorPk);
                         psInsert.setInt(2, idProducto);
+                        // ejecuta la insercion de la relacion
                         psInsert.executeUpdate();
                     }
                 }
             }
+            // retorna true si todo el proceso se realizo correctamente
             return true;
+        // atrapa cualquier excepcion de base de datos
         } catch (SQLException e) {
+            // retorna false indicando que ocurrio un error
             return false;
         }
     }

@@ -15,15 +15,18 @@ import java.util.ArrayList;
 import com.dmari.helper.databaseHelper;
 import com.dmari.modelo.etiqueta;
 
+// clase que maneja la persistencia y lectura de las etiquetas de productos
 public class etiquetaDAO {
     
+    // instancia para conectarse a la base de datos
     databaseHelper db = new databaseHelper();
 
-    // Metodo para listar TODAS las etiquetas (Para mostrarlas en los botones de filtro)
-    // Metodo para listar SOLO las etiquetas que estan en uso por productos visibles
+    // metodo para listar todas las etiquetas (para mostrarlas en los botones de filtro)
+    // metodo para listar solo las etiquetas que estan en uso por productos visibles
     public ArrayList<etiqueta> listarEtiquetas() {
+        // lista para almacenar etiquetas
         ArrayList<etiqueta> lista = new ArrayList<>();
-        // Filtramos para que no salgan etiquetas "huerfanas" (sin productos) 
+        // filtramos para que no salgan etiquetas huerfanas (sin productos) 
         // ni etiquetas de productos que esten pausados o sin stock.
         String sql = "SELECT DISTINCT e.id_etiqueta_pk, e.nombre_etiqueta " +
                      "FROM etiqueta e " +
@@ -31,23 +34,27 @@ public class etiquetaDAO {
                      "INNER JOIN producto p ON pe.id_producto = p.id_producto_pk " +
                      "WHERE p.estado = 1 AND p.stock > 0";
         
+        // se prepara y ejecuta la consulta
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             
+            // recorre cada resultado encontrado
             while (rs.next()) {
                 etiqueta e = new etiqueta();
                 e.setIdEtiquetaPk(rs.getInt("id_etiqueta_pk"));
                 e.setNombreEtiqueta(rs.getString("nombre_etiqueta"));
                 lista.add(e);
             }
+        // captura errores de conexion o sql
         } catch (SQLException e) {
-            System.out.println("Error al listar etiquetas: " + e.getMessage());
+            System.out.println("error al listar etiquetas: " + e.getMessage());
         }
+        // retorna la lista obtenida
         return lista;
     }
     
-    // Metodo para obtener las etiquetas que le pertenecen a UN producto en especifico
+    // metodo para obtener las etiquetas que le pertenecen a un producto en especifico
     public ArrayList<String> listarEtiquetasPorProducto(int idProducto) {
         ArrayList<String> lista = new ArrayList<>();
         // arrancamos consultando la tabla principal de etiquetas
@@ -61,15 +68,19 @@ public class etiquetaDAO {
         try (Connection con = db.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
              
+            // pasamos el id del producto
             ps.setInt(1, idProducto);
             try(ResultSet rs = ps.executeQuery()) {
+                // agrega los nombres a la lista
                 while (rs.next()) {
                     lista.add(rs.getString("nombre_etiqueta"));
                 }
             }
+        // captura y muestra fallos de base de datos
         } catch (SQLException e) {
-            System.out.println("Error al listar etiquetas del producto: " + e.getMessage());
+            System.out.println("error al listar etiquetas del producto: " + e.getMessage());
         }
+        // devuelve la lista de nombres
         return lista;
     }
 
@@ -80,7 +91,8 @@ public class etiquetaDAO {
         try (Connection con = db.conectar(); PreparedStatement psDel = con.prepareStatement(sqlDelete)) {
             psDel.setInt(1, idProducto);
             psDel.executeUpdate();
-        } catch (SQLException e) { System.out.println("Error al limpiar etiquetas viejas: " + e.getMessage()); }
+        // si hay error al limpiar, lo informamos
+        } catch (SQLException e) { System.out.println("error al limpiar etiquetas viejas: " + e.getMessage()); }
 
         // si el usuario no escribio nada, terminamos el proceso aqui
         if (etiquetasStr == null || etiquetasStr.trim().isEmpty()) return;
@@ -89,10 +101,11 @@ public class etiquetaDAO {
         String[] tags = etiquetasStr.split(",");
         String sqlBuscar = "SELECT id_etiqueta_pk FROM etiqueta WHERE nombre_etiqueta = ?";
         String sqlInsertarTag = "INSERT INTO etiqueta (nombre_etiqueta) VALUES (?)";
-        // Usamos INSERT IGNORE para que no explote si el usuario escribe etiquetas repetidas (Ej: "Dulce, Dulce")
+        // usamos insert ignore para que no explote si el usuario escribe etiquetas repetidas (ej: dulce, dulce)
         String sqlVincular = "INSERT IGNORE INTO producto_etiqueta (id_producto, id_etiqueta) VALUES (?, ?)";
 
         try (Connection con = db.conectar()) {
+            // procesamos cada etiqueta individualmente
             for (String tag : tags) {
                 tag = tag.trim(); // quitamos espacios en blanco accidentales
                 if (tag.isEmpty()) continue;
@@ -128,12 +141,13 @@ public class etiquetaDAO {
                 }
             }
             
-            // 3. LIMPIEZA DE BASURA (Garbage Collection): Borrar etiquetas huerfanas
-            // Si una etiqueta ya no esta vinculada a ningun producto, la eliminamos para no dejar basura en la base de datos.
+            // 3. limpieza de basura (garbage collection): borrar etiquetas huerfanas
+            // si una etiqueta ya no esta vinculada a ningun producto, la eliminamos para no dejar basura en la base de datos.
             String sqlLimpiar = "DELETE FROM etiqueta WHERE id_etiqueta_pk NOT IN (SELECT DISTINCT id_etiqueta FROM producto_etiqueta)";
             try (PreparedStatement psLimpiar = con.prepareStatement(sqlLimpiar)) {
                 psLimpiar.executeUpdate();
             }
-        } catch (SQLException e) { System.out.println("Error al procesar etiquetas: " + e.getMessage()); }
+        // capturamos cualquier excepcion y la notificamos
+        } catch (SQLException e) { System.out.println("error al procesar etiquetas: " + e.getMessage()); }
     }
 }
