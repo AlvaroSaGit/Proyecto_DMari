@@ -399,38 +399,47 @@ public class productoDAO {
 
         Connection con = null;
         try {
+            // iniciamos la conexion para la transaccion en bloque
             con = db.conectar();
+            // apagamos el autocommit para evitar inserciones parciales
             con.setAutoCommit(false);
 
+            // eliminamos las referencias de etiquetas vinculadas al articulo
             try (PreparedStatement psEtiq = con.prepareStatement(sqlEtiquetas)) {
                 psEtiq.setInt(1, id);
                 psEtiq.executeUpdate();
             }
 
+            // rompemos el puente entre el vendedor y el producto
             try (PreparedStatement psProv = con.prepareStatement(sqlProveedor)) {
                 psProv.setInt(1, id);
                 psProv.executeUpdate();
             }
 
+            // borramos el historial fotografico del sistema
             try (PreparedStatement psImg = con.prepareStatement(sqlImagenes)) {
                 psImg.setInt(1, id);
                 psImg.executeUpdate();
             }
 
             int filasAfectadas = 0;
+            // destruimos el registro maestro del producto en cuestion
             try (PreparedStatement psProd = con.prepareStatement(sqlProducto)) {
                 psProd.setInt(1, id);
                 filasAfectadas = psProd.executeUpdate();
             }
 
+            // depuramos las categorias sueltas que perdieron su unico producto
             try (PreparedStatement psLimpiar = con.prepareStatement(sqlLimpiarEtiquetas)) {
                 psLimpiar.executeUpdate();
             }
 
+            // sellamos la operacion completa confirmando los deletes
             con.commit();
             return filasAfectadas > 0;
 
         } catch (SQLException e) {
+            // trampa de seguridad: revertimos todo el progreso si algo salio mal
             try {
                 if (con != null)
                     con.rollback();
@@ -439,6 +448,7 @@ public class productoDAO {
             System.out.println("No se pudo borrar el producto.. quiza este amarrado a un pedido: " + e.getMessage());
             return false;
         } finally {
+            // rutina de limpieza: encendemos el autocommit y devolvemos la conexion al pool
             try {
                 if (con != null) {
                     con.setAutoCommit(true);

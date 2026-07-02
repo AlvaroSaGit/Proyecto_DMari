@@ -156,32 +156,30 @@ public class ProductoController extends HttpServlet {
             // guardamos y validamos
             int idGenerado = dao.insertarProducto(nuevoProd);
             if (idGenerado > 0) {
-                // Si se creo el producto, atrapamos la foto y la guardamos
+                // si se creo el producto, atrapamos la foto y la guardamos en el servidor
                 guardarImagenFisica(request, idGenerado);
 
-                // NUEVO: Procesamos y guardamos las etiquetas
+                // procesamos y guardamos las etiquetas relacionadas
                 if (etiquetasParam != null) {
                     etiquetaDAO etiqDao = new etiquetaDAO();
                     etiqDao.actualizarEtiquetasDeProducto(idGenerado, etiquetasParam);
                 }
 
-                // NUEVO: Verificamos si quien esta creando el producto es un proveedor.
-                // Si es asi, lo enlazamos en la tabla puente para que sea el dueno absoluto y
-                // pueda verlo.
+                // verificamos si quien esta creando el producto es un proveedor.
+                // si es asi, lo enlazamos en la tabla puente para que sea el dueno absoluto.
                 HttpSession sesion = request.getSession(false);
                 if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
                     usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
-                    // 4 es el ID del rol proveedor en tu base de datos
+                    // 4 es el id del rol proveedor
                     if (user.getIdRol() == 4) {
                         dao.asignarProductoAProveedor(idGenerado, user.getIdUsuario());
                     } else if (user.getIdRol() == 1) {
-                        // si el admin eligio un proveedor de la lista, usamos ese ID
+                        // si el admin eligio un proveedor de la lista, usamos ese id
                         if (idProveedorParam != null && !idProveedorParam.isEmpty()) {
                             dao.asignarProductoAProveedor(idGenerado, Integer.parseInt(idProveedorParam));
                         }
-                        // IMPORTANTE: Si no eligio a nadie, simplemente no lo enlazamos.
-                        // Al no estar en 'proveedor_producto', el sistema asume que es un producto
-                        // oficial de DMari.
+                        // importante: si no eligio a nadie, simplemente no lo enlazamos.
+                        // al no estar en proveedor_producto, el sistema asume que es oficial.
                     }
                 }
 
@@ -221,11 +219,10 @@ public class ProductoController extends HttpServlet {
             String etiquetasParam = request.getParameter("etiquetas");
 
             if (dao.actualizarProducto(prod)) {
-                // Si se actualizo el producto, verificamos si el Admin subio una foto nueva
-                // para reemplazarla
+                // si se actualizo el producto, verificamos si el admin subio una foto nueva
                 guardarImagenFisica(request, prod.getIdProductoPk());
 
-                // Procesamos y guardamos las etiquetas modificadas
+                // procesamos y guardamos las etiquetas modificadas
                 if (etiquetasParam != null) {
                     etiquetaDAO etiqDao = new etiquetaDAO();
                     etiqDao.actualizarEtiquetasDeProducto(prod.getIdProductoPk(), etiquetasParam);
@@ -236,12 +233,11 @@ public class ProductoController extends HttpServlet {
                 if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
                     usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
                     if (user.getIdRol() == 1) {
-                        // Si eligio a alguien, lo pasamos. Si eligio "Sin proveedor", pasamos 0.
+                        // si eligio a alguien lo pasamos. si eligio sin proveedor pasamos 0.
                         int idProv = (idProveedorParam != null && !idProveedorParam.isEmpty())
                                 ? Integer.parseInt(idProveedorParam)
                                 : 0;
-                        // El DAO borrara el enlace viejo y, como le mandamos 0, no creara uno nuevo
-                        // (volviendolo de DMari)
+                        // el dao borrara el enlace viejo y creara o no uno nuevo
                         dao.actualizarProveedorDeProducto(prod.getIdProductoPk(), idProv);
                     }
                 }

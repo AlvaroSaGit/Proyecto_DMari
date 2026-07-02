@@ -103,8 +103,7 @@ public class AuthController extends HttpServlet {
 
         // condicional de enrutamiento post
         if ("/registro".equals(ruta)) {
-            // Obligatorio para que Tomcat no cambie la respuesta por una pagina HTML de
-            // error generica
+            // obligatorio para que tomcat no cambie la respuesta por una pagina html de error generica
             response.setContentType("text/plain;charset=UTF-8");
 
             // getparameter extrae el valor de los campos que javascript nos envio a traves
@@ -215,9 +214,9 @@ public class AuthController extends HttpServlet {
                         "Hubo un error interno en el servidor al registrar el usuario. Por favor, intentelo mas tarde.");
             }
 
-            // Cuando el http apunta a login
+            // cuando el http apunta a login
         } else if ("/login".equals(ruta)) {
-            // De los parametros del body, se agarra correo y contraseña
+            // de los parametros del body, se agarra correo y contrasena
             String correo = request.getParameter("correo");
             String password = request.getParameter("password");
 
@@ -234,14 +233,14 @@ public class AuthController extends HttpServlet {
                 return;
             }
 
-            // Paso 1: Verificamos si el correo existe independientemente de la contraseña
+            // verificamos si el correo existe independientemente de la contrasena
             if (!dao.existeCorreo(correo)) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 response.getWriter().print("El correo ingresado no está registrado en nuestro sistema.");
                 return;
             }
 
-            // Paso 2: Si el correo existe, intentamos validar la contraseña
+            // si el correo existe, intentamos validar la contrasena
             usuario usuarioLogueado = dao.verificarLogin(correo, password);
 
             // condicional de exito de login
@@ -267,7 +266,7 @@ public class AuthController extends HttpServlet {
                 response.setStatus(HttpServletResponse.SC_OK);
                 response.getWriter().print("{\"idRol\": " + usuarioLogueado.getIdRol() + "}");
             } else {
-                // Si llegamos aquí, el correo existe pero la contraseña es incorrecta
+                // si llegamos aqui, el correo existe pero la contrasena es incorrecta
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().print("La contraseña es incorrecta. Inténtalo de nuevo.");
             }

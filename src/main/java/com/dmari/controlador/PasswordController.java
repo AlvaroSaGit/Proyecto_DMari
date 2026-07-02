@@ -31,18 +31,27 @@ public class PasswordController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // recuperamos la sesion activa sin crear una nueva
         HttpSession sesion = request.getSession(false);
+        // validamos que exista una sesion y que el usuario este logueado
         if (sesion != null && sesion.getAttribute("usuarioLogueado") != null) {
+            // extraemos los datos del usuario en sesion
             usuario user = (usuario) sesion.getAttribute("usuarioLogueado");
+            // capturamos la contrasena actual y la nueva desde la peticion
             String passActual = request.getParameter("passActual");
             String passNueva = request.getParameter("passNueva");
 
+            // instanciamos el dao para interactuar con la base de datos
             usuarioDAO dao = new usuarioDAO();
+            // intentamos ejecutar el cambio de contrasena y evaluamos el resultado
             if (dao.cambiarPassword(user.getIdUsuario(), passActual, passNueva))
+                // devolvemos estado 200 de exito si se logro el cambio
                 response.setStatus(HttpServletResponse.SC_OK);
             else
+                // devolvemos estado 400 si la clave actual era incorrecta o hubo fallo
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         } else
+            // bloqueamos con un 401 a los intrusos sin sesion valida
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 }

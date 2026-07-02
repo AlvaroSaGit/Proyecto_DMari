@@ -31,9 +31,13 @@ public class MetodoPagoController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // definimos que la respuesta saldra codificada como json
         response.setContentType("application/json;charset=UTF-8");
+        // creamos el objeto de acceso a datos para metodos de pago
         metodoPagoDAO dao = new metodoPagoDAO();
+        // iniciamos el flujo de respuesta hacia el cliente
         try (PrintWriter out = response.getWriter()) {
+            // leemos de la base de datos y lo mandamos directamente al navegador
             out.print(dao.obtenerMetodosPagoJSON());
         }
     }

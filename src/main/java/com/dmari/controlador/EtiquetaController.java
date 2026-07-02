@@ -37,14 +37,20 @@ public class EtiquetaController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // preparamos la respuesta indicando que enviaremos formato json
         response.setContentType("application/json;charset=UTF-8");
 
+        // instanciamos el dao encargado de conectar con mysql
         etiquetaDAO dao = new etiquetaDAO();
+        // traemos la lista de etiquetas desde la base de datos
         ArrayList<etiqueta> lista = dao.listarEtiquetas();
 
+        // abrimos el canal de escritura hacia el navegador del cliente
         try (PrintWriter out = response.getWriter()) {
+            // usamos nuestra clase de ayuda para convertir la lista java a json
             jsonHelper helper = new jsonHelper();
             String jsonString = helper.etiquetasAJson(lista);
+            // despachamos el texto final al frontend
             out.print(jsonString);
         }
     }

@@ -41,7 +41,7 @@ public class UsuarioController extends HttpServlet {
         // coincidan exactamente con lo que espera tu archivo javascript
         try (PrintWriter out = response.getWriter()) {
             StringBuilder json = new StringBuilder("[");
-            // Recorren la lista que se trajo del UsuarioDAO
+            // recorremos la lista que se extrajo del dao
             for (int i = 0; i < lista.size(); i++) {
                 usuario usr = lista.get(i);
                 json.append("{");
@@ -52,14 +52,14 @@ public class UsuarioController extends HttpServlet {
                 json.append("\"idRol\":").append(usr.getIdRol()).append(",");
                 json.append("\"estadoCuenta\":").append(usr.isEstadoCuenta());
                 json.append("}");
-                // Para añadir "," despues de cada array de usuario
+                // para anadir la coma despues de cada objeto de usuario
                 if (i < lista.size() - 1) {
                     json.append(",");
                 }
             }
-            // Se añade "]" para cerrar el array y convertir el stringbuilder en json
+            // se anade el corchete para cerrar el array y completar el json
             json.append("]");
-            // Se imprime el json
+            // se despacha el json final hacia el navegador
             out.print(json.toString());
         }
     }
@@ -71,18 +71,24 @@ public class UsuarioController extends HttpServlet {
             throws ServletException, IOException {
 
         try {
+            // extraemos los nuevos parametros de la peticion
             int id = Integer.parseInt(request.getParameter("id"));
             int idRol = Integer.parseInt(request.getParameter("id_rol"));
             boolean estado = Boolean.parseBoolean(request.getParameter("estado"));
 
+            // instanciamos el dao para hacer la actualizacion en base de datos
             usuarioDAO dao = new usuarioDAO();
 
+            // verificamos el exito de la transaccion
             if (dao.actualizarPermisos(id, idRol, estado)) {
+                // estado 200 ok si se actualizo bien
                 response.setStatus(HttpServletResponse.SC_OK);
             } else {
+                // estado 400 si fallo la instruccion
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             }
         } catch (Exception e) {
+            // estado 500 para errores criticos
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
